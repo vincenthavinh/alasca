@@ -22,6 +22,9 @@ extends		AbstractCVM
 	public static final String	RequestGeneratorManagementInboundPortURI = "rgmip" ;
 	public static final String	RequestSubmissionInboundPortURI = "rsibp" ;
 	public static final String	RequestNotificationInboundPortURI = "rnibp" ;
+	
+	public static final String	RequestSubmissionInboundPortURIdispatcher = "rsibp_disp" ;
+	public static final String	RequestNotificationInboundPortURIdispatcher = "rnibp_disp" ;
 
 	/** 	Computer monitor component.										*/
 	protected ComputerMonitor						cm ;
@@ -30,8 +33,10 @@ extends		AbstractCVM
 	protected ApplicationVM							vm1 ;
 	/** 	Request generator component.										*/
 	protected RequestGenerator						rg ;
+	
 	/**		Request dispatcher component.								*/
 	protected RequestDispatcher 					rd ;
+	
 	/** Integrator component.											*/
 	protected Integrator								integ ;
 
@@ -105,14 +110,14 @@ extends		AbstractCVM
 		this.vm = new ApplicationVM("vm0",	// application vm component URI
 								    ApplicationVMManagementInboundPortURI,
 								    RequestSubmissionInboundPortURI,
-								    RequestNotificationInboundPortURI) ;
+								    RequestNotificationInboundPortURIdispatcher) ;
 		this.addDeployedComponent(this.vm) ;
 		// Toggle on tracing and logging in the application virtual machine to
 		// follow the execution of individual requests.
 		this.vm.toggleTracing() ;
 		this.vm.toggleLogging() ;
 		// --------------------------------------------------------------------
-		this.vm1 = new ApplicationVM("vm1",	// application vm component URI
+		/*this.vm1 = new ApplicationVM("vm1",	// application vm component URI
 								    ApplicationVM1ManagementInboundPortURI,
 								    RequestSubmissionInboundPortURI,
 								    RequestNotificationInboundPortURI) ;
@@ -120,19 +125,21 @@ extends		AbstractCVM
 		// Toggle on tracing and logging in the application virtual machine to
 		// follow the execution of individual requests.
 		this.vm1.toggleTracing() ;
-		this.vm1.toggleLogging() ;
+		this.vm1.toggleLogging() ;*/
 		// --------------------------------------------------------------------
 		
 		
 		// --------------------------------------------------------------------
 		// Creating the request dispatcher component.
 		// --------------------------------------------------------------------
-		/*this.rd = new RequestDispatcher(
+		this.rd = new RequestDispatcher(
 					"rd",
-					RequestSubmissionInboundPortURI,
-					RequestNotificationInboundPortURI);
+					RequestNotificationInboundPortURIdispatcher,
+					RequestSubmissionInboundPortURIdispatcher,
+					RequestNotificationInboundPortURI,
+					RequestSubmissionInboundPortURI);
 		this.addDeployedComponent(rd);
-		*/
+		
 		// --------------------------------------------------------------------
 		// Creating the request generator component.
 		// --------------------------------------------------------------------
@@ -141,7 +148,7 @@ extends		AbstractCVM
 					500.0,			// mean time between two requests
 					6000000000L,	// mean number of instructions in requests
 					RequestGeneratorManagementInboundPortURI,
-					RequestSubmissionInboundPortURI,
+					RequestSubmissionInboundPortURIdispatcher,
 					RequestNotificationInboundPortURI) ;
 		this.addDeployedComponent(rg) ;
 

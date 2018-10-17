@@ -4,7 +4,12 @@ import java.util.ArrayList;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
+import fr.sorbonne_u.components.exceptions.ComponentStartException;
+import fr.sorbonne_u.datacenter.software.connectors.RequestNotificationConnector;
+import fr.sorbonne_u.datacenter.software.connectors.RequestSubmissionConnector;
 import fr.sorbonne_u.datacenter.software.interfaces.RequestI;
+import fr.sorbonne_u.datacenter.software.interfaces.RequestNotificationHandlerI;
+import fr.sorbonne_u.datacenter.software.interfaces.RequestNotificationI;
 import fr.sorbonne_u.datacenter.software.interfaces.RequestSubmissionHandlerI;
 import fr.sorbonne_u.datacenter.software.interfaces.RequestSubmissionI;
 import fr.sorbonne_u.datacenter.software.ports.RequestNotificationInboundPort;
@@ -14,13 +19,15 @@ import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionOutboundPort;
 
 public class RequestDispatcher 
 	extends AbstractComponent
-	implements RequestSubmissionHandlerI{
+	implements RequestSubmissionHandlerI, 
+			   RequestNotificationHandlerI{
 
 	//nom de ce composant
 	protected String rdURI;
 	
 	// liste de port des VMs
-	protected ArrayList<String> requestSubmissionInboundPortsURI ; // AVMs
+	//protected ArrayList<String> requestSubmissionInboundPortsURI ; // AVMs
+	protected String requestSubmissionInboundPortURI ; // AVM
 	
 	protected String requestNotificationInboundPortURI ; // RG
 	
@@ -32,50 +39,93 @@ public class RequestDispatcher
 	
 	public RequestDispatcher(
 		String rdURI,
-		String requestSubmissionInboundPortURI, // RD
-		String requestNotificationInboundPortURI, // RG
-		ArrayList<String> requestSubmissionInboundPortsURI /* AVMs */) throws Exception {
+		String requestNotificationInboundPortURIdispatcher,
+		String requestSubmissionInboundPortURIdispatcher,
+		String requestNotificationInboundPortURI, //RG
+		//ArrayList<String> requestSubmissionInboundPortsURI /* AVMs */) throws Exception {
+		String requestSubmissionInboundPortURI /* AVM */) throws Exception {
 		
 		super(1, 1);
 		
 		// Preconditions
 		assert	rdURI != null ;
+		assert	requestSubmissionInboundPortURIdispatcher != null ;
+		assert	requestNotificationInboundPortURIdispatcher != null ;
+		
+		assert	requestNotificationInboundPortURI != null ;
+		//assert	requestSubmissionInboundPortsURI != null ;
+		//assert  requestSubmissionInboundPortsURI.size() != 0;
 		assert	requestSubmissionInboundPortURI != null ;
-		assert	requestSubmissionInboundPortsURI != null ;
-		assert  requestSubmissionInboundPortsURI.size() != 0;
 		
 		//initialisation
 		this.rdURI = rdURI;
 		
 		//init des ports dont dispatcher est le owner
+		
+		//offered
+		
+		/*Submission*/
 		this.addOfferedInterface(RequestSubmissionI.class) ;
-		this.requestSubmissionInboundPort = new RequestSubmissionInboundPort(requestSubmissionInboundPortURI, this);
+		this.requestSubmissionInboundPort = new RequestSubmissionInboundPort(requestSubmissionInboundPortURIdispatcher, this);
 		this.addPort(this.requestSubmissionInboundPort) ;
 		this.requestSubmissionInboundPort.publishPort() ;
 		
+		/*Notification*/
+		this.addOfferedInterface(RequestNotificationI.class) ;
+		this.requestNotificationInboundPort = new RequestNotificationInboundPort(requestNotificationInboundPortURIdispatcher, this);
+		this.addPort(this.requestNotificationInboundPort) ;
+		this.requestNotificationInboundPort.publishPort() ;
+		
+		//required
+		
+		/*Submission*/
 		this.addRequiredInterface(RequestSubmissionI.class) ;
 		this.requestSubmissionOutboundPort = new RequestSubmissionOutboundPort(this) ;
 		this.addPort(this.requestSubmissionOutboundPort) ;
 		this.requestSubmissionOutboundPort.publishPort() ;
 		
+		/*Notification*/
+		this.addRequiredInterface(RequestNotificationI.class) ;
+		this.requestNotificationOutboundPort = new RequestNotificationOutboundPort(this) ;
+		this.addPort(this.requestNotificationOutboundPort) ;
+		this.requestNotificationOutboundPort.publishPort() ;
+		
 		//init des ports a connecter
-		this.requestSubmissionInboundPortsURI = requestSubmissionInboundPortsURI;
+		//this.requestSubmissionInboundPortsURI = requestSubmissionInboundPortsURI; //aVMs
+		this.requestSubmissionInboundPortURI = requestSubmissionInboundPortURI; //aVMs
+		this.requestNotificationInboundPortURI = requestNotificationInboundPortURI; //RG
 	
 		//Postconditions check
 		assert	this.requestSubmissionOutboundPort != null && this.requestSubmissionOutboundPort instanceof RequestSubmissionI ;
+		assert	this.requestNotificationOutboundPort != null && this.requestNotificationOutboundPort instanceof RequestNotificationI ;
 	}
 	
+	
+	
 	// Component life cycle
+	
+	@Override
+	public void			start() throws ComponentStartException
+	{
+		super.start() ;
+
+		try {
+			this.doPortConnection(
+					this.requestNotificationOutboundPort.getPortURI(),
+					requestNotificationInboundPortURI,
+					RequestNotificationConnector.class.getCanonicalName()) ;  //Connection RG
+		} catch (Exception e) {
+			throw new ComponentStartException(e) ;
+		}
+	}
+	
+	
 	@Override
 	public void			finalise() throws Exception
-	{
-		if(this.requestSubmissionOutboundPort.connected()) {
-			for(String p : requestSubmissionInboundPortsURI) {
-				if(this.isPortConnected(p)) {
-					this.doPortDisconnection(p);
-				}
-			}
-		}
+	{	
+		this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI()); //deconnection aVMs
+		this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI()) ; //deconnection RG
+
 		super.finalise() ;
 	}
 	
@@ -86,24 +136,24 @@ public class RequestDispatcher
 		try {
 			this.requestSubmissionInboundPort.unpublishPort() ;
 			this.requestSubmissionOutboundPort.unpublishPort() ;
+			this.requestNotificationInboundPort.unpublishPort();
+			this.requestNotificationOutboundPort.unpublishPort();
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
 
 		super.shutdown();
+		
 	}
 	
 	@Override
-	public void			acceptRequestSubmissionAndNotify(
-		final RequestI r
-		) throws Exception
-	{
-		
+	public void	acceptRequestSubmissionAndNotify(final RequestI r) throws Exception {
+		this.requestSubmissionOutboundPort.submitRequestAndNotify(r) ;
 	}
 	
 	@Override
 	public void acceptRequestSubmission(RequestI r) throws Exception {
-		
+		this.requestSubmissionOutboundPort.submitRequest(r) ;
 	}
 	
 	/*
@@ -127,6 +177,13 @@ public class RequestDispatcher
 		des dernières requêtes dans la file d’attente puis la désinscription auprès du répartiteur et la
 		réinitialisation ou la destruction de la machine virtuelle.
 		 */
+	}
+
+
+
+	@Override
+	public void acceptRequestTerminationNotification(RequestI r) throws Exception {
+		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}
 
 	
