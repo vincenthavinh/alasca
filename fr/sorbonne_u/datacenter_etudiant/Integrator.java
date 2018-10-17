@@ -20,6 +20,7 @@ extends		AbstractComponent
 	protected String									rmipURI ;
 	protected String									csipURI ;
 	protected String									avmipURI ;
+	protected String 									avm1ipURI ;
 	/** Port connected to the request generator component to manage its
 	 *  execution (starting and stopping the request generation).			*/
 	protected RequestGeneratorManagementOutboundPort	rmop ;
@@ -27,19 +28,21 @@ extends		AbstractComponent
 	protected ComputerServicesOutboundPort			csop ;
 	/** Port connected to the AVM component to allocate it cores.			*/
 	protected ApplicationVMManagementOutboundPort	avmop ;
-
+	
 	public				Integrator(
 		String csipURI,
 		String avmipURI,
+		String avm1ipURI,
 		String rmipURI
 		) throws Exception
 	{
 		super(1, 0) ;
 
-		assert	csipURI != null && avmipURI != null && rmipURI != null ;
+		assert	csipURI != null && avmipURI != null && avm1ipURI != null && rmipURI != null ;
 
 		this.rmipURI = rmipURI ;
 		this.avmipURI = avmipURI ;
+		this.avm1ipURI = avm1ipURI ;
 		this.csipURI = csipURI ;
 
 		this.addRequiredInterface(ComputerServicesI.class) ;
@@ -79,6 +82,10 @@ extends		AbstractComponent
 			this.doPortConnection(
 				this.avmop.getPortURI(),
 				avmipURI,
+				ApplicationVMManagementConnector.class.getCanonicalName()) ;
+			this.doPortConnection(
+				this.avmop.getPortURI(),
+				avm1ipURI,
 				ApplicationVMManagementConnector.class.getCanonicalName()) ;
 		} catch (Exception e) {
 			throw new ComponentStartException(e) ;

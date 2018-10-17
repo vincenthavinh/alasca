@@ -18,6 +18,7 @@ extends		AbstractCVM
 	public static final String	ComputerStaticStateDataInboundPortURI = "css-dip" ;
 	public static final String	ComputerDynamicStateDataInboundPortURI = "cds-dip" ;
 	public static final String	ApplicationVMManagementInboundPortURI = "avm-ibp" ;
+	public static final String	ApplicationVM1ManagementInboundPortURI = "avm1-ibp" ;
 	public static final String	RequestGeneratorManagementInboundPortURI = "rgmip" ;
 	public static final String	RequestSubmissionInboundPortURI = "rsibp" ;
 	public static final String	RequestNotificationInboundPortURI = "rnibp" ;
@@ -112,7 +113,7 @@ extends		AbstractCVM
 		this.vm.toggleLogging() ;
 		// --------------------------------------------------------------------
 		this.vm1 = new ApplicationVM("vm1",	// application vm component URI
-								    ApplicationVMManagementInboundPortURI,
+								    ApplicationVM1ManagementInboundPortURI,
 								    RequestSubmissionInboundPortURI,
 								    RequestNotificationInboundPortURI) ;
 		this.addDeployedComponent(this.vm1) ;
@@ -126,12 +127,12 @@ extends		AbstractCVM
 		// --------------------------------------------------------------------
 		// Creating the request dispatcher component.
 		// --------------------------------------------------------------------
-		this.rd = new RequestDispatcher(
+		/*this.rd = new RequestDispatcher(
 					"rd",
 					RequestSubmissionInboundPortURI,
 					RequestNotificationInboundPortURI);
 		this.addDeployedComponent(rd);
-		
+		*/
 		// --------------------------------------------------------------------
 		// Creating the request generator component.
 		// --------------------------------------------------------------------
@@ -157,6 +158,7 @@ extends		AbstractCVM
 		this.integ = new Integrator(
 							ComputerServicesInboundPortURI,
 							ApplicationVMManagementInboundPortURI,
+							ApplicationVM1ManagementInboundPortURI,
 							RequestGeneratorManagementInboundPortURI) ;
 		this.addDeployedComponent(this.integ) ;
 		// --------------------------------------------------------------------
