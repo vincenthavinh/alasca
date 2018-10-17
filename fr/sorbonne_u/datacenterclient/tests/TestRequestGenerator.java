@@ -235,7 +235,7 @@ extends		AbstractCVM
 			final TestRequestGenerator trg = new TestRequestGenerator() ;
 			trg.startStandardLifeCycle(10000L) ;
 			// Augment the time if you want to examine the traces after
-			// the exeuction of the program.
+			// the execution of the program.
 			Thread.sleep(10000L) ;
 			// Exit from Java (closes all trace windows...).
 			System.exit(0) ;

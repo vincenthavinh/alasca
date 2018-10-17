@@ -1,6 +1,10 @@
 package fr.sorbonne_u.datacenter_etudiant;
 
 import fr.sorbonne_u.components.AbstractComponent;
+import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
+import fr.sorbonne_u.components.exceptions.ComponentStartException;
+import fr.sorbonne_u.datacenter.software.connectors.RequestNotificationConnector;
+import fr.sorbonne_u.datacenter.software.connectors.RequestSubmissionConnector;
 import fr.sorbonne_u.datacenter.software.interfaces.RequestNotificationI;
 import fr.sorbonne_u.datacenter.software.interfaces.RequestSubmissionI;
 import fr.sorbonne_u.datacenter.software.ports.RequestNotificationInboundPort;
@@ -36,7 +40,7 @@ public class RequestDispatcher extends AbstractComponent {
 		assert	requestSubmissionInboundPortURI != null ;
 		assert	requestNotificationInboundPortURI != null ;
 		
-		
+		//initialisation
 		this.rdURI = rdURI;
 		
 		//init des ports fournisseurs
@@ -65,10 +69,10 @@ public class RequestDispatcher extends AbstractComponent {
 		//Postconditions check
 		assert	this.requestSubmissionOutboundPort != null && this.requestSubmissionOutboundPort instanceof RequestSubmissionI ;
 		assert	this.requestNotificationOutboundPort != null && this.requestNotificationOutboundPort instanceof RequestNotificationI ;
-		
-		
 	}
-/*
+	
+	// Component life cycle
+
 	public void			start() throws ComponentStartException
 	{
 		super.start() ;
@@ -76,12 +80,63 @@ public class RequestDispatcher extends AbstractComponent {
 		try {
 			this.doPortConnection(
 					this.requestSubmissionOutboundPort.getPortURI(),
-					requestSubmissionInboundPortURI,
+					this.requestSubmissionInboundPort.getPortURI(),
 					RequestSubmissionConnector.class.getCanonicalName()) ;
+			this.doPortConnection(
+					this.requestNotificationOutboundPort.getPortURI(),
+					this.requestNotificationInboundPort.getPortURI(),
+					RequestNotificationConnector.class.getCanonicalName()) ;
 		} catch (Exception e) {
 			throw new ComponentStartException(e) ;
 		}
 	}
-	*/
 	
+	@Override
+	public void			finalise() throws Exception
+	{
+		// TO DO
+		this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI()) ;
+		this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI()) ;
+
+		super.finalise() ;
+	}
+	
+	@Override
+	public void			shutdown() throws ComponentShutdownException
+	{
+
+		try {
+			this.requestSubmissionInboundPort.unpublishPort() ;
+			this.requestNotificationInboundPort.unpublishPort() ;
+			this.requestSubmissionOutboundPort.unpublishPort() ;
+			this.requestNotificationOutboundPort.unpublishPort();
+		} catch (Exception e) {
+			throw new ComponentShutdownException(e) ;
+		}
+
+		super.shutdown();
+	}
+	
+	/*
+	 * Une politique de répartition simple consiste à supposer que sur chaque machine virtuelle,
+	l’instance de l’application possède une file d’attente des requêtes devant être exécutées, et le
+	répartiteur envoie les requêtes à tour de rôle à chaque machine virtuelle.
+	 */
+	
+	public void allocationMachineVirtuelle() {
+		/*
+		 * L’allocation d’une machine
+		virtuelle à une application suppose donc la création d’une instance de l’application dans cette
+		machine virtuelle puis l’inscription de cette instance auprès du répartiteur
+		 */
+	}
+	
+	public void deallocationMachineVirtuelle() {
+		/*
+		 * La déallocation d’une
+		machine virtuelle suppose l’arrêt de l’envoi de requêtes à cette instance d’application, le traitement
+		des dernières requêtes dans la file d’attente puis la désinscription auprès du répartiteur et la
+		réinitialisation ou la destruction de la machine virtuelle.
+		 */
+	}
 }

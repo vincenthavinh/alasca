@@ -10,38 +10,29 @@ import fr.sorbonne_u.datacenter.hardware.processors.Processor;
 import fr.sorbonne_u.datacenter.hardware.tests.ComputerMonitor;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
 import fr.sorbonne_u.datacenterclient.requestgenerator.RequestGenerator;
-import fr.sorbonne_u.datacenterclient.tests.Integrator;
-
 
 public class				TestRequestDispatcher
 extends		AbstractCVM
 {
-	// ------------------------------------------------------------------------
-	// Constants and instance variables
-	// ------------------------------------------------------------------------
-
-	// Predefined URI of the different ports visible at the component assembly
-	// level.
 	public static final String	ComputerServicesInboundPortURI = "cs-ibp" ;
 	public static final String	ComputerStaticStateDataInboundPortURI = "css-dip" ;
 	public static final String	ComputerDynamicStateDataInboundPortURI = "cds-dip" ;
 	public static final String	ApplicationVMManagementInboundPortURI = "avm-ibp" ;
+	public static final String	RequestGeneratorManagementInboundPortURI = "rgmip" ;
 	public static final String	RequestSubmissionInboundPortURI = "rsibp" ;
 	public static final String	RequestNotificationInboundPortURI = "rnibp" ;
-	public static final String	RequestGeneratorManagementInboundPortURI = "rgmip" ;
 
 	/** 	Computer monitor component.										*/
 	protected ComputerMonitor						cm ;
 	/** 	Application virtual machine component.							*/
 	protected ApplicationVM							vm ;
+	protected ApplicationVM							vm1 ;
 	/** 	Request generator component.										*/
 	protected RequestGenerator						rg ;
-	/** Integrator component.											*/
-	protected Integrator								integ ;
-	
 	/**		Request dispatcher component.								*/
 	protected RequestDispatcher 					rd ;
-	
+	/** Integrator component.											*/
+	protected Integrator								integ ;
 
 	// ------------------------------------------------------------------------
 	// Component virtual machine constructors
@@ -120,7 +111,16 @@ extends		AbstractCVM
 		this.vm.toggleTracing() ;
 		this.vm.toggleLogging() ;
 		// --------------------------------------------------------------------
-
+		this.vm1 = new ApplicationVM("vm1",	// application vm component URI
+								    ApplicationVMManagementInboundPortURI,
+								    RequestSubmissionInboundPortURI,
+								    RequestNotificationInboundPortURI) ;
+		this.addDeployedComponent(this.vm1) ;
+		// Toggle on tracing and logging in the application virtual machine to
+		// follow the execution of individual requests.
+		this.vm1.toggleTracing() ;
+		this.vm1.toggleLogging() ;
+		// --------------------------------------------------------------------
 		
 		
 		// --------------------------------------------------------------------
@@ -130,7 +130,7 @@ extends		AbstractCVM
 					"rd",
 					RequestSubmissionInboundPortURI,
 					RequestNotificationInboundPortURI);
-		
+		this.addDeployedComponent(rd);
 		
 		// --------------------------------------------------------------------
 		// Creating the request generator component.
@@ -179,10 +179,10 @@ extends		AbstractCVM
 		// Uncomment next line to execute components in debug mode.
 		// AbstractCVM.toggleDebugMode() ;
 		try {
-			final TestRequestDispatcher trg = new TestRequestDispatcher() ;
-			trg.startStandardLifeCycle(10000L) ;
+			final TestRequestDispatcher trd = new TestRequestDispatcher() ;
+			trd.startStandardLifeCycle(10000L) ;
 			// Augment the time if you want to examine the traces after
-			// the exeuction of the program.
+			// the execution of the program.
 			Thread.sleep(10000L) ;
 			// Exit from Java (closes all trace windows...).
 			System.exit(0) ;
