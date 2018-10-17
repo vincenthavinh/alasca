@@ -191,7 +191,7 @@ extends		AbstractCVM
 			trd.startStandardLifeCycle(10000L) ;
 			// Augment the time if you want to examine the traces after
 			// the execution of the program.
-			Thread.sleep(10000L) ;
+			Thread.sleep(100000L) ;
 			// Exit from Java (closes all trace windows...).
 			System.exit(0) ;
 		} catch (Exception e) {

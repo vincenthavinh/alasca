@@ -110,10 +110,17 @@ public class RequestDispatcher
 		super.start() ;
 
 		try {
+			
 			this.doPortConnection(
 					this.requestNotificationOutboundPort.getPortURI(),
 					requestNotificationInboundPortURI,
 					RequestNotificationConnector.class.getCanonicalName()) ;  //Connection RG
+			
+			this.doPortConnection(
+					this.requestSubmissionOutboundPort.getPortURI(),
+					requestSubmissionInboundPortURI,
+					RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
+			
 		} catch (Exception e) {
 			throw new ComponentStartException(e) ;
 		}
