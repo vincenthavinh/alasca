@@ -165,7 +165,6 @@ extends		AbstractCVM
 		this.integ = new Integrator(
 							ComputerServicesInboundPortURI,
 							ApplicationVMManagementInboundPortURI,
-							ApplicationVM1ManagementInboundPortURI,
 							RequestGeneratorManagementInboundPortURI) ;
 		this.addDeployedComponent(this.integ) ;
 		// --------------------------------------------------------------------
