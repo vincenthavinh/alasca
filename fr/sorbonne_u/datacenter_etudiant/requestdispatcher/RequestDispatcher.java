@@ -1,4 +1,4 @@
-package fr.sorbonne_u.datacenter_etudiant;
+package fr.sorbonne_u.datacenter_etudiant.requestdispatcher;
 
 import java.util.ArrayList;
 
@@ -155,6 +155,8 @@ public class RequestDispatcher
 	
 	@Override
 	public void	acceptRequestSubmissionAndNotify(final RequestI r) throws Exception {
+		this.logMessage(
+				"Request dispatcher "+this.rdURI+" accept request "+ r.getRequestURI()+" submission and notify");
 		this.requestSubmissionOutboundPort.submitRequestAndNotify(r) ;
 	}
 	
@@ -162,7 +164,16 @@ public class RequestDispatcher
 	public void acceptRequestSubmission(RequestI r) throws Exception {
 		this.requestSubmissionOutboundPort.submitRequest(r) ;
 	}
-	
+
+	@Override
+	public void acceptRequestTerminationNotification(RequestI r) throws Exception {
+		this.logMessage("Request dispatcher " + this.rdURI +
+				" is notified that request "+ r.getRequestURI() +
+				" has ended.") ;
+		this.requestNotificationOutboundPort.notifyRequestTermination(r);
+	}
+
+
 	/*
 	 * Une politique de répartition simple consiste à supposer que sur chaque machine virtuelle,
 	l’instance de l’application possède une file d’attente des requêtes devant être exécutées, et le
@@ -185,13 +196,4 @@ public class RequestDispatcher
 		réinitialisation ou la destruction de la machine virtuelle.
 		 */
 	}
-
-
-
-	@Override
-	public void acceptRequestTerminationNotification(RequestI r) throws Exception {
-		this.requestNotificationOutboundPort.notifyRequestTermination(r);
-	}
-
-	
 }

@@ -1,4 +1,4 @@
-package fr.sorbonne_u.datacenter_etudiant;
+package fr.sorbonne_u.datacenter_etudiant.tests;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,6 +9,7 @@ import fr.sorbonne_u.datacenter.hardware.computers.Computer;
 import fr.sorbonne_u.datacenter.hardware.processors.Processor;
 import fr.sorbonne_u.datacenter.hardware.tests.ComputerMonitor;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.RequestDispatcher;
 import fr.sorbonne_u.datacenterclient.requestgenerator.RequestGenerator;
 
 public class				TestRequestDispatcher
@@ -139,7 +140,8 @@ extends		AbstractCVM
 					RequestNotificationInboundPortURI,
 					RequestSubmissionInboundPortURI);
 		this.addDeployedComponent(rd);
-		
+		this.rd.toggleTracing();
+		this.rd.toggleLogging();
 		// --------------------------------------------------------------------
 		// Creating the request generator component.
 		// --------------------------------------------------------------------

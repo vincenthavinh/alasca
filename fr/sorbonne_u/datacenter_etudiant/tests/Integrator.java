@@ -1,4 +1,4 @@
-package fr.sorbonne_u.datacenter_etudiant;
+package fr.sorbonne_u.datacenter_etudiant.tests;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
