@@ -27,9 +27,10 @@ public class RequestDispatcher
 	
 	// liste de port des VMs
 	protected ArrayList<String> requestSubmissionInboundPortsURI ; // AVMs
-	protected int index;
+	protected int index; // l'avm (index%(nb AVMs)) recoit la requete
 	//protected String requestSubmissionInboundPortURI ; // AVM
 	
+	// port de la RequestGenerator
 	protected String requestNotificationInboundPortURI ; // RG
 	
 	// ports appartenant au dispatcher
@@ -61,6 +62,7 @@ public class RequestDispatcher
 		//initialisation
 		this.rdURI = rdURI;
 		this.index = 0;
+		
 		//init des ports dont dispatcher est le owner
 		
 		//offered
@@ -166,14 +168,16 @@ public class RequestDispatcher
 	
 	@Override
 	public void acceptRequestSubmission(RequestI r) throws Exception {
-		this.requestSubmissionOutboundPort.submitRequest(r) ;
+		this.logMessage(
+				"Request dispatcher "+this.rdURI+" accept request "+ r.getRequestURI()+" submission and dispatch to AVMs.");
+		this.dispatchRequest(r);
 	}
 
 	@Override
 	public void acceptRequestTerminationNotification(RequestI r) throws Exception {
 		this.logMessage("Request dispatcher " + this.rdURI +
 				" is notified that request "+ r.getRequestURI() +
-				" has ended and notify request generator.") ;
+				" has ended and notify the request generator.") ;
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}
 	
