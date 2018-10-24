@@ -6,7 +6,8 @@ import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.components.exceptions.ComponentStartException;
 import fr.sorbonne_u.components.ports.AbstractPort;
-import fr.sorbonne_u.components.pre.dcc.DynamicComponentCreator;
+import fr.sorbonne_u.components.pre.dcc.interfaces.DynamicComponentCreationI;
+import fr.sorbonne_u.components.pre.dcc.ports.DynamicComponentCreationOutboundPort;
 import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
 import fr.sorbonne_u.datacenter.hardware.computers.connectors.ComputerServicesConnector;
 import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI;
@@ -44,6 +45,7 @@ public class AdmissionController
 	protected RequestSubmissionOutboundPort requestSubmissionOutboundPort_AC;
 	protected RequestNotificationInboundPort requestNotificationInboundPort_AC;
 	protected RequestNotificationOutboundPort requestNotificationOutboundPort_AC;
+	protected DynamicComponentCreationOutboundPort dynamicComponentCreationOutboundPort_AC;
 	protected ComputerServicesOutboundPort computerServicesOutboundPort_AC;
 	protected ApplicationVMManagementOutboundPort applicationVMManagementOutboundPort_AC;
 	
@@ -52,6 +54,7 @@ public class AdmissionController
 			String acURI,
 			String requestNotificationInboundPortURI_RG, //Request generator
 			String requestSubmissionInboundPortURI_AC, //Admission controller
+			String dynamicComponentCreationInboundPortURI_DC, //Dynamic component
 			ArrayList<String> computerServicesInboundPortURIs_CP //Computers
 	) throws Exception {
 		super(1,1);
@@ -60,6 +63,7 @@ public class AdmissionController
 		assert acURI != null;
 		assert requestNotificationInboundPortURI_RG != null;
 		assert requestSubmissionInboundPortURI_AC != null;
+		assert dynamicComponentCreationInboundPortURI_DC != null;
 		assert computerServicesInboundPortURIs_CP != null;
 		assert computerServicesInboundPortURIs_CP.size() != 0;
 		
@@ -108,6 +112,12 @@ public class AdmissionController
 		this.addPort(this.applicationVMManagementOutboundPort_AC) ;
 		this.applicationVMManagementOutboundPort_AC.publishPort() ;
 		
+		/*Dynamic Component*/
+		this.addRequiredInterface(DynamicComponentCreationI.class);
+		this.dynamicComponentCreationOutboundPort_AC = new DynamicComponentCreationOutboundPort(this);
+		this.addPort(this.dynamicComponentCreationOutboundPort_AC);
+		this.dynamicComponentCreationOutboundPort_AC.publishPort();
+		
 		//init des ports a connecter
 		this.requestNotificationInboundPortURI_RG = requestNotificationInboundPortURI_RG;
 		this.computerServicesInboundPortURIs_CP = computerServicesInboundPortURIs_CP;
@@ -118,6 +128,7 @@ public class AdmissionController
 		assert	this.requestNotificationOutboundPort_AC != null && this.requestNotificationOutboundPort_AC instanceof RequestNotificationI ;
 		assert  this.computerServicesOutboundPort_AC != null && this.computerServicesOutboundPort_AC instanceof ComputerServicesI ;
 		assert  this.applicationVMManagementOutboundPort_AC != null && this.applicationVMManagementOutboundPort_AC instanceof ApplicationVMManagementI;
+		assert  this.dynamicComponentCreationOutboundPort_AC != null && this.dynamicComponentCreationOutboundPort_AC instanceof DynamicComponentCreationI;
 	}
 
 	// Component life cycle
@@ -141,7 +152,7 @@ public class AdmissionController
 	public void			finalise() throws Exception
 	{	
 		if(this.requestSubmissionOutboundPort_AC.connected()) {
-			this.doPortDisconnection(this.requestNotificationOutboundPort_AC.getPortURI());
+			this.doPortDisconnection(this.requestSubmissionOutboundPort_AC.getPortURI());
 		}
 		this.doPortDisconnection(this.requestNotificationOutboundPort_AC.getPortURI()) ; //deconnection RG
 		if(this.computerServicesOutboundPort_AC.connected()) {
@@ -195,29 +206,14 @@ public class AdmissionController
 		
 	}
 
-	public void executeInComputer(String computerServicesInboundPortURI) throws Exception{
-		this.doPortConnection(
-				this.computerServicesOutboundPort_AC.getPortURI(),
-				computerServicesInboundPortURI,
-				ComputerServicesConnector.class.getCanonicalName()) ;
+	public void executeInComputer(AllocatedCore ac) throws Exception{
+		// TODO
 		
-		AllocatedCore ac = this.computerServicesOutboundPort_AC.allocateCore() ;
-		if(ac != null) {
-			// TODO
-			String avmip = AbstractPort.generatePortURI(ApplicationVMManagementI.class);
-			String avmURI;
-			ApplicationVM vm;
-		}
-		else {
-			
-		}
-		this.doPortDisconnection(this.computerServicesOutboundPort_AC.getPortURI()) ;
 	}
 	
 	// voir le quel des computers.allocatedCore() ne retourne pas null ?
-	public String findComputer() {
-		String cp = null;
-		// TODO
-		return cp;
+	public AllocatedCore findComputer() {
+		AllocatedCore ac = null;
+		return ac;
 	}
 }
