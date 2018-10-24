@@ -123,7 +123,7 @@ extends		AbstractCVM
 		this.vm1 = new ApplicationVM("vm1",	// application vm component URI
 								    ApplicationVM1ManagementInboundPortURI,
 								    RequestSubmissionInboundPortURIAVM1,
-								    RequestNotificationInboundPortURI) ;
+								    RequestNotificationInboundPortURIdispatcher) ;
 		this.addDeployedComponent(this.vm1) ;
 		// Toggle on tracing and logging in the application virtual machine to
 		// follow the execution of individual requests.

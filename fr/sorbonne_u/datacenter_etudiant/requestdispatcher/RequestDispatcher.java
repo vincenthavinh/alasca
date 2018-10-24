@@ -159,6 +159,11 @@ public class RequestDispatcher
 		
 	}
 	
+	// -------------------------------------------------------------------------
+	// Component internal services
+	// -------------------------------------------------------------------------
+
+	
 	@Override
 	public void	acceptRequestSubmissionAndNotify(RequestI r) throws Exception {
 		this.logMessage(
@@ -170,7 +175,7 @@ public class RequestDispatcher
 	public void acceptRequestSubmission(RequestI r) throws Exception {
 		this.logMessage(
 				"Request dispatcher "+this.rdURI+" accept request "+ r.getRequestURI()+" submission and dispatch to AVMs.");
-		this.dispatchRequest(r);
+		this.dispatchRequestWithOutNotification(r);
 	}
 
 	@Override
@@ -189,6 +194,18 @@ public class RequestDispatcher
 			RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
 		
 		this.requestSubmissionOutboundPort.submitRequestAndNotify(r) ;
+		
+		this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI());
+	}
+	
+	public void dispatchRequestWithOutNotification(RequestI r) throws Exception{
+		String aVMuri = this.requestSubmissionInboundPortsURI.get(index++%this.requestSubmissionInboundPortsURI.size());
+		this.doPortConnection(
+			this.requestSubmissionOutboundPort.getPortURI(),
+			aVMuri,
+			RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
+		
+		this.requestSubmissionOutboundPort.submitRequest(r) ;
 		
 		this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI());
 	}
