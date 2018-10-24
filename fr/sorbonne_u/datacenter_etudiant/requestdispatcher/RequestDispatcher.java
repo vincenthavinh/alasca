@@ -26,8 +26,9 @@ public class RequestDispatcher
 	protected String rdURI;
 	
 	// liste de port des VMs
-	//protected ArrayList<String> requestSubmissionInboundPortsURI ; // AVMs
-	protected String requestSubmissionInboundPortURI ; // AVM
+	protected ArrayList<String> requestSubmissionInboundPortsURI ; // AVMs
+	protected int index;
+	//protected String requestSubmissionInboundPortURI ; // AVM
 	
 	protected String requestNotificationInboundPortURI ; // RG
 	
@@ -42,8 +43,8 @@ public class RequestDispatcher
 		String requestNotificationInboundPortURIdispatcher,
 		String requestSubmissionInboundPortURIdispatcher,
 		String requestNotificationInboundPortURI, //RG
-		//ArrayList<String> requestSubmissionInboundPortsURI /* AVMs */) throws Exception {
-		String requestSubmissionInboundPortURI /* AVM */) throws Exception {
+		ArrayList<String> requestSubmissionInboundPortsURI /* AVMs */) throws Exception {
+		//String requestSubmissionInboundPortURI /* AVM */) throws Exception {
 		
 		super(1, 1);
 		
@@ -53,13 +54,13 @@ public class RequestDispatcher
 		assert	requestNotificationInboundPortURIdispatcher != null ;
 		
 		assert	requestNotificationInboundPortURI != null ;
-		//assert	requestSubmissionInboundPortsURI != null ;
-		//assert  requestSubmissionInboundPortsURI.size() != 0;
-		assert	requestSubmissionInboundPortURI != null ;
+		assert	requestSubmissionInboundPortsURI != null ;
+		assert  requestSubmissionInboundPortsURI.size() != 0;
+		//assert	requestSubmissionInboundPortURI != null ;
 		
 		//initialisation
 		this.rdURI = rdURI;
-		
+		this.index = 0;
 		//init des ports dont dispatcher est le owner
 		
 		//offered
@@ -91,8 +92,8 @@ public class RequestDispatcher
 		this.requestNotificationOutboundPort.publishPort() ;
 		
 		//init des ports a connecter
-		//this.requestSubmissionInboundPortsURI = requestSubmissionInboundPortsURI; //aVMs
-		this.requestSubmissionInboundPortURI = requestSubmissionInboundPortURI; //aVMs
+		this.requestSubmissionInboundPortsURI = requestSubmissionInboundPortsURI; //aVMs
+		//this.requestSubmissionInboundPortURI = requestSubmissionInboundPortURI; //aVM
 		this.requestNotificationInboundPortURI = requestNotificationInboundPortURI; //RG
 	
 		//Postconditions check
@@ -116,10 +117,10 @@ public class RequestDispatcher
 					requestNotificationInboundPortURI,
 					RequestNotificationConnector.class.getCanonicalName()) ;  //Connection RG
 			
-			this.doPortConnection(
-					this.requestSubmissionOutboundPort.getPortURI(),
-					requestSubmissionInboundPortURI,
-					RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
+//			this.doPortConnection(
+//					this.requestSubmissionOutboundPort.getPortURI(),
+//					requestSubmissionInboundPortURI,
+//					RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
 			
 		} catch (Exception e) {
 			throw new ComponentStartException(e) ;
@@ -130,7 +131,10 @@ public class RequestDispatcher
 	@Override
 	public void			finalise() throws Exception
 	{	
-		this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI()); //deconnection aVMs
+		if(this.requestSubmissionOutboundPort.connected()) {
+			this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI());
+		}
+		//this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI()); //deconnection aVMs
 		this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI()) ; //deconnection RG
 
 		super.finalise() ;
@@ -154,10 +158,10 @@ public class RequestDispatcher
 	}
 	
 	@Override
-	public void	acceptRequestSubmissionAndNotify(final RequestI r) throws Exception {
+	public void	acceptRequestSubmissionAndNotify(RequestI r) throws Exception {
 		this.logMessage(
-				"Request dispatcher "+this.rdURI+" accept request "+ r.getRequestURI()+" submission and notify");
-		this.requestSubmissionOutboundPort.submitRequestAndNotify(r) ;
+				"Request dispatcher "+this.rdURI+" accept request "+ r.getRequestURI()+" submission and dispatch to AVMs.");
+		this.dispatchRequest(r);
 	}
 	
 	@Override
@@ -169,31 +173,19 @@ public class RequestDispatcher
 	public void acceptRequestTerminationNotification(RequestI r) throws Exception {
 		this.logMessage("Request dispatcher " + this.rdURI +
 				" is notified that request "+ r.getRequestURI() +
-				" has ended.") ;
+				" has ended and notify request generator.") ;
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}
-
-
-	/*
-	 * Une politique de répartition simple consiste à supposer que sur chaque machine virtuelle,
-	l’instance de l’application possède une file d’attente des requêtes devant être exécutées, et le
-	répartiteur envoie les requêtes à tour de rôle à chaque machine virtuelle.
-	 */
 	
-	public void allocationMachineVirtuelle() {
-		/*
-		 * L’allocation d’une machine
-		virtuelle à une application suppose donc la création d’une instance de l’application dans cette
-		machine virtuelle puis l’inscription de cette instance auprès du répartiteur
-		 */
-	}
-	
-	public void deallocationMachineVirtuelle() {
-		/*
-		 * La déallocation d’une
-		machine virtuelle suppose l’arrêt de l’envoi de requêtes à cette instance d’application, le traitement
-		des dernières requêtes dans la file d’attente puis la désinscription auprès du répartiteur et la
-		réinitialisation ou la destruction de la machine virtuelle.
-		 */
+	public void dispatchRequest(RequestI r) throws Exception{
+		String aVMuri = this.requestSubmissionInboundPortsURI.get(index++%this.requestSubmissionInboundPortsURI.size());
+		this.doPortConnection(
+			this.requestSubmissionOutboundPort.getPortURI(),
+			aVMuri,
+			RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
+		
+		this.requestSubmissionOutboundPort.submitRequestAndNotify(r) ;
+		
+		this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI());
 	}
 }

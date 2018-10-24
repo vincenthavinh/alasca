@@ -1,5 +1,6 @@
 package fr.sorbonne_u.datacenter_etudiant.tests;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -18,10 +19,11 @@ extends		AbstractCVM
 	public static final String	ComputerServicesInboundPortURI = "cs-ibp" ;
 	public static final String	ComputerStaticStateDataInboundPortURI = "css-dip" ;
 	public static final String	ComputerDynamicStateDataInboundPortURI = "cds-dip" ;
-	public static final String	ApplicationVMManagementInboundPortURI = "avm-ibp" ;
+	public static final String	ApplicationVM0ManagementInboundPortURI = "avm0-ibp" ;
 	public static final String	ApplicationVM1ManagementInboundPortURI = "avm1-ibp" ;
 	public static final String	RequestGeneratorManagementInboundPortURI = "rgmip" ;
-	public static final String	RequestSubmissionInboundPortURI = "rsibp" ;
+	public static final String	RequestSubmissionInboundPortURIAVM0 = "rsibp0" ;
+	public static final String	RequestSubmissionInboundPortURIAVM1 = "rsibp1" ;
 	public static final String	RequestNotificationInboundPortURI = "rnibp" ;
 	
 	public static final String	RequestSubmissionInboundPortURIdispatcher = "rsibp_disp" ;
@@ -109,8 +111,8 @@ extends		AbstractCVM
 		// Create an Application VM component
 		// --------------------------------------------------------------------
 		this.vm = new ApplicationVM("vm0",	// application vm component URI
-								    ApplicationVMManagementInboundPortURI,
-								    RequestSubmissionInboundPortURI,
+								    ApplicationVM0ManagementInboundPortURI,
+								    RequestSubmissionInboundPortURIAVM0,
 								    RequestNotificationInboundPortURIdispatcher) ;
 		this.addDeployedComponent(this.vm) ;
 		// Toggle on tracing and logging in the application virtual machine to
@@ -118,18 +120,20 @@ extends		AbstractCVM
 		this.vm.toggleTracing() ;
 		this.vm.toggleLogging() ;
 		// --------------------------------------------------------------------
-		/*this.vm1 = new ApplicationVM("vm1",	// application vm component URI
+		this.vm1 = new ApplicationVM("vm1",	// application vm component URI
 								    ApplicationVM1ManagementInboundPortURI,
-								    RequestSubmissionInboundPortURI,
+								    RequestSubmissionInboundPortURIAVM1,
 								    RequestNotificationInboundPortURI) ;
 		this.addDeployedComponent(this.vm1) ;
 		// Toggle on tracing and logging in the application virtual machine to
 		// follow the execution of individual requests.
 		this.vm1.toggleTracing() ;
-		this.vm1.toggleLogging() ;*/
+		this.vm1.toggleLogging() ;
 		// --------------------------------------------------------------------
 		
-		
+		ArrayList<String> listAVMs = new ArrayList<String>();
+		listAVMs.add(RequestSubmissionInboundPortURIAVM0);
+		listAVMs.add(RequestSubmissionInboundPortURIAVM1);
 		// --------------------------------------------------------------------
 		// Creating the request dispatcher component.
 		// --------------------------------------------------------------------
@@ -138,7 +142,7 @@ extends		AbstractCVM
 					RequestNotificationInboundPortURIdispatcher,
 					RequestSubmissionInboundPortURIdispatcher,
 					RequestNotificationInboundPortURI,
-					RequestSubmissionInboundPortURI);
+					listAVMs);
 		this.addDeployedComponent(rd);
 		this.rd.toggleTracing();
 		this.rd.toggleLogging();
@@ -166,7 +170,8 @@ extends		AbstractCVM
 		// --------------------------------------------------------------------
 		this.integ = new Integrator(
 							ComputerServicesInboundPortURI,
-							ApplicationVMManagementInboundPortURI,
+							ApplicationVM0ManagementInboundPortURI,
+							ApplicationVM1ManagementInboundPortURI,
 							RequestGeneratorManagementInboundPortURI) ;
 		this.addDeployedComponent(this.integ) ;
 		// --------------------------------------------------------------------

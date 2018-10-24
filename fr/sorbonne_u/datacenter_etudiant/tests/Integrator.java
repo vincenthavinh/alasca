@@ -19,27 +19,31 @@ extends		AbstractComponent
 {
 	protected String									rmipURI ;
 	protected String									csipURI ;
-	protected String									avmipURI ;
+	protected String									avm0ipURI ;
+	protected String									avm1ipURI ;
 	/** Port connected to the request generator component to manage its
 	 *  execution (starting and stopping the request generation).			*/
 	protected RequestGeneratorManagementOutboundPort	rmop ;
 	/** Port connected to the computer component to access its services.	*/
 	protected ComputerServicesOutboundPort			csop ;
 	/** Port connected to the AVM component to allocate it cores.			*/
-	protected ApplicationVMManagementOutboundPort	avmop ;
+	protected ApplicationVMManagementOutboundPort	avm0op ;
+	protected ApplicationVMManagementOutboundPort	avm1op ;
 	
 	public				Integrator(
 		String csipURI,
-		String avmipURI,
+		String avm0ipURI,
+		String avm1ipURI,
 		String rmipURI
 		) throws Exception
 	{
 		super(1, 0) ;
 
-		assert	csipURI != null && avmipURI != null && rmipURI != null ;
+		assert	csipURI != null && avm0ipURI != null && avm1ipURI != null && rmipURI != null ;
 
 		this.rmipURI = rmipURI ;
-		this.avmipURI = avmipURI ;
+		this.avm0ipURI = avm0ipURI ;
+		this.avm1ipURI = avm1ipURI ;
 		this.csipURI = csipURI ;
 
 		this.addRequiredInterface(ComputerServicesI.class) ;
@@ -54,9 +58,13 @@ extends		AbstractComponent
 		this.addPort(rmop) ;
 		this.rmop.publishPort() ;
 
-		this.avmop = new ApplicationVMManagementOutboundPort(this) ;
-		this.addPort(this.avmop) ;
-		this.avmop.publishPort() ;
+		this.avm0op = new ApplicationVMManagementOutboundPort(this) ;
+		this.addPort(this.avm0op) ;
+		this.avm0op.publishPort() ;
+		
+		this.avm1op = new ApplicationVMManagementOutboundPort(this) ;
+		this.addPort(this.avm1op) ;
+		this.avm1op.publishPort() ;
 	}
 
 	/**
@@ -77,8 +85,12 @@ extends		AbstractComponent
 				rmipURI,
 				RequestGeneratorManagementConnector.class.getCanonicalName()) ;
 			this.doPortConnection(
-				this.avmop.getPortURI(),
-				avmipURI,
+				this.avm0op.getPortURI(),
+				avm0ipURI,
+				ApplicationVMManagementConnector.class.getCanonicalName()) ;
+			this.doPortConnection(
+				this.avm1op.getPortURI(),
+				avm1ipURI,
 				ApplicationVMManagementConnector.class.getCanonicalName()) ;
 		} catch (Exception e) {
 			throw new ComponentStartException(e) ;
@@ -93,8 +105,10 @@ extends		AbstractComponent
 	{
 		super.execute() ;
 
-		AllocatedCore[] ac = this.csop.allocateCores(4) ;
-		this.avmop.allocateCores(ac) ;
+		AllocatedCore[] ac0 = this.csop.allocateCores(2) ;
+		this.avm0op.allocateCores(ac0) ;
+		AllocatedCore[] ac1 = this.csop.allocateCores(2) ;
+		this.avm1op.allocateCores(ac1) ;
 		this.rmop.startGeneration() ;
 		// wait 20 seconds
 		Thread.sleep(2000L) ;
@@ -109,7 +123,8 @@ extends		AbstractComponent
 	public void			finalise() throws Exception
 	{
 		this.doPortDisconnection(this.csop.getPortURI()) ;
-		this.doPortDisconnection(this.avmop.getPortURI()) ;
+		this.doPortDisconnection(this.avm0op.getPortURI()) ;
+		this.doPortDisconnection(this.avm1op.getPortURI()) ;
 		this.doPortDisconnection(this.rmop.getPortURI()) ;
 		super.finalise();
 	}
@@ -122,7 +137,8 @@ extends		AbstractComponent
 	{
 		try {
 			this.csop.unpublishPort() ;
-			this.avmop.unpublishPort() ;
+			this.avm0op.unpublishPort() ;
+			this.avm1op.unpublishPort() ;
 			this.rmop.unpublishPort() ;
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
@@ -138,7 +154,8 @@ extends		AbstractComponent
 	{
 		try {
 			this.csop.unpublishPort() ;
-			this.avmop.unpublishPort() ;
+			this.avm0op.unpublishPort() ;
+			this.avm1op.unpublishPort() ;
 			this.rmop.unpublishPort() ;
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
