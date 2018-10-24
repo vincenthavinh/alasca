@@ -35,7 +35,7 @@ public class RequestDispatcher
 	
 	// ports appartenant au dispatcher
 	protected RequestSubmissionInboundPort requestSubmissionInboundPort ;
-	protected RequestSubmissionOutboundPort requestSubmissionOutboundPort ;
+	protected ArrayList<RequestSubmissionOutboundPort> requestSubmissionOutboundPorts ;
 	protected RequestNotificationInboundPort requestNotificationInboundPort ;
 	protected RequestNotificationOutboundPort requestNotificationOutboundPort ;
 	
@@ -82,10 +82,13 @@ public class RequestDispatcher
 		//required
 		
 		/*Submission*/
+		this.requestSubmissionOutboundPorts = new ArrayList<RequestSubmissionOutboundPort>();
 		this.addRequiredInterface(RequestSubmissionI.class) ;
-		this.requestSubmissionOutboundPort = new RequestSubmissionOutboundPort(this) ;
-		this.addPort(this.requestSubmissionOutboundPort) ;
-		this.requestSubmissionOutboundPort.publishPort() ;
+		for(int i=0; i<requestSubmissionInboundPortsURI.size(); i++) {
+			this.requestSubmissionOutboundPorts.add(new RequestSubmissionOutboundPort(this)) ;
+			this.addPort(this.requestSubmissionOutboundPorts.get(i)) ;
+			this.requestSubmissionOutboundPorts.get(i).publishPort() ;
+		}
 		
 		/*Notification*/
 		this.addRequiredInterface(RequestNotificationI.class) ;
@@ -99,7 +102,9 @@ public class RequestDispatcher
 		this.requestNotificationInboundPortURI = requestNotificationInboundPortURI; //RG
 	
 		//Postconditions check
-		assert	this.requestSubmissionOutboundPort != null && this.requestSubmissionOutboundPort instanceof RequestSubmissionI ;
+		for(RequestSubmissionOutboundPort rsop : requestSubmissionOutboundPorts) {
+			assert	rsop != null && rsop instanceof RequestSubmissionI ;
+		}
 		assert	this.requestNotificationOutboundPort != null && this.requestNotificationOutboundPort instanceof RequestNotificationI ;
 	}
 	
@@ -119,10 +124,12 @@ public class RequestDispatcher
 					requestNotificationInboundPortURI,
 					RequestNotificationConnector.class.getCanonicalName()) ;  //Connection RG
 			
-//			this.doPortConnection(
-//					this.requestSubmissionOutboundPort.getPortURI(),
-//					requestSubmissionInboundPortURI,
-//					RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
+			for(int i=0; i<requestSubmissionInboundPortsURI.size(); i++) {
+				this.doPortConnection(
+						this.requestSubmissionOutboundPorts.get(i).getPortURI(),
+						requestSubmissionInboundPortsURI.get(i),
+						RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
+			}
 			
 		} catch (Exception e) {
 			throw new ComponentStartException(e) ;
@@ -133,8 +140,10 @@ public class RequestDispatcher
 	@Override
 	public void			finalise() throws Exception
 	{	
-		if(this.requestSubmissionOutboundPort.connected()) {
-			this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI());
+		for(RequestSubmissionOutboundPort rsop : requestSubmissionOutboundPorts) {
+			if(rsop.connected()) {
+				this.doPortDisconnection(rsop.getPortURI());
+			}
 		}
 		//this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI()); //deconnection aVMs
 		this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI()) ; //deconnection RG
@@ -148,7 +157,9 @@ public class RequestDispatcher
 
 		try {
 			this.requestSubmissionInboundPort.unpublishPort() ;
-			this.requestSubmissionOutboundPort.unpublishPort() ;
+			for(RequestSubmissionOutboundPort rsop : requestSubmissionOutboundPorts) {
+				rsop.unpublishPort() ;
+			}
 			this.requestNotificationInboundPort.unpublishPort();
 			this.requestNotificationOutboundPort.unpublishPort();
 		} catch (Exception e) {
@@ -187,26 +198,28 @@ public class RequestDispatcher
 	}
 	
 	public void dispatchRequest(RequestI r) throws Exception{
-		String aVMuri = this.requestSubmissionInboundPortsURI.get(index++%this.requestSubmissionInboundPortsURI.size());
-		this.doPortConnection(
-			this.requestSubmissionOutboundPort.getPortURI(),
-			aVMuri,
-			RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
+		RequestSubmissionOutboundPort rsop = requestSubmissionOutboundPorts.get(index++%this.requestSubmissionInboundPortsURI.size());
+//		String aVMuri = this.requestSubmissionInboundPortsURI.get(index++%this.requestSubmissionInboundPortsURI.size());
+//		this.doPortConnection(
+//			this.requestSubmissionOutboundPort.getPortURI(),
+//			aVMuri,
+//			RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
 		
-		this.requestSubmissionOutboundPort.submitRequestAndNotify(r) ;
+		rsop.submitRequestAndNotify(r) ;
 		
-		this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI());
+	//	this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI());
 	}
 	
 	public void dispatchRequestWithOutNotification(RequestI r) throws Exception{
-		String aVMuri = this.requestSubmissionInboundPortsURI.get(index++%this.requestSubmissionInboundPortsURI.size());
-		this.doPortConnection(
-			this.requestSubmissionOutboundPort.getPortURI(),
-			aVMuri,
-			RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
+		RequestSubmissionOutboundPort rsop = requestSubmissionOutboundPorts.get(index++%this.requestSubmissionInboundPortsURI.size());
+//		String aVMuri = this.requestSubmissionInboundPortsURI.get(index++%this.requestSubmissionInboundPortsURI.size());
+//		this.doPortConnection(
+//			this.requestSubmissionOutboundPort.getPortURI(),
+//			aVMuri,
+//			RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
+//		
+		rsop.submitRequest(r) ;
 		
-		this.requestSubmissionOutboundPort.submitRequest(r) ;
-		
-		this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI());
+		//this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI());
 	}
 }
