@@ -199,27 +199,11 @@ public class RequestDispatcher
 	
 	public void dispatchRequest(RequestI r) throws Exception{
 		RequestSubmissionOutboundPort rsop = requestSubmissionOutboundPorts.get(index++%this.requestSubmissionInboundPortsURI.size());
-//		String aVMuri = this.requestSubmissionInboundPortsURI.get(index++%this.requestSubmissionInboundPortsURI.size());
-//		this.doPortConnection(
-//			this.requestSubmissionOutboundPort.getPortURI(),
-//			aVMuri,
-//			RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
-		
 		rsop.submitRequestAndNotify(r) ;
-		
-	//	this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI());
 	}
 	
 	public void dispatchRequestWithOutNotification(RequestI r) throws Exception{
 		RequestSubmissionOutboundPort rsop = requestSubmissionOutboundPorts.get(index++%this.requestSubmissionInboundPortsURI.size());
-//		String aVMuri = this.requestSubmissionInboundPortsURI.get(index++%this.requestSubmissionInboundPortsURI.size());
-//		this.doPortConnection(
-//			this.requestSubmissionOutboundPort.getPortURI(),
-//			aVMuri,
-//			RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
-//		
 		rsop.submitRequest(r) ;
-		
-		//this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI());
 	}
 }
