@@ -208,8 +208,16 @@ public class AdmissionController
 			String avmURI;
 			ApplicationVM vm;
 		}
-		
+		else {
+			
+		}
 		this.doPortDisconnection(this.computerServicesOutboundPort_AC.getPortURI()) ;
 	}
 	
+	// voir le quel des computers.allocatedCore() ne retourne pas null ?
+	public String findComputer() {
+		String cp = null;
+		// TODO
+		return cp;
+	}
 }
