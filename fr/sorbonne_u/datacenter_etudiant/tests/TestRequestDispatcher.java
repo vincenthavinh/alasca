@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.datacenter.hardware.computers.Computer;
 import fr.sorbonne_u.datacenter.hardware.processors.Processor;
@@ -178,6 +179,17 @@ extends		AbstractCVM
 
 		// complete the deployment at the component virtual machine level.
 		super.deploy();
+		
+//		System.out.println("DEBUT RECHERCHE ITFS");
+//		for(ComponentI z : this.deployedComponents) {
+//			if(z instanceof DynamicComponentCreator) {
+//				String[] uris = z.findPortURIsFromInterface(DynamicComponentCreationI.class);
+//				for(String s : uris) {
+//					System.out.println(s);
+//				}
+//			}
+//		}
+//		System.out.println("FIN RECHERCHE ITFS");
 	}
 
 	// ------------------------------------------------------------------------
@@ -198,7 +210,7 @@ extends		AbstractCVM
 			trd.startStandardLifeCycle(10000L) ;
 			// Augment the time if you want to examine the traces after
 			// the execution of the program.
-			Thread.sleep(100000L) ;
+			Thread.sleep(10000L) ;
 			// Exit from Java (closes all trace windows...).
 			System.exit(0) ;
 		} catch (Exception e) {

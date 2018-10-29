@@ -9,15 +9,28 @@ import fr.sorbonne_u.components.cvm.AbstractCVM;
 import fr.sorbonne_u.datacenter.hardware.computers.Computer;
 import fr.sorbonne_u.datacenter.hardware.processors.Processor;
 import fr.sorbonne_u.datacenter.hardware.tests.ComputerMonitor;
+import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.AdmissionController;
+import fr.sorbonne_u.datacenter_etudiant.clientapplication.ClientApplication;
 
 public class TestAdmissionController extends AbstractCVM {
 
+	/** static URIs **/
+	//computer
 	public static final String	ComputerServicesInboundPortURI = "cs-ibp" ;
 	public static final String	ComputerStaticStateDataInboundPortURI = "css-dip" ;
 	public static final String	ComputerDynamicStateDataInboundPortURI = "cds-dip" ;
 
-	/** 	Computer monitor component.										*/
-	protected ComputerMonitor						cm ;
+	//admission controller
+	public static final String ac_ApplicationSubmissionInboundPortURI = "asip" ;
+	
+	//client application
+	public static final String	ca_ApplicationNotificationInboundPortURI = "anip" ;
+	
+	/** static components **/
+	protected ComputerMonitor cm ;
+	protected AdmissionController ac ;
+	protected ClientApplication ca;
+
 	
 	
 	public TestAdmissionController() throws Exception {
@@ -77,10 +90,24 @@ public class TestAdmissionController extends AbstractCVM {
 		// Create the Admission Controller component.
 		// Il faut lui passer le(s) ordinateur(s) existant(s).
 		// --------------------------------------------------------------------
-			//TODO
+		String ac_URI = "AdmissionController0";
+		this.ac = new AdmissionController(ac_URI, computerURI, ca_ApplicationNotificationInboundPortURI);
+		this.addDeployedComponent(this.ac);
 		// --------------------------------------------------------------------
 		
-	
+		// --------------------------------------------------------------------
+		// Create the Client Application component.
+		// Il faut lui passer l'admission controller pour communiquer avec
+		// --------------------------------------------------------------------
+		String ca_URI = "ClientApplication0";
+		this.ca = new ClientApplication(
+				ca_URI, 
+				ca_ApplicationNotificationInboundPortURI, 
+				ac_ApplicationSubmissionInboundPortURI, 
+				"rg", 500.0, 6000000000L);
+		this.addDeployedComponent(this.ca);
+		// --------------------------------------------------------------------
+
 		// complete the deployment at the component virtual machine level.
 		super.deploy();
 	}
