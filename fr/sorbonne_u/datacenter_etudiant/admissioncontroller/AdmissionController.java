@@ -3,6 +3,14 @@ package fr.sorbonne_u.datacenter_etudiant.admissioncontroller;
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.components.exceptions.ComponentStartException;
+import fr.sorbonne_u.components.pre.dcc.connectors.DynamicComponentCreationConnector;
+import fr.sorbonne_u.components.pre.dcc.interfaces.DynamicComponentCreationI;
+import fr.sorbonne_u.components.pre.dcc.ports.DynamicComponentCreationOutboundPort;
+import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
+import fr.sorbonne_u.datacenter.hardware.computers.connectors.ComputerServicesConnector;
+import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI;
+import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerServicesOutboundPort;
+import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.connectors.ApplicationNotificationConnector;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationNotificationI;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationSubmissionHandlerI;
@@ -17,11 +25,6 @@ public class AdmissionController
 	/**URI de ce composant**/
 	protected String ac_URI;
 	
-	/**Computers**/
-	//outboundports
-	//protected ArrayList<String> cp_computerServicesInboundPortURIs;
-	//protected ArrayList<ComputerServicesOutboundPort> ac_computerServicesOutboundPorts;
-	
 	/**Client Application**/
 	//inboundport
 	protected ApplicationSubmissionInboundPort ac_ApplicationSubmissionInboundPort;
@@ -29,18 +32,27 @@ public class AdmissionController
 	protected String ca_ApplicationNotificationInboundPortURI;
 	protected ApplicationNotificationOutboundPort ac_ApplicationNotificationOutboundPort;
 	
-	//DynamicComponentCreator
-	//protected String dcc_DynamicComponentCreationInboundPortURI;
-	//protected DynamicComponentCreationOutboundPort dynamicComponentCreationOutboundPort_AC;
+	/**Computer**/
+	//outboundport
+	protected String cp_ComputerServicesInboundPortURI;
+	protected ComputerServicesOutboundPort ac_ComputerServicesOutboundPort;
 	
+	/**DynamicComponentCreator**/
+	//outboundport
+	protected String dcc_DynamicComponentCreationInboundPortURI;
+	protected DynamicComponentCreationOutboundPort ac_DynamicComponentCreationOutboundPort;
+
 	
+	//--------------------------------------------------------------------
+	//METHODS
+	//--------------------------------------------------------------------
 	
 	public AdmissionController(
 			String ac_URI,
 			String ac_ApplicationSubmissionInboundPortURI,
-			String ca_ApplicationNotificationInboundPortURI//,
-			//ArrayList<String> cp_computerServicesInboundPortURIs, //Computers
-			//String dcc_dynamicComponentCreationInboundPortURI //Dynamic component
+			String ca_ApplicationNotificationInboundPortURI,
+			String cp_computerServicesInboundPortURI,
+			String dcc_DynamicComponentCreationInboundPortURI
 	) throws Exception {
 		super(1,1);
 		
@@ -55,6 +67,8 @@ public class AdmissionController
 		
 		this.ac_URI = ac_URI;
 		this.ca_ApplicationNotificationInboundPortURI = ca_ApplicationNotificationInboundPortURI;
+		this.cp_ComputerServicesInboundPortURI = cp_computerServicesInboundPortURI;
+		this.dcc_DynamicComponentCreationInboundPortURI = dcc_DynamicComponentCreationInboundPortURI;
 		
 		//initialisation des ports
 		
@@ -76,6 +90,16 @@ public class AdmissionController
 		this.ac_ApplicationNotificationOutboundPort = new ApplicationNotificationOutboundPort(this) ;
 		this.addPort(this.ac_ApplicationNotificationOutboundPort) ;
 		this.ac_ApplicationNotificationOutboundPort.publishPort() ;
+		//ComputerServices
+		this.addRequiredInterface(ComputerServicesI.class) ;
+		this.ac_ComputerServicesOutboundPort = new ComputerServicesOutboundPort(this) ;
+		this.addPort(this.ac_ComputerServicesOutboundPort) ;
+		this.ac_ComputerServicesOutboundPort.publishPort() ;
+		//DynamicComponentCreation
+		this.addRequiredInterface(DynamicComponentCreationI.class);
+		this.ac_DynamicComponentCreationOutboundPort = new DynamicComponentCreationOutboundPort(this);
+		this.addPort(this.ac_DynamicComponentCreationOutboundPort);
+		this.ac_DynamicComponentCreationOutboundPort.publishPort();
 		
 //		//Submission
 //		this.addRequiredInterface(RequestSubmissionI.class) ;
@@ -83,11 +107,6 @@ public class AdmissionController
 //		this.addPort(this.requestSubmissionOutboundPort_AC) ;
 //		this.requestSubmissionOutboundPort_AC.publishPort() ;
 //		
-//		/*Computer Service*/
-//		this.addRequiredInterface(ComputerServicesI.class) ;
-//		this.computerServicesOutboundPort_AC = new ComputerServicesOutboundPort(this) ;
-//		this.addPort(this.computerServicesOutboundPort_AC) ;
-//		this.computerServicesOutboundPort_AC.publishPort() ;
 //		
 //		/*Application VM Management*/
 //		this.addRequiredInterface(ApplicationVMManagementI.class) ;
@@ -95,11 +114,6 @@ public class AdmissionController
 //		this.addPort(this.applicationVMManagementOutboundPort_AC) ;
 //		this.applicationVMManagementOutboundPort_AC.publishPort() ;
 //		
-//		/*Dynamic Component*/
-//		this.addRequiredInterface(DynamicComponentCreationI.class);
-//		this.dynamicComponentCreationOutboundPort_AC = new DynamicComponentCreationOutboundPort(this);
-//		this.addPort(this.dynamicComponentCreationOutboundPort_AC);
-//		this.dynamicComponentCreationOutboundPort_AC.publishPort();
 //		
 //		//init des ports a connecter
 //		this.requestNotificationInboundPortURI_RG = requestNotificationInboundPortURI_RG;
@@ -126,6 +140,14 @@ public class AdmissionController
 					this.ac_ApplicationNotificationOutboundPort.getPortURI(),
 					this.ca_ApplicationNotificationInboundPortURI,
 					ApplicationNotificationConnector.class.getCanonicalName()) ;
+			this.doPortConnection(
+					this.ac_ComputerServicesOutboundPort.getPortURI(),
+					this.cp_ComputerServicesInboundPortURI,
+					ComputerServicesConnector.class.getCanonicalName()) ;
+			this.doPortConnection(
+					this.ac_DynamicComponentCreationOutboundPort.getPortURI(),
+					this.dcc_DynamicComponentCreationInboundPortURI,
+					DynamicComponentCreationConnector.class.getCanonicalName()) ;
 		} catch (Exception e) {
 			throw new ComponentStartException(e) ;
 		}
@@ -135,9 +157,8 @@ public class AdmissionController
 	public void			finalise() throws Exception
 	{	
 		this.doPortDisconnection(this.ac_ApplicationNotificationOutboundPort.getPortURI()) ;
-//		if(this.computerServicesOutboundPort_AC.connected()) {
-//			this.doPortDisconnection(this.computerServicesOutboundPort_AC.getPortURI()) ;
-//		}
+		this.doPortDisconnection(this.ac_ComputerServicesOutboundPort.getPortURI()) ;
+		this.doPortDisconnection(this.ac_DynamicComponentCreationOutboundPort.getPortURI()) ;
 //		if(this.requestSubmissionOutboundPort_AC.connected()) {
 //			this.doPortDisconnection(this.requestSubmissionOutboundPort_AC.getPortURI());
 //		}
@@ -153,9 +174,10 @@ public class AdmissionController
 		try {
 			this.ac_ApplicationNotificationOutboundPort.unpublishPort();
 			this.ac_ApplicationSubmissionInboundPort.unpublishPort() ;
+			this.ac_ComputerServicesOutboundPort.unpublishPort() ;
+			this.ac_DynamicComponentCreationOutboundPort.unpublishPort() ;
 //			this.requestSubmissionInboundPort_AC.unpublishPort() ;
 //			this.requestSubmissionOutboundPort_AC.unpublishPort() ;
-//			this.computerServicesOutboundPort_AC.unpublishPort() ;
 //			this.applicationVMManagementOutboundPort_AC.unpublishPort();
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
@@ -166,9 +188,23 @@ public class AdmissionController
 
 	
 	@Override
-	public void acceptApplicationSubmissionAndNotify() {
+	public void acceptApplicationSubmissionAndNotify() throws Exception {
 		// TODO Auto-generated method stub
 		this.logMessage(this.ac_URI + " accepts an application submission and notify." /*+ r.getRequestURI()*/);
+		
+		/**Try hosting application**/
+		AllocatedCore[] allocatedCores = this.ac_ComputerServicesOutboundPort.allocateCores(2) ;
+		logMessage(allocatedCores.length + " coeur(s) alloué(s) depuis " +
+				this.ac_ComputerServicesOutboundPort.getServerPortURI());
+
+		if(allocatedCores.length == 0) {
+			this.ac_ApplicationNotificationOutboundPort.notifyApplicationRejected();
+		}else {
+//			this.ac_DynamicComponentCreationOutboundPort.createComponent(
+//					ApplicationVM.class.getCanonicalName(), 
+//					new Object[]{PROVIDER_COMPONENT_URI,
+//							 this.providerInboundPortURI});
+		}
+		
 	}
-	
 }

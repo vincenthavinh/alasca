@@ -8,4 +8,6 @@ extends OfferedI,
 		RequiredI {
 
 	public void notifyApplicationReady() throws Exception ;
+	
+	public void notifyApplicationRejected() throws Exception ;
 }

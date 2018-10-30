@@ -12,6 +12,7 @@ import fr.sorbonne_u.datacenter.hardware.processors.Processor;
 import fr.sorbonne_u.datacenter.hardware.tests.ComputerMonitor;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.RequestDispatcher;
+import fr.sorbonne_u.datacenter_etudiant.tests.integrators.IntegratorRequestDispatcher;
 import fr.sorbonne_u.datacenterclient.requestgenerator.RequestGenerator;
 
 public class				TestRequestDispatcher
@@ -42,7 +43,7 @@ extends		AbstractCVM
 	protected RequestDispatcher 					rd ;
 	
 	/** Integrator component.											*/
-	protected Integrator								integ ;
+	protected IntegratorRequestDispatcher								integ ;
 
 	// ------------------------------------------------------------------------
 	// Component virtual machine constructors
@@ -169,7 +170,7 @@ extends		AbstractCVM
 		// --------------------------------------------------------------------
 		// Creating the integrator component.
 		// --------------------------------------------------------------------
-		this.integ = new Integrator(
+		this.integ = new IntegratorRequestDispatcher(
 							ComputerServicesInboundPortURI,
 							ApplicationVM0ManagementInboundPortURI,
 							ApplicationVM1ManagementInboundPortURI,

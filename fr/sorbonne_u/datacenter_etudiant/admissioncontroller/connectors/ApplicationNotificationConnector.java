@@ -11,5 +11,10 @@ implements ApplicationNotificationI {
 	public void notifyApplicationReady() throws Exception {
 		((ApplicationNotificationI)this.offering).notifyApplicationReady() ;		
 	}
+	
+	@Override
+	public void notifyApplicationRejected() throws Exception {
+		((ApplicationNotificationI)this.offering).notifyApplicationRejected() ;		
+	}
 
 }

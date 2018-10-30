@@ -23,5 +23,10 @@ implements ApplicationNotificationI {
 	public void notifyApplicationReady() throws Exception {
 		((ApplicationNotificationI)this.connector).notifyApplicationReady() ;		
 	}
+	
+	@Override
+	public void notifyApplicationRejected() throws Exception {
+		((ApplicationNotificationI)this.connector).notifyApplicationRejected() ;		
+	}
 
 }

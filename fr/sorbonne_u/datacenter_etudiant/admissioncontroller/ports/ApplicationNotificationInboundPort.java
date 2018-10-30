@@ -31,5 +31,18 @@ implements ApplicationNotificationI {
 					}
 				}) ;
 	}
+	
+	@Override
+	public void	notifyApplicationRejected() throws Exception {
+		this.getOwner().handleRequestAsync(
+				new AbstractComponent.AbstractService<Void>() {
+					@Override
+					public Void call() throws Exception {
+						((ApplicationNotificationHandlerI)this.getOwner()).
+							acceptApplicationRejectedNotification() ;
+						return null;
+					}
+				}) ;
+	}
 
 }

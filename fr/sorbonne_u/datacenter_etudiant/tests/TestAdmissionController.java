@@ -16,15 +16,18 @@ public class TestAdmissionController extends AbstractCVM {
 
 	/** static URIs **/
 	//computer
-	public static final String	ComputerServicesInboundPortURI = "cs-ibp" ;
-	public static final String	ComputerStaticStateDataInboundPortURI = "css-dip" ;
-	public static final String	ComputerDynamicStateDataInboundPortURI = "cds-dip" ;
+	public static final String	cp_ComputerServicesInboundPortURI = "cs-ibp" ;
+	public static final String	cp_ComputerStaticStateDataInboundPortURI = "css-dip" ;
+	public static final String	cp_ComputerDynamicStateDataInboundPortURI = "cds-dip" ;
 
 	//admission controller
 	public static final String ac_ApplicationSubmissionInboundPortURI = "asip" ;
 	
 	//client application
 	public static final String	ca_ApplicationNotificationInboundPortURI = "anip" ;
+	
+	//dynamic component creator 
+	public static final String dcc_DynamicComponentCreationInboundPortURI = AbstractCVM.DCC_INBOUNDPORT_URI_SUFFIX ;
 	
 	/** static components **/
 	protected ComputerMonitor cm ;
@@ -65,9 +68,9 @@ public class TestAdmissionController extends AbstractCVM {
 							1500,		// max frequency gap within a processor
 							numberOfProcessors,
 							numberOfCores,
-							ComputerServicesInboundPortURI,
-							ComputerStaticStateDataInboundPortURI,
-							ComputerDynamicStateDataInboundPortURI) ;
+							cp_ComputerServicesInboundPortURI,
+							cp_ComputerStaticStateDataInboundPortURI,
+							cp_ComputerDynamicStateDataInboundPortURI) ;
 		this.addDeployedComponent(c) ;
 		c.toggleLogging() ;
 		c.toggleTracing() ;
@@ -80,8 +83,8 @@ public class TestAdmissionController extends AbstractCVM {
 		// --------------------------------------------------------------------
 		this.cm = new ComputerMonitor(computerURI,
 									 true,
-									 ComputerStaticStateDataInboundPortURI,
-									 ComputerDynamicStateDataInboundPortURI) ;
+									 cp_ComputerStaticStateDataInboundPortURI,
+									 cp_ComputerDynamicStateDataInboundPortURI) ;
 		this.addDeployedComponent(this.cm) ;
 		// --------------------------------------------------------------------
 	
@@ -91,8 +94,15 @@ public class TestAdmissionController extends AbstractCVM {
 		// Il faut lui passer le(s) ordinateur(s) existant(s).
 		// --------------------------------------------------------------------
 		String ac_URI = "AdmissionController0";
-		this.ac = new AdmissionController(ac_URI, computerURI, ca_ApplicationNotificationInboundPortURI);
+		this.ac = new AdmissionController(
+				ac_URI, 
+				ac_ApplicationSubmissionInboundPortURI, 
+				ca_ApplicationNotificationInboundPortURI,
+				cp_ComputerServicesInboundPortURI,
+				dcc_DynamicComponentCreationInboundPortURI);
 		this.addDeployedComponent(this.ac);
+		this.ac.toggleTracing() ;
+		this.ac.toggleLogging() ;
 		// --------------------------------------------------------------------
 		
 		// --------------------------------------------------------------------
@@ -106,6 +116,8 @@ public class TestAdmissionController extends AbstractCVM {
 				ac_ApplicationSubmissionInboundPortURI, 
 				"rg", 500.0, 6000000000L);
 		this.addDeployedComponent(this.ca);
+		this.ca.toggleTracing() ;
+		this.ca.toggleLogging() ;
 		// --------------------------------------------------------------------
 
 		// complete the deployment at the component virtual machine level.
@@ -121,13 +133,13 @@ public class TestAdmissionController extends AbstractCVM {
 	public static void	main(String[] args)
 	{
 		// Uncomment next line to execute components in debug mode.
-		// AbstractCVM.toggleDebugMode() ;
+		//AbstractCVM.toggleDebugMode() ;
 		try {
 			final TestAdmissionController tac = new TestAdmissionController();
 			tac.startStandardLifeCycle(10000L) ;
 			// Augment the time if you want to examine the traces after
 			// the execution of the program.
-			Thread.sleep(100000L) ;
+			Thread.sleep(10000L) ;
 			// Exit from Java (closes all trace windows...).
 			System.exit(0) ;
 		} catch (Exception e) {

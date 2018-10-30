@@ -1,4 +1,4 @@
-package fr.sorbonne_u.datacenter_etudiant.tests;
+package fr.sorbonne_u.datacenter_etudiant.tests.integrators;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
@@ -14,7 +14,7 @@ import fr.sorbonne_u.datacenterclient.requestgenerator.connectors.RequestGenerat
 import fr.sorbonne_u.datacenterclient.requestgenerator.interfaces.RequestGeneratorManagementI;
 import fr.sorbonne_u.datacenterclient.requestgenerator.ports.RequestGeneratorManagementOutboundPort;
 
-public class				Integrator
+public class				IntegratorRequestDispatcher
 extends		AbstractComponent
 {
 	protected String									rmipURI ;
@@ -30,7 +30,7 @@ extends		AbstractComponent
 	protected ApplicationVMManagementOutboundPort	avm0op ;
 	protected ApplicationVMManagementOutboundPort	avm1op ;
 	
-	public				Integrator(
+	public				IntegratorRequestDispatcher(
 		String csipURI,
 		String avm0ipURI,
 		String avm1ipURI,

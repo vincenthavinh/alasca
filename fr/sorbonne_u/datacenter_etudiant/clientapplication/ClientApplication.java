@@ -95,10 +95,16 @@ implements ApplicationNotificationHandlerI {
 					this.ac_ApplicationSubmissionInboundPortURI,
 					ApplicationSubmissionConnector.class.getCanonicalName()) ;
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
 			throw new ComponentStartException(e) ;
 		}
 	}
+	
+	@Override
+	public void execute() throws Exception {
+		super.execute();
+		this.ca_ApplicationSubmissionOutboundPort.submitApplicationAndNotify();
+	}
+	
 
 	@Override
 	public void	finalise() throws Exception {
@@ -122,9 +128,15 @@ implements ApplicationNotificationHandlerI {
 	}
 	
 	//Handler
-	
+
 	@Override
 	public void acceptApplicationReadyNotification() throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void acceptApplicationRejectedNotification() throws Exception {
 		// TODO Auto-generated method stub
 		
 	}
