@@ -3,35 +3,33 @@ package fr.sorbonne_u.datacenter_etudiant.clientapplication;
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.components.exceptions.ComponentStartException;
-import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.connectors.ApplicationSubmissionConnector;
-import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationNotificationHandlerI;
-import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationNotificationI;
-import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationSubmissionI;
-import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.ApplicationNotificationInboundPort;
-import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.ApplicationSubmissionOutboundPort;
+import fr.sorbonne_u.components.ports.AbstractPort;
+import fr.sorbonne_u.datacenter.software.ports.RequestNotificationInboundPort;
+import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.connectors.ApplicationHostingConnector;
+import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationHostingI;
+import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.ApplicationHostingOutboundPort;
+import fr.sorbonne_u.datacenterclient.requestgenerator.RequestGenerator;
+import fr.sorbonne_u.datacenterclient.requestgenerator.ports.RequestGeneratorManagementInboundPort;
 
 public class ClientApplication 
-extends AbstractComponent 
-implements ApplicationNotificationHandlerI {
+extends AbstractComponent {
 
 	/**URI de ce composant**/
 	protected String ca_URI;
 	
 	/**admission controller**/
-	//inboundport
-	protected ApplicationNotificationInboundPort ca_ApplicationNotificationInboundPort;
 	//outboundport
 	protected String ac_ApplicationSubmissionInboundPortURI;
-	protected ApplicationSubmissionOutboundPort ca_ApplicationSubmissionOutboundPort;
+	protected ApplicationHostingOutboundPort ca_ApplicationSubmissionOutboundPort;
 		
 	
 	/**params du request generator**/
 	protected final String rg_URI ;
 	protected double rg_meanInterArrivalTime ;
 	protected long rg_meanNumberOfInstructions ;
-	protected String rg_rgmipURI ;
-	protected String rg_rsipURI;
-	protected String rg_rnipURI;
+	protected String rg_RequestGeneratorManagementInboundPortURI ;
+	protected String rg_RequestSubmissionInboundPortURI;
+	protected String rg_RequestNotificationInboundPortURI;
 	
 	
 	public ClientApplication(
@@ -67,16 +65,11 @@ implements ApplicationNotificationHandlerI {
 		//initialisation des ports
 		
 		/**offered**/
-		//ApplicationNotification
-		this.addOfferedInterface(ApplicationNotificationI.class) ;
-		this.ca_ApplicationNotificationInboundPort = new ApplicationNotificationInboundPort(ca_ApplicationNotificationInboundPortURI, this);
-		this.addPort(this.ca_ApplicationNotificationInboundPort) ;
-		this.ca_ApplicationNotificationInboundPort.publishPort() ;
-		
+
 		/**required**/
 		//ApplicationSubmission
-		this.addRequiredInterface(ApplicationSubmissionI.class) ;
-		this.ca_ApplicationSubmissionOutboundPort = new ApplicationSubmissionOutboundPort(this) ;
+		this.addRequiredInterface(ApplicationHostingI.class) ;
+		this.ca_ApplicationSubmissionOutboundPort = new ApplicationHostingOutboundPort(this) ;
 		this.addPort(this.ca_ApplicationSubmissionOutboundPort) ;
 		this.ca_ApplicationSubmissionOutboundPort.publishPort() ;
 		
@@ -93,7 +86,7 @@ implements ApplicationNotificationHandlerI {
 			this.doPortConnection(
 					this.ca_ApplicationSubmissionOutboundPort.getPortURI(),
 					this.ac_ApplicationSubmissionInboundPortURI,
-					ApplicationSubmissionConnector.class.getCanonicalName()) ;
+					ApplicationHostingConnector.class.getCanonicalName()) ;
 		} catch (Exception e) {
 			throw new ComponentStartException(e) ;
 		}
@@ -102,7 +95,34 @@ implements ApplicationNotificationHandlerI {
 	@Override
 	public void execute() throws Exception {
 		super.execute();
-		this.ca_ApplicationSubmissionOutboundPort.submitApplicationAndNotify();
+		
+		this.rg_RequestNotificationInboundPortURI = AbstractPort.generatePortURI(RequestNotificationInboundPort.class);
+		this.rg_RequestGeneratorManagementInboundPortURI = AbstractPort.generatePortURI(RequestGeneratorManagementInboundPort.class);
+		this.rg_RequestSubmissionInboundPortURI = this.ca_ApplicationSubmissionOutboundPort.askHosting(rg_RequestNotificationInboundPortURI);
+	
+		System.out.println("La ClientApp a recu [" +this.rg_RequestSubmissionInboundPortURI+ "] de l'Admission Controller.");
+		RequestGenerator rg = new RequestGenerator(
+				this.rg_URI, 
+				this.rg_meanInterArrivalTime, 
+				this.rg_meanNumberOfInstructions, 
+				this.rg_RequestGeneratorManagementInboundPortURI, 
+				this.rg_RequestSubmissionInboundPortURI, 
+				this.rg_RequestNotificationInboundPortURI);
+		rg.toggleTracing();
+		rg.toggleLogging();
+		rg.start();
+		
+		Boolean isHostConnected = this.ca_ApplicationSubmissionOutboundPort.askHostToConnect();
+		
+		if(isHostConnected == true) {
+			rg.startGeneration();
+			// wait 20 seconds
+			Thread.sleep(2000L) ;
+			// then stop the generation.
+			rg.stopGeneration() ;
+		}else {
+			System.out.println("client dit: le datacenter n'a pas pu héberger l'application.");
+		}
 	}
 	
 
@@ -115,7 +135,6 @@ implements ApplicationNotificationHandlerI {
 	@Override
 	public void	shutdown() throws ComponentShutdownException {
 		try {
-			this.ca_ApplicationNotificationInboundPort.unpublishPort();
 			this.ca_ApplicationSubmissionOutboundPort.unpublishPort();
 //			this.rsop.unpublishPort() ;
 //			this.rnip.unpublishPort() ;
@@ -125,20 +144,6 @@ implements ApplicationNotificationHandlerI {
 		}
 
 		super.shutdown();
-	}
-	
-	//Handler
-
-	@Override
-	public void acceptApplicationReadyNotification() throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void acceptApplicationRejectedNotification() throws Exception {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

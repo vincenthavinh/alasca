@@ -277,6 +277,7 @@ implements	ProcessorServicesNotificationConsumerI,
 					this.requestNotificationInboundPortURI,
 					RequestNotificationConnector.class.getCanonicalName()) ;
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new ComponentStartException(e) ;
 		}
 	}
@@ -515,7 +516,7 @@ implements	ProcessorServicesNotificationConsumerI,
 		HashMap<ApplicationVMPortTypes, String> ret =
 						new HashMap<ApplicationVMPortTypes, String>() ;
 		ret.put(ApplicationVMPortTypes.REQUEST_SUBMISSION,
-						this.requestSubmissionInboundPort.getClientPortURI()) ;
+						this.requestSubmissionInboundPort.getPortURI()) ;
 		ret.put(ApplicationVMPortTypes.MANAGEMENT,
 						this.applicationVMManagementInboundPort.getPortURI()) ;
 		ret.put(ApplicationVMPortTypes.INTROSPECTION,
