@@ -1,5 +1,6 @@
 package fr.sorbonne_u.datacenter_etudiant.tests;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -93,12 +94,15 @@ public class TestAdmissionController extends AbstractCVM {
 		// Create the Admission Controller component.
 		// Il faut lui passer le(s) ordinateur(s) existant(s).
 		// --------------------------------------------------------------------
+		ArrayList<String> csipURIs = new ArrayList<String>();
+		csipURIs.add(cp_ComputerServicesInboundPortURI);
+		
 		String ac_URI = "AdmissionController0";
 		this.ac = new AdmissionController(
 				ac_URI, 
 				ac_ApplicationSubmissionInboundPortURI, 
 				ca_ApplicationNotificationInboundPortURI,
-				cp_ComputerServicesInboundPortURI,
+				csipURIs,
 				dcc_DynamicComponentCreationInboundPortURI);
 		this.addDeployedComponent(this.ac);
 		this.ac.toggleTracing() ;

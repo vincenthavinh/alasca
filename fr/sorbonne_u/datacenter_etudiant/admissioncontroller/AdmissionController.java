@@ -36,8 +36,8 @@ public class AdmissionController
 	
 	/**Computer**/
 	//outboundport
-	protected String cp_ComputerServicesInboundPortURI;
-	protected ComputerServicesOutboundPort ac_ComputerServicesOutboundPort;
+	protected ArrayList<String> cp_ComputerServicesInboundPortURIs;
+	protected ArrayList<ComputerServicesOutboundPort> ac_ComputerServicesOutboundPorts;
 	
 	/**DynamicComponentCreator**/
 	//outboundport
@@ -53,7 +53,7 @@ public class AdmissionController
 			String ac_URI,
 			String ac_ApplicationSubmissionInboundPortURI,
 			String ca_ApplicationNotificationInboundPortURI,
-			String cp_computerServicesInboundPortURI,
+			ArrayList<String> cp_computerServicesInboundPortURIs,
 			String dcc_DynamicComponentCreationInboundPortURI
 	) throws Exception {
 		super(1,1);
@@ -62,13 +62,13 @@ public class AdmissionController
 		assert ac_URI != null;
 		assert ac_ApplicationSubmissionInboundPortURI != null;
 		assert dcc_DynamicComponentCreationInboundPortURI != null;
-		assert cp_ComputerServicesInboundPortURI != null;
-//		assert cp_computerServicesInboundPortURIs.size() != 0;
+		assert cp_ComputerServicesInboundPortURIs != null;
+		assert cp_computerServicesInboundPortURIs.size() != 0;
 		
 		//initilisation
 		
 		this.ac_URI = ac_URI;
-		this.cp_ComputerServicesInboundPortURI = cp_computerServicesInboundPortURI;
+		this.cp_ComputerServicesInboundPortURIs = cp_computerServicesInboundPortURIs;
 		this.dcc_DynamicComponentCreationInboundPortURI = dcc_DynamicComponentCreationInboundPortURI;
 		
 		//initialisation des ports
@@ -82,10 +82,13 @@ public class AdmissionController
 		
 		/**required**/
 		//ComputerServices
-		this.addRequiredInterface(ComputerServicesI.class) ;
-		this.ac_ComputerServicesOutboundPort = new ComputerServicesOutboundPort(this) ;
-		this.addPort(this.ac_ComputerServicesOutboundPort) ;
-		this.ac_ComputerServicesOutboundPort.publishPort() ;
+		this.ac_ComputerServicesOutboundPorts = new ArrayList<ComputerServicesOutboundPort>();
+		for(int i=0; i<this.cp_ComputerServicesInboundPortURIs.size(); i++) {
+			this.addRequiredInterface(ComputerServicesI.class) ;
+			this.ac_ComputerServicesOutboundPorts.add(new ComputerServicesOutboundPort(this));
+			this.addPort(this.ac_ComputerServicesOutboundPorts.get(i)) ;
+			this.ac_ComputerServicesOutboundPorts.get(i).publishPort() ;
+		}
 		//DynamicComponentCreation
 		this.addRequiredInterface(DynamicComponentCreationI.class);
 		this.ac_DynamicComponentCreationOutboundPort = new DynamicComponentCreationOutboundPort(this);
@@ -99,7 +102,7 @@ public class AdmissionController
 //		this.applicationVMManagementOutboundPort_AC.publishPort() ;
 
 		//Postconditions
-		assert  this.ac_ComputerServicesOutboundPort != null && this.ac_ComputerServicesOutboundPort instanceof ComputerServicesI ;
+		assert  this.ac_ComputerServicesOutboundPorts != null ;//&& this.ac_ComputerServicesOutboundPorts instanceof ComputerServicesI ;
 //		assert  this.applicationVMManagementOutboundPort_AC != null && this.applicationVMManagementOutboundPort_AC instanceof ApplicationVMManagementI;
 		assert  this.ac_DynamicComponentCreationOutboundPort != null && this.ac_DynamicComponentCreationOutboundPort instanceof DynamicComponentCreationI;
 	}
@@ -112,10 +115,12 @@ public class AdmissionController
 		super.start() ;
 
 		try {
-			this.doPortConnection(
-					this.ac_ComputerServicesOutboundPort.getPortURI(),
-					this.cp_ComputerServicesInboundPortURI,
-					ComputerServicesConnector.class.getCanonicalName()) ;
+			for(int i=0; i<this.ac_ComputerServicesOutboundPorts.size(); i++){
+				this.doPortConnection(
+						this.ac_ComputerServicesOutboundPorts.get(i).getPortURI(),
+						this.cp_ComputerServicesInboundPortURIs.get(i),
+						ComputerServicesConnector.class.getCanonicalName()) ;
+			}
 			this.doPortConnection(
 					this.ac_DynamicComponentCreationOutboundPort.getPortURI(),
 					this.dcc_DynamicComponentCreationInboundPortURI,
@@ -128,7 +133,9 @@ public class AdmissionController
 	@Override
 	public void			finalise() throws Exception
 	{	
-		this.doPortDisconnection(this.ac_ComputerServicesOutboundPort.getPortURI()) ;
+		for(int i=0; i<this.ac_ComputerServicesOutboundPorts.size(); i++){
+			this.doPortDisconnection(this.ac_ComputerServicesOutboundPorts.get(i).getPortURI()) ;
+		}
 		this.doPortDisconnection(this.ac_DynamicComponentCreationOutboundPort.getPortURI()) ;
 //		if(this.applicationVMManagementOutboundPort_AC.connected()) {
 //			this.doPortDisconnection(this.applicationVMManagementOutboundPort_AC.getPortURI()) ;
@@ -141,7 +148,9 @@ public class AdmissionController
 	{
 		try {
 			this.ac_ApplicationSubmissionInboundPort.unpublishPort() ;
-			this.ac_ComputerServicesOutboundPort.unpublishPort() ;
+			for(int i=0; i<this.ac_ComputerServicesOutboundPorts.size(); i++){
+				this.ac_ComputerServicesOutboundPorts.get(i).unpublishPort() ;
+			}
 			this.ac_DynamicComponentCreationOutboundPort.unpublishPort() ;
 //			this.applicationVMManagementOutboundPort_AC.unpublishPort();
 		} catch (Exception e) {
@@ -157,13 +166,12 @@ public class AdmissionController
 		this.logMessage(this.ac_URI + " accepts an application submission and notify." /*+ r.getRequestURI()*/);
 		
 		/**Try hosting application**/
-		AllocatedCore[] allocatedCores = this.ac_ComputerServicesOutboundPort.allocateCores(2) ;
-		logMessage(allocatedCores.length + " coeur(s) alloué(s) depuis " +
-				this.ac_ComputerServicesOutboundPort.getServerPortURI());
+		AllocatedCore[] allocatedCores = this.findComputerAndAllocateCores();
 
 		if(allocatedCores.length == 0) {
 			return null;
 		}else {
+			
 //			System.out.println("dcc will create a VM.");
 //			this.ac_DynamicComponentCreationOutboundPort.createComponent(
 //					ApplicationVM.class.getCanonicalName(), 
@@ -209,4 +217,17 @@ public class AdmissionController
 	}
 	
 	
+	private AllocatedCore[] findComputerAndAllocateCores() throws Exception {
+		AllocatedCore[] allocatedCores = new AllocatedCore[0];
+
+		for(ComputerServicesOutboundPort csop : this.ac_ComputerServicesOutboundPorts) {
+			allocatedCores = csop.allocateCores(2) ;
+			if(allocatedCores.length > 0) {
+				logMessage(allocatedCores.length + " coeur(s) alloué(s) depuis " + csop.getServerPortURI());
+				return allocatedCores;
+			}	
+		}
+		logMessage("Aucun coeur n'a pu etre alloue.");
+		return allocatedCores;
+	}
 }
