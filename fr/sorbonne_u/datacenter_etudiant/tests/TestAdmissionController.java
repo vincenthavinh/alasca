@@ -73,8 +73,8 @@ public class TestAdmissionController extends AbstractCVM {
 							cp_ComputerStaticStateDataInboundPortURI,
 							cp_ComputerDynamicStateDataInboundPortURI) ;
 		this.addDeployedComponent(c) ;
-		c.toggleLogging() ;
 		c.toggleTracing() ;
+		c.toggleLogging() ;
 		// --------------------------------------------------------------------
 		
 		

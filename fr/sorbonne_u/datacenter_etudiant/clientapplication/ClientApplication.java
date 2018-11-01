@@ -100,7 +100,7 @@ extends AbstractComponent {
 		this.rg_RequestGeneratorManagementInboundPortURI = AbstractPort.generatePortURI(RequestGeneratorManagementInboundPort.class);
 		this.rg_RequestSubmissionInboundPortURI = this.ca_ApplicationSubmissionOutboundPort.askHosting(rg_RequestNotificationInboundPortURI);
 	
-		System.out.println("La ClientApp a recu [" +this.rg_RequestSubmissionInboundPortURI+ "] de l'Admission Controller.");
+		logMessage("ClientApp | a recu [" +this.rg_RequestSubmissionInboundPortURI+ "] de l'Admission Controller.");
 		RequestGenerator rg = new RequestGenerator(
 				this.rg_URI, 
 				this.rg_meanInterArrivalTime, 
@@ -116,13 +116,14 @@ extends AbstractComponent {
 				askHostToConnect(rg_RequestNotificationInboundPortURI);
 		
 		if(isHostConnected == true) {
+			logMessage("ClientApp | démarrage du request generator...");
 			rg.startGeneration();
 			// wait 20 seconds
 			Thread.sleep(2000L) ;
 			// then stop the generation.
 			rg.stopGeneration() ;
 		}else {
-			System.out.println("client dit: le datacenter n'a pas pu héberger l'application.");
+			logMessage("CLient App | le datacenter n'a pas pu héberger l'application.");
 		}
 	}
 	
