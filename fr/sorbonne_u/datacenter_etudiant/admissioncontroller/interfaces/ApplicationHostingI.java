@@ -17,8 +17,9 @@ extends OfferedI,
 
 	/**
 	 * Demande a l'Host de l'application de connecter ses OutboundPorts.
+	 * @param requestNotificationInboundPortURI TODO
 	 * @return true si les ports de l'Host sont bien connectes, false sinon.
 	 * @throws Exception
 	 */
-	public Boolean askHostToConnect() throws Exception ;
+	public Boolean askHostToConnect(String requestNotificationInboundPortURI) throws Exception ;
 }

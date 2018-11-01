@@ -44,7 +44,7 @@ public class RequestDispatcher
 		String requestNotificationInboundPortURIdispatcher,
 		String requestSubmissionInboundPortURIdispatcher,
 		String requestNotificationInboundPortURI, //RG
-		ArrayList<String> requestSubmissionInboundPortsURI /* AVMs */) throws Exception {
+		ArrayList<String> requestSubmissionInboundPortURIs /* AVMs */) throws Exception {
 		//String requestSubmissionInboundPortURI /* AVM */) throws Exception {
 		
 		super(1, 1);
@@ -55,8 +55,8 @@ public class RequestDispatcher
 		assert	requestNotificationInboundPortURIdispatcher != null ;
 		
 		assert	requestNotificationInboundPortURI != null ;
-		assert	requestSubmissionInboundPortsURI != null ;
-		assert  requestSubmissionInboundPortsURI.size() != 0;
+		assert	requestSubmissionInboundPortURIs != null ;
+		assert  requestSubmissionInboundPortURIs.size() != 0;
 		//assert	requestSubmissionInboundPortURI != null ;
 		
 		//initialisation
@@ -84,7 +84,7 @@ public class RequestDispatcher
 		/*Submission*/
 		this.requestSubmissionOutboundPorts = new ArrayList<RequestSubmissionOutboundPort>();
 		this.addRequiredInterface(RequestSubmissionI.class) ;
-		for(int i=0; i<requestSubmissionInboundPortsURI.size(); i++) {
+		for(int i=0; i<requestSubmissionInboundPortURIs.size(); i++) {
 			this.requestSubmissionOutboundPorts.add(new RequestSubmissionOutboundPort(this)) ;
 			this.addPort(this.requestSubmissionOutboundPorts.get(i)) ;
 			this.requestSubmissionOutboundPorts.get(i).publishPort() ;
@@ -97,7 +97,7 @@ public class RequestDispatcher
 		this.requestNotificationOutboundPort.publishPort() ;
 		
 		//init des ports a connecter
-		this.requestSubmissionInboundPortsURI = requestSubmissionInboundPortsURI; //aVMs
+		this.requestSubmissionInboundPortsURI = requestSubmissionInboundPortURIs; //aVMs
 		//this.requestSubmissionInboundPortURI = requestSubmissionInboundPortURI; //aVM
 		this.requestNotificationInboundPortURI = requestNotificationInboundPortURI; //RG
 	

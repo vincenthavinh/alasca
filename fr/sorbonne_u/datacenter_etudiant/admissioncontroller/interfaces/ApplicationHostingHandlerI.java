@@ -6,5 +6,5 @@ public interface ApplicationHostingHandlerI {
 	public String processAskHosting(String requestNotificationInboundPortURI) throws Exception;
 	
 	//retourne true si la connection a bien ete faite, false sinon.
-	public Boolean processAskHostToConnect();
+	public Boolean processAskHostToConnect(String requestNotificationInboundPortURI);
 }

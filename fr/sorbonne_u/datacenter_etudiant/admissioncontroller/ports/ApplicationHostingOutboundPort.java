@@ -25,8 +25,8 @@ implements ApplicationHostingI {
 	}
 
 	@Override
-	public Boolean askHostToConnect() throws Exception {
-		return ((ApplicationHostingI)this.connector).askHostToConnect();
+	public Boolean askHostToConnect(String requestNotificationInboundPortURI) throws Exception {
+		return ((ApplicationHostingI)this.connector).askHostToConnect(requestNotificationInboundPortURI);
 	}
 
 }

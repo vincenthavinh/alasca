@@ -112,7 +112,8 @@ extends AbstractComponent {
 		rg.toggleLogging();
 		rg.start();
 		
-		Boolean isHostConnected = this.ca_ApplicationSubmissionOutboundPort.askHostToConnect();
+		Boolean isHostConnected = this.ca_ApplicationSubmissionOutboundPort.
+				askHostToConnect(rg_RequestNotificationInboundPortURI);
 		
 		if(isHostConnected == true) {
 			rg.startGeneration();

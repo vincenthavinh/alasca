@@ -1,6 +1,7 @@
 package fr.sorbonne_u.datacenter_etudiant.admissioncontroller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
@@ -15,10 +16,12 @@ import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI;
 import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerServicesOutboundPort;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
 import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMManagementInboundPort;
+import fr.sorbonne_u.datacenter.software.ports.RequestNotificationInboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionInboundPort;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationHostingHandlerI;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationHostingI;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.ApplicationHostingInboundPort;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.RequestDispatcher;
 
 public class AdmissionController 
 	extends AbstractComponent
@@ -27,8 +30,11 @@ public class AdmissionController
 	/**URI de ce composant**/
 	protected String ac_URI;
 	
-	/**Request Dispatchers crees dynammiquement par ce composant**/
-	protected ArrayList<ApplicationVM> dynamicRequestDispatchers = new ArrayList<ApplicationVM>();
+	/**hashmap
+	 * clefs: RequestNotificationInboundPortURI du la Client Application.
+	 * valeurs: composants dynamiquement crees pour heberger cette application.
+	 */
+	protected HashMap<String, ArrayList<AbstractComponent>> hosting_components;
 	
 	/**Client**/
 	//inboundport
@@ -70,6 +76,7 @@ public class AdmissionController
 		this.ac_URI = ac_URI;
 		this.cp_ComputerServicesInboundPortURIs = cp_computerServicesInboundPortURIs;
 		this.dcc_DynamicComponentCreationInboundPortURI = dcc_DynamicComponentCreationInboundPortURI;
+		this.hosting_components = new HashMap<String, ArrayList<AbstractComponent>>();
 		
 		//initialisation des ports
 		
@@ -171,7 +178,6 @@ public class AdmissionController
 		if(allocatedCores.length == 0) {
 			return null;
 		}else {
-			
 //			System.out.println("dcc will create a VM.");
 //			this.ac_DynamicComponentCreationOutboundPort.createComponent(
 //					ApplicationVM.class.getCanonicalName(), 
@@ -183,36 +189,66 @@ public class AdmissionController
 //							"vmX"+"test"});
 //			System.out.println("dcc created a VM.");
 			
-			System.out.println("ac will create a VM.");
-			String generatedrsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
+			//URIs
+			String avm_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
+			String avm_amipURI = AbstractPort.generatePortURI(ApplicationVMManagementInboundPort.class);
+			
+			String rd_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
+			String rd_rnipURI = AbstractPort.generatePortURI(RequestNotificationInboundPort.class);
+			
+			ArrayList<String> avms_rsipURIs = new ArrayList<String>();
+			avms_rsipURIs.add(avm_rsipURI);
+			
+			//creation de la aVM
+			logMessage("Creation d'une ApplicatinVM.");
 			ApplicationVM vm0 = new ApplicationVM(
 					"vm0", 
-					AbstractPort.generatePortURI(ApplicationVMManagementInboundPort.class), 
-					generatedrsipURI, 
-					requestNotificationInboundPortURI);
-			System.out.println("milieu create.");
+					avm_amipURI, 
+					avm_rsipURI, 
+					rd_rnipURI);
 			vm0.toggleTracing();
 			vm0.toggleLogging();
 			vm0.allocateCores(allocatedCores);
-			System.out.println("milieu 2 create.");
-			this.dynamicRequestDispatchers.add(vm0);
-			System.out.println("fin create.");
-			return generatedrsipURI;
 			
+			//creation du rd
+			logMessage("Creation d'un Request Dispatcher.");
+			RequestDispatcher rd0 = new RequestDispatcher(
+					"rd0", 
+					rd_rnipURI, 
+					rd_rsipURI, 
+					requestNotificationInboundPortURI, 
+					avms_rsipURIs);
+			rd0.toggleTracing();
+			rd0.toggleLogging();
+			System.out.println("fin creation rd");
+			
+			//ajouts de ces composants crees au dictionnaire des hosting_components.
+			ArrayList<AbstractComponent> new_host_components = new ArrayList<AbstractComponent>();
+			new_host_components.add(vm0);
+			new_host_components.add(rd0);
+			this.hosting_components.put(
+					requestNotificationInboundPortURI, 
+					new_host_components);
+			
+			System.out.println("fin ajout cmps dans hosts_cmps.");
+			//retourne la RequestSubmissionInboundPortURI du Request Dispatcher.
+			return rd_rsipURI;
 		}
 		
 	}
 
 	@Override
-	public Boolean processAskHostToConnect() {
-		System.out.println("ac will start the VM.");
+	public Boolean processAskHostToConnect(String requestNotificationInboundPortURI) {
+		System.out.println("ac will start the host components.");
 		try {
-			this.dynamicRequestDispatchers.get(0).start();
+			for(AbstractComponent hosting_component : hosting_components.get(requestNotificationInboundPortURI)){
+				hosting_component.start();
+			}
 		} catch (ComponentStartException e) {
 			e.printStackTrace();
 			return false;
 		}
-		System.out.println("ac started the VM.");
+		System.out.println("ac started the host components.");
 		return true;
 	}
 	

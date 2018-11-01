@@ -13,8 +13,8 @@ implements ApplicationHostingI {
 	}
 
 	@Override
-	public Boolean askHostToConnect() throws Exception {
-		return ((ApplicationHostingI)this.offering).askHostToConnect() ;		
+	public Boolean askHostToConnect(String requestNotificationInboundPortURI) throws Exception {
+		return ((ApplicationHostingI)this.offering).askHostToConnect(requestNotificationInboundPortURI) ;		
 	}
 
 }

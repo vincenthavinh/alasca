@@ -30,13 +30,13 @@ implements ApplicationHostingI {
 	}
 
 	@Override
-	public Boolean askHostToConnect() throws Exception {
+	public Boolean askHostToConnect(String requestNotificationInboundPortURI) throws Exception {
 		return this.getOwner().handleRequestSync(
 				new AbstractComponent.AbstractService<Boolean>() {
 					@Override
 					public Boolean call() throws Exception {
 						return ((ApplicationHostingHandlerI)this.getOwner()).
-								processAskHostToConnect() ;
+								processAskHostToConnect(requestNotificationInboundPortURI) ;
 					}
 				}) ;
 	}
