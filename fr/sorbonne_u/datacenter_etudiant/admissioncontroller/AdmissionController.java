@@ -220,7 +220,6 @@ public class AdmissionController
 					avms_rsipURIs);
 			rd0.toggleTracing();
 			rd0.toggleLogging();
-			System.out.println("fin creation rd");
 			
 			//ajouts de ces composants crees au dictionnaire des hosting_components.
 			ArrayList<AbstractComponent> new_host_components = new ArrayList<AbstractComponent>();
@@ -230,7 +229,6 @@ public class AdmissionController
 					requestNotificationInboundPortURI, 
 					new_host_components);
 			
-			System.out.println("fin ajout cmps dans hosts_cmps.");
 			//retourne la RequestSubmissionInboundPortURI du Request Dispatcher.
 			return rd_rsipURI;
 		}
@@ -239,7 +237,6 @@ public class AdmissionController
 
 	@Override
 	public Boolean processAskHostToConnect(String requestNotificationInboundPortURI) {
-		System.out.println("ac will start the host components.");
 		try {
 			for(AbstractComponent hosting_component : hosting_components.get(requestNotificationInboundPortURI)){
 				hosting_component.start();
@@ -248,7 +245,6 @@ public class AdmissionController
 			e.printStackTrace();
 			return false;
 		}
-		System.out.println("ac started the host components.");
 		return true;
 	}
 	
