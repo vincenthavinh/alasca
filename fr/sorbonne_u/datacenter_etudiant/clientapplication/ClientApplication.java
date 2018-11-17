@@ -112,8 +112,12 @@ extends AbstractComponent {
 		rg.toggleLogging();
 		rg.start();
 		
+		logMessage("ClientApp | askToConnect(..) a AdmissionController");
+		
 		Boolean isHostConnected = this.ca_ApplicationSubmissionOutboundPort.
 				askHostToConnect(rg_RequestNotificationInboundPortURI);
+		
+		logMessage("ClientAPp | askToConnect(..) returned: " +isHostConnected);
 		
 		if(isHostConnected == true) {
 			logMessage("ClientApp | démarrage du request generator...");

@@ -140,10 +140,10 @@ public class TestAdmissionController extends AbstractCVM {
 		//AbstractCVM.toggleDebugMode() ;
 		try {
 			final TestAdmissionController tac = new TestAdmissionController();
-			tac.startStandardLifeCycle(10000000L) ;
+			tac.startStandardLifeCycle(100000L) ;
 			// Augment the time if you want to examine the traces after
 			// the execution of the program.
-			Thread.sleep(1000000L) ;
+			Thread.sleep(100000L) ;
 			// Exit from Java (closes all trace windows...).
 			System.exit(0) ;
 		} catch (Exception e) {

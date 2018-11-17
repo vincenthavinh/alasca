@@ -12,6 +12,7 @@ implements ApplicationHostingI {
 
 	public	ApplicationHostingOutboundPort(ComponentI owner) throws Exception{
 		super(ApplicationHostingI.class, owner) ;
+		assert owner != null;
 	}
 	
 	public	ApplicationHostingOutboundPort(String uri,ComponentI owner) throws Exception{

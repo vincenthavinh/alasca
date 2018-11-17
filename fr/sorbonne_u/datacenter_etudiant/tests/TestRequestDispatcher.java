@@ -28,6 +28,7 @@ extends		AbstractCVM
 	public static final String	RequestSubmissionInboundPortURIAVM1 = "rsibp1" ;
 	public static final String	RequestNotificationInboundPortURI = "rnibp" ;
 	
+	public static final String	RequestDispatcherManagementInboundPortURIdispatcher = "rdmip_disp" ;
 	public static final String	RequestSubmissionInboundPortURIdispatcher = "rsibp_disp" ;
 	public static final String	RequestNotificationInboundPortURIdispatcher = "rnibp_disp" ;
 
@@ -141,6 +142,7 @@ extends		AbstractCVM
 		// --------------------------------------------------------------------
 		this.rd = new RequestDispatcher(
 					"rd",
+					RequestDispatcherManagementInboundPortURIdispatcher,
 					RequestNotificationInboundPortURIdispatcher,
 					RequestSubmissionInboundPortURIdispatcher,
 					RequestNotificationInboundPortURI,
@@ -174,23 +176,13 @@ extends		AbstractCVM
 							ComputerServicesInboundPortURI,
 							ApplicationVM0ManagementInboundPortURI,
 							ApplicationVM1ManagementInboundPortURI,
-							RequestGeneratorManagementInboundPortURI) ;
+							RequestGeneratorManagementInboundPortURI,
+							RequestDispatcherManagementInboundPortURIdispatcher) ;
 		this.addDeployedComponent(this.integ) ;
 		// --------------------------------------------------------------------
 
 		// complete the deployment at the component virtual machine level.
 		super.deploy();
-		
-//		System.out.println("DEBUT RECHERCHE ITFS");
-//		for(ComponentI z : this.deployedComponents) {
-//			if(z instanceof DynamicComponentCreator) {
-//				String[] uris = z.findPortURIsFromInterface(DynamicComponentCreationI.class);
-//				for(String s : uris) {
-//					System.out.println(s);
-//				}
-//			}
-//		}
-//		System.out.println("FIN RECHERCHE ITFS");
 	}
 
 	// ------------------------------------------------------------------------

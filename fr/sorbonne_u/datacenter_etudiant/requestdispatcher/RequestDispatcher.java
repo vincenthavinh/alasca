@@ -16,6 +16,9 @@ import fr.sorbonne_u.datacenter.software.ports.RequestNotificationInboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestNotificationOutboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionInboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionOutboundPort;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherManagementInboundPort;
+import fr.sorbonne_u.datacenterclient.requestgenerator.ports.RequestGeneratorManagementInboundPort;
 
 public class RequestDispatcher 
 	extends AbstractComponent
@@ -39,8 +42,11 @@ public class RequestDispatcher
 	protected RequestNotificationInboundPort requestNotificationInboundPort ;
 	protected RequestNotificationOutboundPort requestNotificationOutboundPort ;
 	
+	protected RequestDispatcherManagementInboundPort	requestDispatcherManagementInboundPort ;
+	
 	public RequestDispatcher(
 		String rdURI,
+		String managementInboundPortURIdispatcher,
 		String requestNotificationInboundPortURIdispatcher,
 		String requestSubmissionInboundPortURIdispatcher,
 		String requestNotificationInboundPortURI, //RG
@@ -53,6 +59,7 @@ public class RequestDispatcher
 		assert	rdURI != null ;
 		assert	requestSubmissionInboundPortURIdispatcher != null ;
 		assert	requestNotificationInboundPortURIdispatcher != null ;
+		assert	managementInboundPortURIdispatcher != null ;
 		
 		assert	requestNotificationInboundPortURI != null ;
 		assert	requestSubmissionInboundPortURIs != null ;
@@ -78,6 +85,12 @@ public class RequestDispatcher
 		this.requestNotificationInboundPort = new RequestNotificationInboundPort(requestNotificationInboundPortURIdispatcher, this);
 		this.addPort(this.requestNotificationInboundPort) ;
 		this.requestNotificationInboundPort.publishPort() ;
+		
+		/*Management*/
+		this.addOfferedInterface(RequestDispatcherManagementI.class);
+		this.requestDispatcherManagementInboundPort = new RequestDispatcherManagementInboundPort(managementInboundPortURIdispatcher, this);
+		this.addPort(this.requestDispatcherManagementInboundPort);
+		this.requestDispatcherManagementInboundPort.publishPort();
 		
 		//required
 		
@@ -116,23 +129,19 @@ public class RequestDispatcher
 	public void			start() throws ComponentStartException
 	{
 		super.start() ;
-
-		try {
-			
+	}
+	
+	public void connectOutboundPorts() throws Exception {
+		this.doPortConnection(
+				this.requestNotificationOutboundPort.getPortURI(),
+				requestNotificationInboundPortURI,
+				RequestNotificationConnector.class.getCanonicalName()) ;  //Connection RG
+		
+		for(int i=0; i<requestSubmissionInboundPortsURI.size(); i++) {
 			this.doPortConnection(
-					this.requestNotificationOutboundPort.getPortURI(),
-					requestNotificationInboundPortURI,
-					RequestNotificationConnector.class.getCanonicalName()) ;  //Connection RG
-			
-			for(int i=0; i<requestSubmissionInboundPortsURI.size(); i++) {
-				this.doPortConnection(
-						this.requestSubmissionOutboundPorts.get(i).getPortURI(),
-						requestSubmissionInboundPortsURI.get(i),
-						RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
-			}
-			
-		} catch (Exception e) {
-			throw new ComponentStartException(e) ;
+					this.requestSubmissionOutboundPorts.get(i).getPortURI(),
+					requestSubmissionInboundPortsURI.get(i),
+					RequestSubmissionConnector.class.getCanonicalName()) ;  //Connection aVM
 		}
 	}
 	
@@ -141,13 +150,10 @@ public class RequestDispatcher
 	public void			finalise() throws Exception
 	{	
 		for(RequestSubmissionOutboundPort rsop : requestSubmissionOutboundPorts) {
-			if(rsop.connected()) {
 				this.doPortDisconnection(rsop.getPortURI());
-			}
 		}
 		//this.doPortDisconnection(this.requestSubmissionOutboundPort.getPortURI()); //deconnection aVMs
 		this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI()) ; //deconnection RG
-
 		super.finalise() ;
 	}
 	
@@ -156,6 +162,7 @@ public class RequestDispatcher
 	{
 
 		try {
+			this.requestDispatcherManagementInboundPort.unpublishPort();
 			this.requestSubmissionInboundPort.unpublishPort() ;
 			for(RequestSubmissionOutboundPort rsop : requestSubmissionOutboundPorts) {
 				rsop.unpublishPort() ;
@@ -205,5 +212,13 @@ public class RequestDispatcher
 	public void dispatchRequestWithOutNotification(RequestI r) throws Exception{
 		RequestSubmissionOutboundPort rsop = requestSubmissionOutboundPorts.get(index++%this.requestSubmissionInboundPortsURI.size());
 		rsop.submitRequest(r) ;
+	}
+
+
+
+	public void toggleTracingLogging() {
+		System.out.println("tooggled");
+		this.toggleTracing();
+		this.toggleLogging();
 	}
 }
