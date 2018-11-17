@@ -18,7 +18,6 @@ import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionInboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionOutboundPort;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherManagementInboundPort;
-import fr.sorbonne_u.datacenterclient.requestgenerator.ports.RequestGeneratorManagementInboundPort;
 
 public class RequestDispatcher 
 	extends AbstractComponent
@@ -217,7 +216,7 @@ public class RequestDispatcher
 
 
 	public void toggleTracingLogging() {
-		System.out.println("tooggled");
+		System.out.println("RD "+this.rdURI+" tooggled...");
 		this.toggleTracing();
 		this.toggleLogging();
 	}

@@ -37,6 +37,7 @@ package fr.sorbonne_u.datacenter.software.applicationvm.ports;
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.ComponentI;
 import fr.sorbonne_u.components.ports.AbstractInboundPort;
+import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
 import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI;
 
@@ -135,5 +136,31 @@ implements	ApplicationVMManagementI
 	public void			connectWithRequestSubmissioner() throws Exception {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public void connectOutboundPorts() throws Exception {
+		this.getOwner().handleRequestSync(
+						new AbstractComponent.AbstractService<Void>() {
+							@Override
+							public Void call() throws Exception {
+								((ApplicationVM)this.getOwner()).connectOutboundPorts();
+								return null;
+							}
+						}
+				);
+	}
+
+	@Override
+	public void toggleTracingLogging() throws Exception {
+		this.getOwner().handleRequestSync(
+				new AbstractComponent.AbstractService<Void>() {
+					@Override
+					public Void call() throws Exception {
+						((ApplicationVM)this.getOwner()).toggleTracingLogging();
+						return null;
+					}
+				}
+		);
 	}
 }

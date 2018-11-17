@@ -275,6 +275,8 @@ extends		AbstractCVM
 		vm.toggleTracing() ;
 		vm.toggleLogging() ;
 		vm.start() ;
+		// ajout etudiant
+		vm.connectOutboundPorts();
 
 		ApplicationVMManagementOutboundPort avmPort =
 				new ApplicationVMManagementOutboundPort(

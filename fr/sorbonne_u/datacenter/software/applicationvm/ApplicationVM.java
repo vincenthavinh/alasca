@@ -270,16 +270,15 @@ implements	ProcessorServicesNotificationConsumerI,
 	public void			start() throws ComponentStartException
 	{
 		super.start() ;
-
-		try {
+	}
+	
+	@Override
+	public void connectOutboundPorts() throws Exception {
 			this.doPortConnection(
-					this.requestNotificationOutboundPort.getPortURI(),
-					this.requestNotificationInboundPortURI,
-					RequestNotificationConnector.class.getCanonicalName()) ;
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new ComponentStartException(e) ;
-		}
+				this.requestNotificationOutboundPort.getPortURI(),
+				this.requestNotificationInboundPortURI,
+				RequestNotificationConnector.class.getCanonicalName()
+			) ;
 	}
 
 	@Override
@@ -705,5 +704,12 @@ implements	ProcessorServicesNotificationConsumerI,
 	{
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public void toggleTracingLogging() throws Exception {
+		System.out.println( "VM " +this.vmURI +" tooggled...");
+		this.toggleTracing();
+		this.toggleLogging();
 	}
 }

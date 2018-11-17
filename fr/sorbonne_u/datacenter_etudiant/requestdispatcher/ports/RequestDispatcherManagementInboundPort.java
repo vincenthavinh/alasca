@@ -5,12 +5,15 @@ import fr.sorbonne_u.components.ComponentI;
 import fr.sorbonne_u.components.ports.AbstractInboundPort;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.RequestDispatcher;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI;
-import fr.sorbonne_u.datacenterclient.requestgenerator.RequestGenerator;
-import fr.sorbonne_u.datacenterclient.requestgenerator.interfaces.RequestGeneratorManagementI;
 
 public class RequestDispatcherManagementInboundPort 
 extends		AbstractInboundPort
 implements	RequestDispatcherManagementI {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
 	public RequestDispatcherManagementInboundPort(ComponentI owner) throws Exception {
 		super(RequestDispatcherManagementI.class, owner);
@@ -45,6 +48,5 @@ implements	RequestDispatcherManagementI {
 						return null;
 					}
 				}) ;
-		
 	}
 }

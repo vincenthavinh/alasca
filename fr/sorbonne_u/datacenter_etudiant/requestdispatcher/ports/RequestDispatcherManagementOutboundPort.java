@@ -12,10 +12,12 @@ implements	RequestDispatcherManagementI{
 
 	public RequestDispatcherManagementOutboundPort(ComponentI owner) throws Exception {
 		super(RequestDispatcherManagementI.class, owner);
+		assert	owner instanceof RequestDispatcherManagementI ;
 	}
 	
 	public RequestDispatcherManagementOutboundPort(String uri, ComponentI owner) throws Exception {
 		super(uri, RequestDispatcherManagementI.class, owner);
+		assert	uri != null && owner instanceof RequestDispatcherManagementI ;
 	}
 
 	@Override

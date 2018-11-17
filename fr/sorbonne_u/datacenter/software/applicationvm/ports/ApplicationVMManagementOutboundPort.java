@@ -100,4 +100,14 @@ implements	ApplicationVMManagementI
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void connectOutboundPorts() throws Exception {
+		((ApplicationVMManagementI)this.connector).connectOutboundPorts();
+	}
+
+	@Override
+	public void toggleTracingLogging() throws Exception {
+		((ApplicationVMManagementI)this.connector).toggleTracingLogging();
+	}
 }

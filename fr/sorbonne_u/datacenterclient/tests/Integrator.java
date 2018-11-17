@@ -142,7 +142,10 @@ extends		AbstractComponent
 	public void			execute() throws Exception
 	{
 		super.execute() ;
-
+		
+		// ajout etudiant
+		this.avmop.connectOutboundPorts();
+		
 		AllocatedCore[] ac = this.csop.allocateCores(4) ;
 		this.avmop.allocateCores(ac) ;
 		this.rmop.startGeneration() ;

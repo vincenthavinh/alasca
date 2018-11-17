@@ -15,6 +15,7 @@ import fr.sorbonne_u.datacenter.hardware.computers.connectors.ComputerServicesCo
 import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI;
 import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerServicesOutboundPort;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
+import fr.sorbonne_u.datacenter.software.applicationvm.connectors.ApplicationVMManagementConnector;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI;
 import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMManagementInboundPort;
 import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMManagementOutboundPort;
@@ -49,7 +50,8 @@ public class AdmissionController
 	/* clefs: RequestNotificationInboundPortURI du la Client Application.
 	 * valeurs : les Submission ports des ApplicationVMs creees dynamiquement 
 	 * 			 pour gerer les requetes de cette application				*/
-	protected HashMap<String, ArrayList<ApplicationVM>> ac_ApplicationVMs;
+//	protected HashMap<String, ArrayList<ApplicationVM>> ac_ApplicationVMs;
+	protected HashMap<String, ArrayList<ApplicationVMManagementOutboundPort>> ac_ApplicationVMManagementOutboundPorts;
 	
 	/**Client**/
 	//inboundport
@@ -93,8 +95,8 @@ public class AdmissionController
 		this.dcc_DynamicComponentCreationInboundPortURI = dcc_DynamicComponentCreationInboundPortURI;
 		
 		this.ac_RequestDispatcherManagementOutboundPorts = new HashMap<String, RequestDispatcherManagementOutboundPort>();
-		this.ac_ApplicationVMs = new HashMap<String, ArrayList<ApplicationVM>>();
-		
+//		this.ac_ApplicationVMs = new HashMap<String, ArrayList<ApplicationVM>>();
+		this.ac_ApplicationVMManagementOutboundPorts = new HashMap<String, ArrayList<ApplicationVMManagementOutboundPort>>();
 		//initialisation des ports
 		
 		/**offered**/
@@ -161,8 +163,11 @@ public class AdmissionController
 			this.doPortDisconnection(rdmop.getPortURI());
 		}
 		
-		//TODO ajouter la deco des ports des appsVMs quand elle es seront dynamiquement creees
-		
+		for(ArrayList<ApplicationVMManagementOutboundPort> avmmops : this.ac_ApplicationVMManagementOutboundPorts.values()) {
+			for(ApplicationVMManagementOutboundPort avmmop : avmmops) {
+				this.doPortDisconnection(avmmop.getPortURI());
+			}
+		}
 		super.finalise() ;
 	}
 	
@@ -178,6 +183,11 @@ public class AdmissionController
 			for(RequestDispatcherManagementOutboundPort rdmop : this.ac_RequestDispatcherManagementOutboundPorts.values()) {
 				rdmop.unpublishPort();
 			}
+			for(ArrayList<ApplicationVMManagementOutboundPort> avmmops : this.ac_ApplicationVMManagementOutboundPorts.values()) {
+				for(ApplicationVMManagementOutboundPort avmmop : avmmops) {
+					avmmop.unpublishPort();
+				}
+			}
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
@@ -188,103 +198,104 @@ public class AdmissionController
 	
 	@Override
 	public String processAskHosting(String requestNotificationInboundPortURI) throws Exception {
-		this.logMessage(this.ac_URI + " accepts an application submission and notify." /*+ r.getRequestURI()*/);
+		this.logMessage(this.ac_URI + " accepts an application submission and notify.");
+		
+		int nbAVM = 4;
 		
 		/**Try hosting application**/
-		AllocatedCore[] allocatedCores = this.findComputerAndAllocateCores();
-
+		// choix arbitraire de 2 pour le moment
+		// argument variable selon la demande de l application dans le futur
+		AllocatedCore[] allocatedCores = this.findComputerAndAllocateCores(nbAVM);
+		
 		if(allocatedCores.length == 0) {
 			return null;
-		}else {
-			/*generation des URIs des composants dynamiques*/
-			
-			//ports du RequestDispatcher
-			String rd_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
-			String rd_rnipURI = AbstractPort.generatePortURI(RequestNotificationInboundPort.class);
-			String rd_rdmipURI = AbstractPort.generatePortURI(RequestDispatcherManagementInboundPort.class);
-			
+		}
+		
+		/*generation des URIs des composants dynamiques*/
+		
+		//ports du RequestDispatcher
+		String rd_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
+		String rd_rnipURI = AbstractPort.generatePortURI(RequestNotificationInboundPort.class);
+		String rd_rdmipURI = AbstractPort.generatePortURI(RequestDispatcherManagementInboundPort.class);
+		
+		//stockage dans des listes.
+		ArrayList<String> avms_rsipURIs = new ArrayList<String>();
+		ArrayList<String> avms_amipURIs = new ArrayList<String>();
+		
+		for(int i=0; i<nbAVM; i++) {
 			//ports des AppVMs
 			String avm_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
 			String avm_amipURI = AbstractPort.generatePortURI(ApplicationVMManagementInboundPort.class);
-			
-			//stockage dans des listes.
-			ArrayList<String> avms_rsipURIs = new ArrayList<String>();
 			avms_rsipURIs.add(avm_rsipURI);
-			ArrayList<String> avms_amipURIs = new ArrayList<String>();
 			avms_amipURIs.add(avm_amipURI);
-			
-			
-			/*Creation des composants dynamiques*/
-			
-//			logMessage("Creation d'un Request Dispatcher.");
-//			RequestDispatcher rd0 = new RequestDispatcher(
-//					"rd0",
-//					"a",
-//					rd_rnipURI, 
-//					rd_rsipURI, 
-//					requestNotificationInboundPortURI, 
-//					avms_rsipURIs);
-//			rd0.toggleTracing();
-//			rd0.toggleLogging();
-			
-			//RequestDispatcher
-			this.ac_DynamicComponentCreationOutboundPort.createComponent(
-					RequestDispatcher.class.getCanonicalName(), 
-					new Object[]{
-							"rd0",
-							rd_rdmipURI,
-							rd_rnipURI, 
-							rd_rsipURI, 
-							requestNotificationInboundPortURI, 
-							avms_rsipURIs});
-			
-			
-			//ApplicationVM(s)
-			logMessage("Creation d'une ApplicatinVM.");
-			ApplicationVM vm0 = new ApplicationVM(
-					"vm0", 
-					avm_amipURI, 
-					avm_rsipURI, 
-					rd_rnipURI);
-			vm0.toggleTracing();
-			vm0.toggleLogging();
-			
-			
-			/*Connexion de l'AdmissionController avec les composants dynamiques*/
-	
-			//RequestDispatcherManagementOutboundPort de l'AC
-			RequestDispatcherManagementOutboundPort rdmop = new RequestDispatcherManagementOutboundPort(this);
-			
-			this.addRequiredInterface(RequestDispatcherManagementI.class);
-			this.ac_RequestDispatcherManagementOutboundPorts.put(requestNotificationInboundPortURI, rdmop);
-			this.addPort(rdmop);
-			rdmop.publishPort();
-			
-			this.doPortConnection(
-					rdmop.getPortURI(),
-					rd_rdmipURI,
-					RequestDispatcherManagementConnector.class.getCanonicalName()) ;
-			
-			rdmop.toggleTracingLogging();
-			
-			//ApplicationVMManagementOutboundPorts de l'AC
-//			this.addRequiredInterface(ApplicationVMManagementI.class) ;
-//			this.applicationVMManagementOutboundPort_AC = new ApplicationVMManagementOutboundPort(this) ;
-//			this.addPort(this.applicationVMManagementOutboundPort_AC) ;
-//			this.applicationVMManagementOutboundPort_AC.publishPort() ;
-			//TODO
-			ArrayList<ApplicationVM> appVMs = new ArrayList<ApplicationVM>();
-			appVMs.add(vm0);
-			this.ac_ApplicationVMs.put(requestNotificationInboundPortURI, appVMs);
-		
-			
-			//allouer les coeurs reserves aux aVMs
-			vm0.allocateCores(allocatedCores);
-			
-			//retourne la RequestSubmissionInboundPortURI du Request Dispatcher.
-			return rd_rsipURI;
 		}
 		
+		/*Creation des composants dynamiques*/
+		
+		//RequestDispatcher
+		this.ac_DynamicComponentCreationOutboundPort.createComponent(
+				RequestDispatcher.class.getCanonicalName(), 
+				new Object[]{
+						"rd0",
+						rd_rdmipURI,
+						rd_rnipURI, 
+						rd_rsipURI, 
+						requestNotificationInboundPortURI, 
+						avms_rsipURIs});
+		
+		//ApplicationVM(s)
+		for(int i=0; i<nbAVM; i++) {
+			this.ac_DynamicComponentCreationOutboundPort.createComponent(
+					ApplicationVM.class.getCanonicalName(),
+					new Object[] {
+							"vm"+i,
+							avms_amipURIs.get(i),
+							avms_rsipURIs.get(i),
+							rd_rnipURI
+					}
+			);
+		}
+		
+		/*Connexion de l'AdmissionController avec les composants dynamiques*/
+
+		//RequestDispatcherManagementOutboundPort de l'AC
+		this.addRequiredInterface(RequestDispatcherManagementI.class);
+		RequestDispatcherManagementOutboundPort rdmop = new RequestDispatcherManagementOutboundPort(this);
+		this.ac_RequestDispatcherManagementOutboundPorts.put(requestNotificationInboundPortURI, rdmop);
+		this.addPort(rdmop);
+		rdmop.publishPort();
+		
+		this.doPortConnection(
+				rdmop.getPortURI(),
+				rd_rdmipURI,
+				RequestDispatcherManagementConnector.class.getCanonicalName()) ;
+		
+		rdmop.toggleTracingLogging();
+		
+		//ApplicationVMManagementOutboundPorts de l'AC
+		this.addRequiredInterface(ApplicationVMManagementI.class) ;
+		ArrayList<ApplicationVMManagementOutboundPort> avmmop_list = new ArrayList<ApplicationVMManagementOutboundPort>();
+		for(int i=0; i<nbAVM; i++) {
+			ApplicationVMManagementOutboundPort avmmop = new ApplicationVMManagementOutboundPort(this);
+			avmmop_list.add(avmmop);
+			this.addPort(avmmop) ;
+			avmmop.publishPort() ;
+			this.doPortConnection(
+					avmmop.getPortURI(),
+					avms_amipURIs.get(i),
+					ApplicationVMManagementConnector.class.getCanonicalName());
+			avmmop.toggleTracingLogging();
+			
+			//allouer les coeurs reserves aux aVMs
+			AllocatedCore[] allocatedCore = new AllocatedCore[1];
+			allocatedCore[0] = allocatedCores[i];
+			avmmop.allocateCores(allocatedCore);
+		}
+		
+		this.ac_ApplicationVMManagementOutboundPorts.put(requestNotificationInboundPortURI, avmmop_list);
+		
+		//retourne la RequestSubmissionInboundPortURI du Request Dispatcher.
+		return rd_rsipURI;
 	}
 
 	@Override
@@ -296,9 +307,8 @@ public class AdmissionController
 				connectOutboundPorts();
 			
 			//connexion des OutboundPorts des ApplicationVMs
-			//TODO changer applicationVM -> apvmManageementOutboundPort
-			for(ApplicationVM appVM : this.ac_ApplicationVMs.get(requestNotificationInboundPortURI)){
-				appVM.start();
+			for(ApplicationVMManagementOutboundPort avmmop : this.ac_ApplicationVMManagementOutboundPorts.get(requestNotificationInboundPortURI)) {
+				avmmop.connectOutboundPorts();
 			}
 			
 		} catch (ComponentStartException e) {
@@ -313,11 +323,11 @@ public class AdmissionController
 	}
 	
 	
-	private AllocatedCore[] findComputerAndAllocateCores() throws Exception {
+	private AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception {
 		AllocatedCore[] allocatedCores = new AllocatedCore[0];
 
 		for(ComputerServicesOutboundPort csop : this.ac_ComputerServicesOutboundPorts) {
-			allocatedCores = csop.allocateCores(2) ;
+			allocatedCores = csop.allocateCores(nbCore) ;
 			if(allocatedCores.length > 0) {
 				logMessage(allocatedCores.length + " coeur(s) alloué(s) depuis " + csop.getServerPortURI());
 				return allocatedCores;

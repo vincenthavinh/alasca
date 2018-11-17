@@ -124,6 +124,8 @@ extends		AbstractComponent
 		super.execute() ;
 
 		this.rdmop.connectOutboundPorts();
+		this.avm0op.connectOutboundPorts();
+		this.avm1op.connectOutboundPorts();
 
 		AllocatedCore[] ac0 = this.csop.allocateCores(2) ;
 		this.avm0op.allocateCores(ac0) ;

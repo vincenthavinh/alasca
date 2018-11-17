@@ -76,4 +76,9 @@ extends		OfferedI,
 
 	public void			connectWithRequestSubmissioner()
 	throws Exception ;
+	
+	// Ajout
+	public void connectOutboundPorts() throws Exception;
+	
+	public void toggleTracingLogging() throws Exception;
 }
