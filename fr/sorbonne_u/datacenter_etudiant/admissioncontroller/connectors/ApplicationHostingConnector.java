@@ -8,8 +8,8 @@ extends AbstractConnector
 implements ApplicationHostingI {
 
 	@Override
-	public String askHosting(String requestNotificationInboundPortURI) throws Exception {
-		return ((ApplicationHostingI)this.offering).askHosting(requestNotificationInboundPortURI) ;
+	public String askHosting(String requestNotificationInboundPortURI, int nbCores) throws Exception {
+		return ((ApplicationHostingI)this.offering).askHosting(requestNotificationInboundPortURI, nbCores) ;
 	}
 
 	@Override

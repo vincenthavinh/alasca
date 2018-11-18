@@ -75,7 +75,6 @@ public class AdmissionController
 	public AdmissionController(
 			String ac_URI,
 			String ac_ApplicationSubmissionInboundPortURI,
-			String ca_ApplicationNotificationInboundPortURI,
 			ArrayList<String> cp_computerServicesInboundPortURIs,
 			String dcc_DynamicComponentCreationInboundPortURI
 	) throws Exception {
@@ -197,11 +196,10 @@ public class AdmissionController
 
 	
 	@Override
-	public String processAskHosting(String requestNotificationInboundPortURI) throws Exception {
+	public String processAskHosting(String requestNotificationInboundPortURI, int nbCoresByAVM) throws Exception {
 		this.logMessage(this.ac_URI+"| reçu askHosting()"+requestNotificationInboundPortURI+")");
 		
 		int nbAVMsByApp = 1;
-		int nbCoresByAVM = 2;
 		
 		/**Try hosting application**/
 		// choix arbitraire pour le moment

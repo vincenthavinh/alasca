@@ -17,11 +17,13 @@ extends AbstractComponent {
 	/**URI de ce composant**/
 	protected String ca_URI;
 	
+	protected int nbCores_required;
+	
 	/**admission controller**/
 	//outboundport
 	protected String ac_ApplicationSubmissionInboundPortURI;
 	protected ApplicationHostingOutboundPort ca_ApplicationSubmissionOutboundPort;
-		
+	
 	
 	/**params du request generator**/
 	protected final String rg_URI ;
@@ -38,6 +40,7 @@ extends AbstractComponent {
 			String ca_URI,
 			String ca_ApplicationNotificationInboundPortURI,
 			String ac_ApplicationSubmissionInboundPortURI,
+			int nbCores_required,
 			
 			//params du request generator
 			String rg_URI,
@@ -61,6 +64,7 @@ extends AbstractComponent {
 		//initialisation
 		this.ca_URI = ca_URI;
 		this.ac_ApplicationSubmissionInboundPortURI = ac_ApplicationSubmissionInboundPortURI;
+		this.nbCores_required = nbCores_required;
 		
 		//initialisation des ports
 		
@@ -98,7 +102,7 @@ extends AbstractComponent {
 		
 		this.rg_RequestNotificationInboundPortURI = AbstractPort.generatePortURI(RequestNotificationInboundPort.class);
 		this.rg_RequestGeneratorManagementInboundPortURI = AbstractPort.generatePortURI(RequestGeneratorManagementInboundPort.class);
-		this.rg_RequestSubmissionInboundPortURI = this.ca_ApplicationSubmissionOutboundPort.askHosting(rg_RequestNotificationInboundPortURI);
+		this.rg_RequestSubmissionInboundPortURI = this.ca_ApplicationSubmissionOutboundPort.askHosting(rg_RequestNotificationInboundPortURI, nbCores_required);
 	
 		logMessage("ClientApp | a recu [" +this.rg_RequestSubmissionInboundPortURI+ "] de l'Admission Controller.");
 		RequestGenerator rg = new RequestGenerator(

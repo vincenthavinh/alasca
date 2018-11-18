@@ -21,8 +21,8 @@ implements ApplicationHostingI {
 	}
 	
 	@Override
-	public String askHosting(String requestNotificationInboundPortURI) throws Exception {
-		return ((ApplicationHostingI)this.connector).askHosting(requestNotificationInboundPortURI) ;		
+	public String askHosting(String requestNotificationInboundPortURI, int nbCores) throws Exception {
+		return ((ApplicationHostingI)this.connector).askHosting(requestNotificationInboundPortURI, nbCores) ;		
 	}
 
 	@Override

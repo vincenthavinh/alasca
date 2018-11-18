@@ -13,7 +13,7 @@ import fr.sorbonne_u.datacenter.hardware.tests.ComputerMonitor;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.AdmissionController;
 import fr.sorbonne_u.datacenter_etudiant.clientapplication.ClientApplication;
 
-public class TestAdmissionController extends AbstractCVM {
+public class TestAdmissionController_multi_application extends AbstractCVM {
 
 	/** static URIs **/
 	//computer
@@ -25,7 +25,8 @@ public class TestAdmissionController extends AbstractCVM {
 	public static final String ac_ApplicationSubmissionInboundPortURI = "asip" ;
 	
 	//client application
-	public static final String	ca_ApplicationNotificationInboundPortURI = "anip" ;
+	public static final String	ca0_ApplicationNotificationInboundPortURI = "anip0" ;
+	public static final String	ca1_ApplicationNotificationInboundPortURI = "anip1" ;
 	
 	//dynamic component creator 
 	public static final String dcc_DynamicComponentCreationInboundPortURI = AbstractCVM.DCC_INBOUNDPORT_URI_SUFFIX ;
@@ -33,11 +34,12 @@ public class TestAdmissionController extends AbstractCVM {
 	/** static components **/
 	protected ComputerMonitor cm ;
 	protected AdmissionController ac ;
-	protected ClientApplication ca;
+	protected ClientApplication ca0;
+	protected ClientApplication ca1;
 
 	
 	
-	public TestAdmissionController() throws Exception {
+	public TestAdmissionController_multi_application() throws Exception {
 		// TODO Auto-generated constructor stub
 		super();
 	}
@@ -52,7 +54,7 @@ public class TestAdmissionController extends AbstractCVM {
 		// each with 2 cores.
 		// --------------------------------------------------------------------
 		String computerURI = "computer0" ;
-		int numberOfProcessors = 2 ;
+		int numberOfProcessors = 4 ;
 		int numberOfCores = 2 ;
 		Set<Integer> admissibleFrequencies = new HashSet<Integer>() ;
 		admissibleFrequencies.add(1500) ;	// Cores can run at 1,5 GHz
@@ -97,7 +99,7 @@ public class TestAdmissionController extends AbstractCVM {
 		ArrayList<String> csipURIs = new ArrayList<String>();
 		csipURIs.add(cp_ComputerServicesInboundPortURI);
 		
-		String ac_URI = "ac0";
+		String ac_URI = "AdmissionController0";
 		this.ac = new AdmissionController(
 				ac_URI, 
 				ac_ApplicationSubmissionInboundPortURI, 
@@ -109,43 +111,34 @@ public class TestAdmissionController extends AbstractCVM {
 		// --------------------------------------------------------------------
 		
 		// --------------------------------------------------------------------
-		// Create the 2 Client Application components.
+		// Create the Client Application component.
 		// Il faut lui passer l'admission controller pour communiquer avec
 		// --------------------------------------------------------------------
 		String ca0_URI = "ClientApplication0";
-		this.ca = new ClientApplication(
+		this.ca0 = new ClientApplication(
 				ca0_URI, 
-				ca_ApplicationNotificationInboundPortURI, 
+				ca0_ApplicationNotificationInboundPortURI, 
 				ac_ApplicationSubmissionInboundPortURI, 
-				2,
-				"rg", 500.0, 6000000000L);
-		this.addDeployedComponent(this.ca);
-		this.ca.toggleTracing() ;
-		this.ca.toggleLogging() ;
-		
-		
+				4,
+				"rg0",
+				500.0,
+				6000000000L);
+		this.addDeployedComponent(this.ca0);
+		this.ca0.toggleTracing() ;
+		this.ca0.toggleLogging() ;
+		// --------------------------------------------------------------------
 		String ca1_URI = "ClientApplication1";
-		this.ca = new ClientApplication(
+		this.ca1 = new ClientApplication(
 				ca1_URI, 
-				ca_ApplicationNotificationInboundPortURI, 
+				ca1_ApplicationNotificationInboundPortURI, 
 				ac_ApplicationSubmissionInboundPortURI, 
-				2,
-				"rg", 500.0, 6000000000L);
-		this.addDeployedComponent(this.ca);
-		this.ca.toggleTracing() ;
-		this.ca.toggleLogging() ;
-		
-		String ca2_URI = "ClientApplication2";
-		this.ca = new ClientApplication(
-				ca2_URI, 
-				ca_ApplicationNotificationInboundPortURI, 
-				ac_ApplicationSubmissionInboundPortURI, 
-				2,
-				"rg", 500.0, 6000000000L);
-		this.addDeployedComponent(this.ca);
-		this.ca.toggleTracing() ;
-		this.ca.toggleLogging() ;
-		
+				4,
+				"rg1",
+				500.0,
+				6000000000L);
+		this.addDeployedComponent(this.ca1);
+		this.ca1.toggleTracing() ;
+		this.ca1.toggleLogging() ;
 		// --------------------------------------------------------------------
 
 		// complete the deployment at the component virtual machine level.
@@ -163,7 +156,7 @@ public class TestAdmissionController extends AbstractCVM {
 		// Uncomment next line to execute components in debug mode.
 		//AbstractCVM.toggleDebugMode() ;
 		try {
-			final TestAdmissionController tac = new TestAdmissionController();
+			final TestAdmissionController_multi_application tac = new TestAdmissionController_multi_application();
 			tac.startStandardLifeCycle(100000L) ;
 			// Augment the time if you want to examine the traces after
 			// the execution of the program.
