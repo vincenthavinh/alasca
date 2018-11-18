@@ -198,14 +198,15 @@ public class AdmissionController
 	
 	@Override
 	public String processAskHosting(String requestNotificationInboundPortURI) throws Exception {
-		this.logMessage(this.ac_URI + " accepts an application submission and notify.");
+		this.logMessage(this.ac_URI+"| reçu askHosting()"+requestNotificationInboundPortURI+")");
 		
-		int nbAVM = 4;
+		int nbAVMsByApp = 1;
+		int nbCoresByAVM = 2;
 		
 		/**Try hosting application**/
-		// choix arbitraire de 2 pour le moment
+		// choix arbitraire pour le moment
 		// argument variable selon la demande de l application dans le futur
-		AllocatedCore[] allocatedCores = this.findComputerAndAllocateCores(nbAVM);
+		AllocatedCore[] allocatedCores = this.findComputerAndAllocateCores(nbCoresByAVM*nbAVMsByApp);
 		
 		if(allocatedCores.length == 0) {
 			return null;
@@ -214,15 +215,16 @@ public class AdmissionController
 		/*generation des URIs des composants dynamiques*/
 		
 		//ports du RequestDispatcher
+		String rd_URI = "rd"+ this.ac_RequestDispatcherManagementOutboundPorts.size() +"-"+ this.ac_URI;
 		String rd_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
 		String rd_rnipURI = AbstractPort.generatePortURI(RequestNotificationInboundPort.class);
 		String rd_rdmipURI = AbstractPort.generatePortURI(RequestDispatcherManagementInboundPort.class);
 		
-		//stockage dans des listes.
+		//listes de stockage des URIs des avms.
 		ArrayList<String> avms_rsipURIs = new ArrayList<String>();
 		ArrayList<String> avms_amipURIs = new ArrayList<String>();
 		
-		for(int i=0; i<nbAVM; i++) {
+		for(int i=0; i<nbAVMsByApp; i++) {
 			//ports des AppVMs
 			String avm_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
 			String avm_amipURI = AbstractPort.generatePortURI(ApplicationVMManagementInboundPort.class);
@@ -236,7 +238,7 @@ public class AdmissionController
 		this.ac_DynamicComponentCreationOutboundPort.createComponent(
 				RequestDispatcher.class.getCanonicalName(), 
 				new Object[]{
-						"rd0",
+						rd_URI,
 						rd_rdmipURI,
 						rd_rnipURI, 
 						rd_rsipURI, 
@@ -244,11 +246,11 @@ public class AdmissionController
 						avms_rsipURIs});
 		
 		//ApplicationVM(s)
-		for(int i=0; i<nbAVM; i++) {
+		for(int i=0; i<nbAVMsByApp; i++) {
 			this.ac_DynamicComponentCreationOutboundPort.createComponent(
 					ApplicationVM.class.getCanonicalName(),
 					new Object[] {
-							"vm"+i,
+							"vm"+ i +"-"+ rd_URI,
 							avms_amipURIs.get(i),
 							avms_rsipURIs.get(i),
 							rd_rnipURI
@@ -275,7 +277,7 @@ public class AdmissionController
 		//ApplicationVMManagementOutboundPorts de l'AC
 		this.addRequiredInterface(ApplicationVMManagementI.class) ;
 		ArrayList<ApplicationVMManagementOutboundPort> avmmop_list = new ArrayList<ApplicationVMManagementOutboundPort>();
-		for(int i=0; i<nbAVM; i++) {
+		for(int i=0; i<nbAVMsByApp; i++) {
 			ApplicationVMManagementOutboundPort avmmop = new ApplicationVMManagementOutboundPort(this);
 			avmmop_list.add(avmmop);
 			this.addPort(avmmop) ;
@@ -287,9 +289,11 @@ public class AdmissionController
 			avmmop.toggleTracingLogging();
 			
 			//allouer les coeurs reserves aux aVMs
-			AllocatedCore[] allocatedCore = new AllocatedCore[1];
-			allocatedCore[0] = allocatedCores[i];
-			avmmop.allocateCores(allocatedCore);
+			AllocatedCore[] aVMCores = new AllocatedCore[nbCoresByAVM];
+			for(int j=0; j<nbCoresByAVM; j++) {
+				aVMCores[j] = allocatedCores[i*nbCoresByAVM + j];
+			}
+			avmmop.allocateCores(aVMCores);
 		}
 		
 		this.ac_ApplicationVMManagementOutboundPorts.put(requestNotificationInboundPortURI, avmmop_list);
@@ -329,11 +333,11 @@ public class AdmissionController
 		for(ComputerServicesOutboundPort csop : this.ac_ComputerServicesOutboundPorts) {
 			allocatedCores = csop.allocateCores(nbCore) ;
 			if(allocatedCores.length > 0) {
-				logMessage(allocatedCores.length + " coeur(s) alloué(s) depuis " + csop.getServerPortURI());
+				logMessage(this.ac_URI+"| "+ allocatedCores.length + " coeur(s) alloué(s) depuis " + csop.getServerPortURI());
 				return allocatedCores;
 			}	
 		}
-		logMessage("Aucun coeur n'a pu etre alloue.");
+		logMessage(this.ac_URI+"| Aucun coeur n'a pu être alloué.");
 		return allocatedCores;
 	}
 }

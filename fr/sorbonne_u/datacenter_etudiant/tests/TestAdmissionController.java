@@ -97,7 +97,7 @@ public class TestAdmissionController extends AbstractCVM {
 		ArrayList<String> csipURIs = new ArrayList<String>();
 		csipURIs.add(cp_ComputerServicesInboundPortURI);
 		
-		String ac_URI = "AdmissionController0";
+		String ac_URI = "ac0";
 		this.ac = new AdmissionController(
 				ac_URI, 
 				ac_ApplicationSubmissionInboundPortURI, 
@@ -110,18 +110,40 @@ public class TestAdmissionController extends AbstractCVM {
 		// --------------------------------------------------------------------
 		
 		// --------------------------------------------------------------------
-		// Create the Client Application component.
+		// Create the 2 Client Application components.
 		// Il faut lui passer l'admission controller pour communiquer avec
 		// --------------------------------------------------------------------
-		String ca_URI = "ClientApplication0";
+		String ca0_URI = "ClientApplication0";
 		this.ca = new ClientApplication(
-				ca_URI, 
+				ca0_URI, 
 				ca_ApplicationNotificationInboundPortURI, 
 				ac_ApplicationSubmissionInboundPortURI, 
 				"rg", 500.0, 6000000000L);
 		this.addDeployedComponent(this.ca);
 		this.ca.toggleTracing() ;
 		this.ca.toggleLogging() ;
+		
+		
+		String ca1_URI = "ClientApplication1";
+		this.ca = new ClientApplication(
+				ca1_URI, 
+				ca_ApplicationNotificationInboundPortURI, 
+				ac_ApplicationSubmissionInboundPortURI, 
+				"rg", 500.0, 6000000000L);
+		this.addDeployedComponent(this.ca);
+		this.ca.toggleTracing() ;
+		this.ca.toggleLogging() ;
+		
+		String ca2_URI = "ClientApplication2";
+		this.ca = new ClientApplication(
+				ca2_URI, 
+				ca_ApplicationNotificationInboundPortURI, 
+				ac_ApplicationSubmissionInboundPortURI, 
+				"rg", 500.0, 6000000000L);
+		this.addDeployedComponent(this.ca);
+		this.ca.toggleTracing() ;
+		this.ca.toggleLogging() ;
+		
 		// --------------------------------------------------------------------
 
 		// complete the deployment at the component virtual machine level.
