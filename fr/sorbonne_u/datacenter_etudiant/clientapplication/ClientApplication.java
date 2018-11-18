@@ -132,7 +132,7 @@ extends AbstractComponent {
 			logMessage("CliApp. "+  this.ca_URI +"| démarrage du request generator...");
 			rg.startGeneration();
 			// wait 20 seconds
-			Thread.sleep(2000L) ;
+			Thread.sleep(8000L) ;
 			// then stop the generation.
 			rg.stopGeneration() ;
 		}else {
