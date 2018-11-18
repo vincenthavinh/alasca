@@ -197,7 +197,7 @@ extends		AbstractComponent
 		this.rg0mop.startGeneration() ;
 		this.rg1mop.startGeneration() ;
 		// wait 20 seconds
-		Thread.sleep(2000L) ;
+		Thread.sleep(8000L) ;
 		// then stop the generation.
 		this.rg0mop.stopGeneration() ;
 		this.rg1mop.stopGeneration() ;
