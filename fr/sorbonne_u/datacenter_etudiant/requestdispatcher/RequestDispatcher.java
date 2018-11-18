@@ -183,22 +183,20 @@ public class RequestDispatcher
 	
 	@Override
 	public void	acceptRequestSubmissionAndNotify(RequestI r) throws Exception {
-		this.logMessage(
-				"Request dispatcher "+this.rdURI+" accept request "+ r.getRequestURI()+" submission and dispatch to AVMs.");
+		this.logMessage("ReqDisp. "+ this.rdURI+"| accept request "+ r.getRequestURI()+" submission and dispatch to AVMs.");
 		this.dispatchRequest(r);
 	}
 	
 	@Override
 	public void acceptRequestSubmission(RequestI r) throws Exception {
-		this.logMessage(
-				"Request dispatcher "+this.rdURI+" accept request "+ r.getRequestURI()+" submission and dispatch to AVMs.");
+		this.logMessage("ReqDisp. "+ this.rdURI+"| accept request "+ r.getRequestURI()+" submission and dispatch to AVMs.");
 		this.dispatchRequestWithOutNotification(r);
 	}
 
 	@Override
 	public void acceptRequestTerminationNotification(RequestI r) throws Exception {
-		this.logMessage("Request dispatcher " + this.rdURI +
-				" is notified that request "+ r.getRequestURI() +
+		this.logMessage("ReqDisp. "+ this.rdURI +
+				"| is notified that request "+ r.getRequestURI() +
 				" has ended and notify the request generator.") ;
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}

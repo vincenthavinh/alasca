@@ -197,7 +197,7 @@ public class AdmissionController
 	
 	@Override
 	public String processAskHosting(String requestNotificationInboundPortURI, int nbCoresByAVM) throws Exception {
-		this.logMessage(this.ac_URI+"| reçu askHosting()"+requestNotificationInboundPortURI+")");
+		this.logMessage("AdContr. "+ this.ac_URI+"| reçu askHosting() d'un applicationClient.");
 		
 		int nbAVMsByApp = 1;
 		
@@ -243,6 +243,8 @@ public class AdmissionController
 						requestNotificationInboundPortURI, 
 						avms_rsipURIs});
 		
+		this.logMessage("AdContr. "+ this.ac_URI+"| creation dynamique de "+rd_URI);
+		
 		//ApplicationVM(s)
 		for(int i=0; i<nbAVMsByApp; i++) {
 			this.ac_DynamicComponentCreationOutboundPort.createComponent(
@@ -254,6 +256,8 @@ public class AdmissionController
 							rd_rnipURI
 					}
 			);
+			
+			this.logMessage("AdContr. "+ this.ac_URI+"| creation dynamique de "+"vm"+ i +"-"+ rd_URI);
 		}
 		
 		/*Connexion de l'AdmissionController avec les composants dynamiques*/
@@ -269,7 +273,6 @@ public class AdmissionController
 				rdmop.getPortURI(),
 				rd_rdmipURI,
 				RequestDispatcherManagementConnector.class.getCanonicalName()) ;
-		
 		rdmop.toggleTracingLogging();
 		
 		//ApplicationVMManagementOutboundPorts de l'AC
@@ -293,7 +296,6 @@ public class AdmissionController
 			}
 			avmmop.allocateCores(aVMCores);
 		}
-		
 		this.ac_ApplicationVMManagementOutboundPorts.put(requestNotificationInboundPortURI, avmmop_list);
 		
 		//retourne la RequestSubmissionInboundPortURI du Request Dispatcher.
@@ -303,6 +305,7 @@ public class AdmissionController
 	@Override
 	public Boolean processAskHostToConnect(String requestNotificationInboundPortURI) {
 		try {
+			logMessage("AdContr. "+ this.ac_URI+"| reçu askHostToConnect() d'un applicationClient.");
 			//connexion des OutboundPorts du RequestDispatcher
 			this.ac_RequestDispatcherManagementOutboundPorts.
 				get(requestNotificationInboundPortURI).
@@ -312,6 +315,8 @@ public class AdmissionController
 			for(ApplicationVMManagementOutboundPort avmmop : this.ac_ApplicationVMManagementOutboundPorts.get(requestNotificationInboundPortURI)) {
 				avmmop.connectOutboundPorts();
 			}
+			
+			logMessage("AdContr. "+ this.ac_URI+"| ReqDisp dynamique et ReqGen du client connectés.");
 			
 		} catch (ComponentStartException e) {
 			e.printStackTrace();
@@ -331,11 +336,11 @@ public class AdmissionController
 		for(ComputerServicesOutboundPort csop : this.ac_ComputerServicesOutboundPorts) {
 			allocatedCores = csop.allocateCores(nbCore) ;
 			if(allocatedCores.length > 0) {
-				logMessage(this.ac_URI+"| "+ allocatedCores.length + " coeur(s) alloué(s) depuis " + csop.getServerPortURI());
+				logMessage("AdContr. "+ this.ac_URI+"| "+ allocatedCores.length + " coeur(s) alloué(s) depuis " + csop.getServerPortURI());
 				return allocatedCores;
 			}	
 		}
-		logMessage(this.ac_URI+"| Aucun coeur n'a pu être alloué.");
+		logMessage("AdContr. "+ this.ac_URI+"| Aucun coeur n'a pu être alloué.");
 		return allocatedCores;
 	}
 }

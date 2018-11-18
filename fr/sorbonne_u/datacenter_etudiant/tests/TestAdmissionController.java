@@ -112,36 +112,36 @@ public class TestAdmissionController extends AbstractCVM {
 		// Create the 2 Client Application components.
 		// Il faut lui passer l'admission controller pour communiquer avec
 		// --------------------------------------------------------------------
-		String ca0_URI = "ClientApplication0";
+		String ca0_URI = "ca0";
 		this.ca = new ClientApplication(
 				ca0_URI, 
 				ca_ApplicationNotificationInboundPortURI, 
 				ac_ApplicationSubmissionInboundPortURI, 
 				2,
-				"rg", 500.0, 6000000000L);
+				"rg-"+ca0_URI, 500.0, 6000000000L);
 		this.addDeployedComponent(this.ca);
 		this.ca.toggleTracing() ;
 		this.ca.toggleLogging() ;
 		
 		
-		String ca1_URI = "ClientApplication1";
+		String ca1_URI = "ca1";
 		this.ca = new ClientApplication(
 				ca1_URI, 
 				ca_ApplicationNotificationInboundPortURI, 
 				ac_ApplicationSubmissionInboundPortURI, 
 				2,
-				"rg", 500.0, 6000000000L);
+				"rg-"+ca1_URI, 500.0, 6000000000L);
 		this.addDeployedComponent(this.ca);
 		this.ca.toggleTracing() ;
 		this.ca.toggleLogging() ;
 		
-		String ca2_URI = "ClientApplication2";
+		String ca2_URI = "ca2";
 		this.ca = new ClientApplication(
 				ca2_URI, 
 				ca_ApplicationNotificationInboundPortURI, 
 				ac_ApplicationSubmissionInboundPortURI, 
 				2,
-				"rg", 500.0, 6000000000L);
+				"rg-"+ca2_URI, 500.0, 6000000000L);
 		this.addDeployedComponent(this.ca);
 		this.ca.toggleTracing() ;
 		this.ca.toggleLogging() ;

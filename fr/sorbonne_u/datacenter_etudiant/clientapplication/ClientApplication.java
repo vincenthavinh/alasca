@@ -104,7 +104,12 @@ extends AbstractComponent {
 		this.rg_RequestGeneratorManagementInboundPortURI = AbstractPort.generatePortURI(RequestGeneratorManagementInboundPort.class);
 		this.rg_RequestSubmissionInboundPortURI = this.ca_ApplicationSubmissionOutboundPort.askHosting(rg_RequestNotificationInboundPortURI, nbCores_required);
 	
-		logMessage("ClientApp | a recu [" +this.rg_RequestSubmissionInboundPortURI+ "] de l'Admission Controller.");
+		logMessage("CliApp. "+  this.ca_URI +"| a recu [" +this.rg_RequestSubmissionInboundPortURI+ "] de l'Admission Controller.");
+		
+		if(this.rg_RequestSubmissionInboundPortURI == null) {
+			logMessage("CliApp. "+  this.ca_URI +"| La demande d'hébèrgement a été refusée...");
+			return;
+		}
 		RequestGenerator rg = new RequestGenerator(
 				this.rg_URI, 
 				this.rg_meanInterArrivalTime, 
@@ -116,22 +121,22 @@ extends AbstractComponent {
 		rg.toggleLogging();
 		rg.start();
 		
-		logMessage("ClientApp | askToConnect(..) a AdmissionController");
+		logMessage("CliApp. "+  this.ca_URI +"| askHostToConnect(..) a AdmissionController");
 		
 		Boolean isHostConnected = this.ca_ApplicationSubmissionOutboundPort.
 				askHostToConnect(rg_RequestNotificationInboundPortURI);
 		
-		logMessage("ClientAPp | askToConnect(..) returned: " +isHostConnected);
+		logMessage("CliApp. "+  this.ca_URI +"| askToConnect(..) returned: " +isHostConnected);
 		
 		if(isHostConnected == true) {
-			logMessage("ClientApp | démarrage du request generator...");
+			logMessage("CliApp. "+  this.ca_URI +"| démarrage du request generator...");
 			rg.startGeneration();
 			// wait 20 seconds
 			Thread.sleep(2000L) ;
 			// then stop the generation.
 			rg.stopGeneration() ;
 		}else {
-			logMessage("CLient App | le datacenter n'a pas pu héberger l'application.");
+			logMessage("CliApp. "+  this.ca_URI +"| le datacenter n'a pas pu héberger l'application.");
 		}
 	}
 	
