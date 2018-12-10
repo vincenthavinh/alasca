@@ -645,7 +645,7 @@ implements	ProcessorServicesNotificationConsumerI,
 	{
 		return null ;
 	}
-
+	
 	public	ApplicationVMDynamicStateI	getDynamicState()
 	throws Exception
 	{

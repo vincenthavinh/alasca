@@ -329,7 +329,7 @@ public class AdmissionController
 		return true;
 	}
 	
-	
+	// TODO changer le check de retour de allocatesCores penser à désallouer les coeurs si on utilise pas
 	private AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception {
 		AllocatedCore[] allocatedCores = new AllocatedCore[0];
 

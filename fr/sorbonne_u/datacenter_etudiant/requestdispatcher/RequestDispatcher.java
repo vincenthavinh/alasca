@@ -1,6 +1,8 @@
 package fr.sorbonne_u.datacenter_etudiant.requestdispatcher;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
@@ -43,6 +45,8 @@ public class RequestDispatcher
 	
 	protected RequestDispatcherManagementInboundPort	requestDispatcherManagementInboundPort ;
 	
+	protected Map<String, Long> timeStamp;
+	
 	public RequestDispatcher(
 		String rdURI,
 		String managementInboundPortURIdispatcher,
@@ -68,6 +72,7 @@ public class RequestDispatcher
 		//initialisation
 		this.rdURI = rdURI;
 		this.index = 0;
+		this.timeStamp = new HashMap<String, Long>();
 		
 		//init des ports dont dispatcher est le owner
 		
@@ -183,6 +188,7 @@ public class RequestDispatcher
 	
 	@Override
 	public void	acceptRequestSubmissionAndNotify(RequestI r) throws Exception {
+		this.timeStamp.put(r.getRequestURI(), System.currentTimeMillis());
 		this.logMessage("ReqDisp. "+ this.rdURI+"| accept request "+ r.getRequestURI()+" submission and dispatch to AVMs.");
 		this.dispatchRequest(r);
 	}
@@ -195,12 +201,14 @@ public class RequestDispatcher
 
 	@Override
 	public void acceptRequestTerminationNotification(RequestI r) throws Exception {
+		long time = System.currentTimeMillis() - this.timeStamp.remove(r.getRequestURI());
 		this.logMessage("ReqDisp. "+ this.rdURI +
 				"| is notified that request "+ r.getRequestURI() +
-				" has ended and notify the request generator.") ;
+				" has ended with "+ time +"ms and notify the request generator.") ;
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}
 	
+	// TODO changer la méthode de dispatch
 	public void dispatchRequest(RequestI r) throws Exception{
 		RequestSubmissionOutboundPort rsop = requestSubmissionOutboundPorts.get(index++%this.requestSubmissionInboundPortsURI.size());
 		rsop.submitRequestAndNotify(r) ;
