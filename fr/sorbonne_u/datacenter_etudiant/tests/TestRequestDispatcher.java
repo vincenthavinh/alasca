@@ -23,6 +23,8 @@ extends		AbstractCVM
 	public static final String	ComputerDynamicStateDataInboundPortURI = "cds-dip" ;
 	public static final String	ApplicationVM0ManagementInboundPortURI = "avm0-ibp" ;
 	public static final String	ApplicationVM1ManagementInboundPortURI = "avm1-ibp" ;
+	public static final String	ApplicationVM0IntrospectionInboundPortURI = "intro0-ibp" ;
+	public static final String	ApplicationVM1IntrospectionInboundPortURI = "intro1-ibp" ;
 	public static final String	RequestGeneratorManagementInboundPortURI = "rgmip" ;
 	public static final String	RequestSubmissionInboundPortURIAVM0 = "rsibp0" ;
 	public static final String	RequestSubmissionInboundPortURIAVM1 = "rsibp1" ;
@@ -115,6 +117,7 @@ extends		AbstractCVM
 		// --------------------------------------------------------------------
 		this.vm = new ApplicationVM("vm0",	// application vm component URI
 								    ApplicationVM0ManagementInboundPortURI,
+								    ApplicationVM0IntrospectionInboundPortURI,
 								    RequestSubmissionInboundPortURIAVM0,
 								    RequestNotificationInboundPortURIdispatcher) ;
 		this.addDeployedComponent(this.vm) ;
@@ -125,6 +128,7 @@ extends		AbstractCVM
 		// --------------------------------------------------------------------
 		this.vm1 = new ApplicationVM("vm1",	// application vm component URI
 								    ApplicationVM1ManagementInboundPortURI,
+								    ApplicationVM1IntrospectionInboundPortURI,
 								    RequestSubmissionInboundPortURIAVM1,
 								    RequestNotificationInboundPortURIdispatcher) ;
 		this.addDeployedComponent(this.vm1) ;
@@ -137,6 +141,10 @@ extends		AbstractCVM
 		ArrayList<String> listAVMs = new ArrayList<String>();
 		listAVMs.add(RequestSubmissionInboundPortURIAVM0);
 		listAVMs.add(RequestSubmissionInboundPortURIAVM1);
+		
+		ArrayList<String> listAVMsIntrospection = new ArrayList<String>();
+		listAVMsIntrospection.add(ApplicationVM0IntrospectionInboundPortURI);
+		listAVMsIntrospection.add(ApplicationVM1IntrospectionInboundPortURI);
 		// --------------------------------------------------------------------
 		// Creating the request dispatcher component.
 		// --------------------------------------------------------------------
@@ -146,7 +154,8 @@ extends		AbstractCVM
 					RequestNotificationInboundPortURIdispatcher,
 					RequestSubmissionInboundPortURIdispatcher,
 					RequestNotificationInboundPortURI,
-					listAVMs);
+					listAVMs,
+					listAVMsIntrospection);
 		this.addDeployedComponent(rd);
 		this.rd.toggleTracing();
 		this.rd.toggleLogging();

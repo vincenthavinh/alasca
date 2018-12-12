@@ -161,6 +161,8 @@ extends		AbstractCVM
 	public static final String	ComputerDynamicStateDataOutboundPortURI = "cds-dop" ;
 	public static final String	ApplicationVMManagementInboundPortURI = "avm-ibp" ;
 	public static final String	ApplicationVMManagementOutboundPortURI = "avm-obp" ;
+	public static final String  ApplicationVMIntrospectionInboundPortURI = "intro-ibp" ;
+	public static final String  ApplicationVMIntrospectionOutboundPortURI = "intro-obp" ;
 	public static final String	RequestSubmissionInboundPortURI = "rsibp" ;
 	public static final String	RequestSubmissionOutboundPortURI = "rsobp" ;
 	public static final String	RequestNotificationInboundPortURI = "rnibp" ;
@@ -269,6 +271,7 @@ extends		AbstractCVM
 		ApplicationVM vm =
 			new ApplicationVM("vm0",
 							  ApplicationVMManagementInboundPortURI,
+							  ApplicationVMIntrospectionInboundPortURI,
 							  RequestSubmissionInboundPortURI,
 							  RequestNotificationOutboundPortURI) ;
 		this.addDeployedComponent(vm) ;

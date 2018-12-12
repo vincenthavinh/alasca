@@ -55,6 +55,7 @@ import fr.sorbonne_u.datacenter.hardware.processors.ports.ProcessorServicesNotif
 import fr.sorbonne_u.datacenter.hardware.processors.ports.ProcessorServicesOutboundPort;
 import fr.sorbonne_u.datacenter.interfaces.PushModeControllingI;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMDynamicStateI;
+import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMIntrospectionI;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMStaticStateI;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.TaskI;
@@ -205,6 +206,7 @@ implements	ProcessorServicesNotificationConsumerI,
 	public				ApplicationVM(
 		String vmURI,
 		String applicationVMManagementInboundPortURI,
+		String applicationVMIntrospectionInboundPortURI,
 		String requestSubmissionInboundPortURI,
 		String requestNotificationInboundPortURI
 		) throws Exception
@@ -260,6 +262,14 @@ implements	ProcessorServicesNotificationConsumerI,
 								new RequestNotificationOutboundPort(this) ;
 		this.addPort(this.requestNotificationOutboundPort) ;
 		this.requestNotificationOutboundPort.publishPort() ;
+		
+		this.addOfferedInterface(ApplicationVMIntrospectionI.class);
+		this.avmIntrospectionInboundPort =
+								new ApplicationVMIntrospectionInboundPort(
+										applicationVMIntrospectionInboundPortURI,
+										this);
+		this.addPort(this.avmIntrospectionInboundPort);
+		this.avmIntrospectionInboundPort.publishPort();
 	}
 
 	// ------------------------------------------------------------------------
@@ -314,6 +324,7 @@ implements	ProcessorServicesNotificationConsumerI,
 														unpublishPort() ;
 			}
 			this.applicationVMManagementInboundPort.unpublishPort() ;
+			this.avmIntrospectionInboundPort.unpublishPort();
 		} catch (Exception e) {
 			throw new ComponentShutdownException(
 					"processor services outbound port disconnection"

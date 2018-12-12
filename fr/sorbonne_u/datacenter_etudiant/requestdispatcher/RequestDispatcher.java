@@ -32,7 +32,6 @@ public class RequestDispatcher
 	// liste de port des VMs
 	protected ArrayList<String> requestSubmissionInboundPortsURI ; // AVMs
 	protected int index; // l'avm (index%(nb AVMs)) recoit la requete
-	//protected String requestSubmissionInboundPortURI ; // AVM
 	
 	// port de la RequestGenerator
 	protected String requestNotificationInboundPortURI ; // RG
@@ -53,8 +52,8 @@ public class RequestDispatcher
 		String requestNotificationInboundPortURIdispatcher,
 		String requestSubmissionInboundPortURIdispatcher,
 		String requestNotificationInboundPortURI, //RG
-		ArrayList<String> requestSubmissionInboundPortURIs /* AVMs */) throws Exception {
-		//String requestSubmissionInboundPortURI /* AVM */) throws Exception {
+		ArrayList<String> requestSubmissionInboundPortURIs /* AVMs */,
+		ArrayList<String> introspectionInboundPortURIs /* AVMs introspection */) throws Exception {
 		
 		super(1, 1);
 		
@@ -67,7 +66,6 @@ public class RequestDispatcher
 		assert	requestNotificationInboundPortURI != null ;
 		assert	requestSubmissionInboundPortURIs != null ;
 		assert  requestSubmissionInboundPortURIs.size() != 0;
-		//assert	requestSubmissionInboundPortURI != null ;
 		
 		//initialisation
 		this.rdURI = rdURI;
@@ -115,7 +113,6 @@ public class RequestDispatcher
 		
 		//init des ports a connecter
 		this.requestSubmissionInboundPortsURI = requestSubmissionInboundPortURIs; //aVMs
-		//this.requestSubmissionInboundPortURI = requestSubmissionInboundPortURI; //aVM
 		this.requestNotificationInboundPortURI = requestNotificationInboundPortURI; //RG
 	
 		//Postconditions check

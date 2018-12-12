@@ -98,6 +98,7 @@ extends		AbstractCVM
 	public static final String	ComputerStaticStateDataInboundPortURI = "css-dip" ;
 	public static final String	ComputerDynamicStateDataInboundPortURI = "cds-dip" ;
 	public static final String	ApplicationVMManagementInboundPortURI = "avm-ibp" ;
+	public static final String  ApplicationVMIntrospectionInboundPortURI = "intro-ibp" ;
 	public static final String	RequestSubmissionInboundPortURI = "rsibp" ;
 	public static final String	RequestNotificationInboundPortURI = "rnibp" ;
 	public static final String	RequestGeneratorManagementInboundPortURI = "rgmip" ;
@@ -176,6 +177,7 @@ extends		AbstractCVM
 		// --------------------------------------------------------------------
 		this.vm = new ApplicationVM("vm0",	// application vm component URI
 								    ApplicationVMManagementInboundPortURI,
+								    ApplicationVMIntrospectionInboundPortURI,
 								    RequestSubmissionInboundPortURI,
 								    RequestNotificationInboundPortURI) ;
 		this.addDeployedComponent(this.vm) ;
