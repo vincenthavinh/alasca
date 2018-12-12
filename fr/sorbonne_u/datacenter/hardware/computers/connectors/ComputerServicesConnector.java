@@ -80,4 +80,23 @@ implements	ComputerServicesI
 		return ((ComputerServicesI)this.offering).
 											allocateCores(numberRequested) ;
 	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#releaseCore(AllocatedCore)
+	 */
+	@Override
+	public void	releaseCore(AllocatedCore ac) throws Exception
+	{
+		((ComputerServicesI)this.offering).releaseCore(ac) ;
+	}
+
+	/**
+	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#releaseCores(AllocatedCore[])
+	 */
+	@Override
+	public void releaseCores(AllocatedCore[] acs)
+	throws Exception
+	{
+		((ComputerServicesI)this.offering).releaseCores(acs);
+	}
 }

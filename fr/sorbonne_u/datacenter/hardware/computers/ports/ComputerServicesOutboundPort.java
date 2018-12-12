@@ -103,4 +103,23 @@ implements	ComputerServicesI
 		return ((ComputerServicesI)this.connector).
 											allocateCores(numberRequested) ;
 	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#releaseCore(AllocatedCore)
+	 */
+	@Override
+	public void	releaseCore(AllocatedCore ac) throws Exception
+	{
+		((ComputerServicesI)this.connector).releaseCore(ac);
+	}
+
+	/**
+	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#releaseCores(AllocatedCore[])
+	 */
+	@Override
+	public void releaseCores(AllocatedCore[] acs)
+	throws Exception
+	{
+		((ComputerServicesI)this.connector).releaseCores(acs);;
+	}
 }

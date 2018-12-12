@@ -329,16 +329,19 @@ public class AdmissionController
 		return true;
 	}
 	
-	// TODO changer le check de retour de allocatesCores penser à désallouer les coeurs si on utilise pas
+	// TODO ne pas parcourir tous les ordinateurs
 	private AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception {
 		AllocatedCore[] allocatedCores = new AllocatedCore[0];
 
 		for(ComputerServicesOutboundPort csop : this.ac_ComputerServicesOutboundPorts) {
 			allocatedCores = csop.allocateCores(nbCore) ;
-			if(allocatedCores.length > 0) {
+			if(allocatedCores.length == nbCore) {
 				logMessage("AdContr. "+ this.ac_URI+"| "+ allocatedCores.length + " coeur(s) alloué(s) depuis " + csop.getServerPortURI());
 				return allocatedCores;
-			}	
+			}
+			else {
+				csop.releaseCores(allocatedCores);
+			}
 		}
 		logMessage("AdContr. "+ this.ac_URI+"| Aucun coeur n'a pu être alloué.");
 		return allocatedCores;

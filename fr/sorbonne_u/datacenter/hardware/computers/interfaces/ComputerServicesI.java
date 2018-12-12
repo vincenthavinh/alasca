@@ -96,4 +96,34 @@ extends		OfferedI,
 	 */
 	public AllocatedCore[]	allocateCores(final int numberRequested)
 	throws Exception ;
+	
+	/**
+	 * releases a priorly reserved core.
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	this.isReserved(ac.processorNo, ac.coreNo) ;
+	 * post	!this.isReserved(ac.processorNo, ac.coreNo) ;
+	 * </pre>
+	 *
+	 * @param ac			priorly allocated core data.
+	 * @throws Exception	<i>todo.</i>
+	 */
+	public void				releaseCore(AllocatedCore ac) throws Exception;
+	
+	/**
+	 * release an array of priorly reserved cores.
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	true			// no precondition.
+	 * post	true			// no postcondition.
+	 * </pre>
+	 *
+	 * @param acs			array of priorly allocated cores data.
+	 * @throws Exception		<i>todo.</i>
+	 */
+	public void				releaseCores(AllocatedCore[] acs) throws Exception;
 }

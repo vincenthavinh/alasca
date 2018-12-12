@@ -123,4 +123,37 @@ implements	ComputerServicesI
 						}
 					}) ;
 	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#releaseCore(AllocatedCore)
+	 */
+	@Override
+	public void	releaseCore(AllocatedCore ac) throws Exception
+	{
+		this.getOwner().handleRequestSync(
+				new AbstractComponent.AbstractService<Void>() {
+					@Override
+					public Void call() throws Exception {
+						((Computer)this.getOwner()).releaseCore(ac);
+						return null;
+					}
+				}) ;
+	}
+
+	/**
+	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#releaseCores(AllocatedCore[])
+	 */
+	@Override
+	public void releaseCores(AllocatedCore[] acs)
+	throws Exception
+	{
+		this.getOwner().handleRequestSync(
+				new AbstractComponent.AbstractService<Void>() {
+					@Override
+					public Void call() throws Exception {
+						((Computer)this.getOwner()).releaseCores(acs);
+						return null;
+					}
+				}) ;
+	}
 }
