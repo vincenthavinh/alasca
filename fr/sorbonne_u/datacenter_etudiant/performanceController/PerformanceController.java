@@ -73,10 +73,10 @@ extends AbstractComponent{
 	// Component internal services
 	// -------------------------------------------------------------------------
 	
-	public void receiveData(long temps_moyenne_requete) {
+	public void receiveData(long temps_requete) {
 		long total = tmp_moyenne * qt_req; 
 		qt_req++;
-		tmp_moyenne = (total + temps_moyenne_requete) / qt_req;
+		tmp_moyenne = (total + temps_requete) / qt_req;
 	}
 	
 	
