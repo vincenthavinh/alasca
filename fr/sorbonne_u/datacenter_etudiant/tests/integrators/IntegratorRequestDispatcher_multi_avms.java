@@ -17,13 +17,11 @@ import fr.sorbonne_u.datacenterclient.requestgenerator.connectors.RequestGenerat
 import fr.sorbonne_u.datacenterclient.requestgenerator.interfaces.RequestGeneratorManagementI;
 import fr.sorbonne_u.datacenterclient.requestgenerator.ports.RequestGeneratorManagementOutboundPort;
 
-public class				IntegratorRequestDispatcher_multi_generator
+public class				IntegratorRequestDispatcher_multi_avms
 extends		AbstractComponent
 {
-	protected String									rg0mipURI ;
-	protected String									rg1mipURI ;
-	protected String									rd0mipURI ;
-	protected String									rd1mipURI ;
+	protected String									rgmipURI ;
+	protected String									rdmipURI ;
 	protected String									csipURI ;
 	protected String									avm0ipURI ;
 	protected String									avm1ipURI ;
@@ -31,12 +29,10 @@ extends		AbstractComponent
 	protected String									avm3ipURI ;
 	/** Port connected to the request generator component to manage its
 	 *  execution (starting and stopping the request generation).			*/
-	protected RequestGeneratorManagementOutboundPort	rg0mop ;
-	protected RequestGeneratorManagementOutboundPort	rg1mop ;
+	protected RequestGeneratorManagementOutboundPort	rgmop ;
 	/** Port connected to the request dispatcher component to manage its
 	 *	connections 														*/
-	protected RequestDispatcherManagementOutboundPort rd0mop ;
-	protected RequestDispatcherManagementOutboundPort rd1mop ;
+	protected RequestDispatcherManagementOutboundPort rdmop ;
 	/** Port connected to the computer component to access its services.	*/
 	protected ComputerServicesOutboundPort			csop ;
 	/** Port connected to the AVM component to allocate it cores.			*/
@@ -45,16 +41,14 @@ extends		AbstractComponent
 	protected ApplicationVMManagementOutboundPort	avm2op ;
 	protected ApplicationVMManagementOutboundPort	avm3op ;
 	
-	public				IntegratorRequestDispatcher_multi_generator(
+	public				IntegratorRequestDispatcher_multi_avms(
 		String csipURI,
 		String avm0ipURI,
 		String avm1ipURI,
 		String avm2ipURI,
 		String avm3ipURI,
-		String rg0mipURI,
-		String rg1mipURI,
-		String rd0mipURI,
-		String rd1mipURI
+		String rgmipURI,
+		String rdmipURI
 		) throws Exception
 	{
 		super(1, 0) ;
@@ -64,15 +58,11 @@ extends		AbstractComponent
 				&& avm1ipURI != null 
 				&& avm2ipURI != null 
 				&& avm3ipURI != null 
-				&& rg0mipURI != null 
-				&& rg1mipURI != null 
-				&& rd0mipURI != null
-				&& rd1mipURI != null;
+				&& rgmipURI != null 
+				&& rdmipURI != null;
 
-		this.rg0mipURI = rg0mipURI ;
-		this.rg1mipURI = rg1mipURI ;
-		this.rd0mipURI = rd0mipURI ;
-		this.rd1mipURI = rd1mipURI ;
+		this.rgmipURI = rgmipURI ;
+		this.rdmipURI = rdmipURI ;
 		this.avm0ipURI = avm0ipURI ;
 		this.avm1ipURI = avm1ipURI ;
 		this.avm2ipURI = avm2ipURI ;
@@ -88,21 +78,13 @@ extends		AbstractComponent
 		this.addPort(this.csop) ;
 		this.csop.publishPort() ;
 
-		this.rg0mop = new RequestGeneratorManagementOutboundPort(this) ;
-		this.addPort(rg0mop) ;
-		this.rg0mop.publishPort() ;
+		this.rgmop = new RequestGeneratorManagementOutboundPort(this) ;
+		this.addPort(rgmop) ;
+		this.rgmop.publishPort() ;
 		
-		this.rg1mop = new RequestGeneratorManagementOutboundPort(this) ;
-		this.addPort(rg1mop) ;
-		this.rg1mop.publishPort() ;
-		
-		this.rd0mop = new RequestDispatcherManagementOutboundPort(this) ;
-		this.addPort(rd0mop) ;
-		this.rd0mop.publishPort() ;
-		
-		this.rd1mop = new RequestDispatcherManagementOutboundPort(this) ;
-		this.addPort(rd1mop) ;
-		this.rd1mop.publishPort() ;
+		this.rdmop = new RequestDispatcherManagementOutboundPort(this) ;
+		this.addPort(rdmop) ;
+		this.rdmop.publishPort() ;
 
 		this.avm0op = new ApplicationVMManagementOutboundPort(this) ;
 		this.addPort(this.avm0op) ;
@@ -135,20 +117,12 @@ extends		AbstractComponent
 				this.csipURI,
 				ComputerServicesConnector.class.getCanonicalName()) ;
 			this.doPortConnection(
-				this.rg0mop.getPortURI(),
-				rg0mipURI,
+				this.rgmop.getPortURI(),
+				rgmipURI,
 				RequestGeneratorManagementConnector.class.getCanonicalName()) ;
 			this.doPortConnection(
-				this.rg1mop.getPortURI(),
-				rg1mipURI,
-				RequestGeneratorManagementConnector.class.getCanonicalName()) ;
-			this.doPortConnection(
-				this.rd0mop.getPortURI(), 
-				rd0mipURI, 
-				RequestDispatcherManagementConnector.class.getCanonicalName()) ;
-			this.doPortConnection(
-				this.rd1mop.getPortURI(), 
-				rd1mipURI, 
+				this.rdmop.getPortURI(), 
+				rdmipURI, 
 				RequestDispatcherManagementConnector.class.getCanonicalName()) ;
 			this.doPortConnection(
 				this.avm0op.getPortURI(),
@@ -179,28 +153,25 @@ extends		AbstractComponent
 	{
 		super.execute() ;
 
-		this.rd0mop.connectOutboundPorts();
-		this.rd1mop.connectOutboundPorts();
+		this.rdmop.connectOutboundPorts();
 		this.avm0op.connectOutboundPorts();
 		this.avm1op.connectOutboundPorts();
 		this.avm2op.connectOutboundPorts();
 		this.avm3op.connectOutboundPorts();
 
-		AllocatedCore[] ac0 = this.csop.allocateCores(1) ;
+		AllocatedCore[] ac0 = this.csop.allocateCores(2) ;
 		this.avm0op.allocateCores(ac0) ;
-		AllocatedCore[] ac1 = this.csop.allocateCores(1) ;
+		AllocatedCore[] ac1 = this.csop.allocateCores(2) ;
 		this.avm1op.allocateCores(ac1) ;
-		AllocatedCore[] ac2 = this.csop.allocateCores(1) ;
+		AllocatedCore[] ac2 = this.csop.allocateCores(2) ;
 		this.avm2op.allocateCores(ac2) ;
-		AllocatedCore[] ac3 = this.csop.allocateCores(1) ;
+		AllocatedCore[] ac3 = this.csop.allocateCores(2) ;
 		this.avm3op.allocateCores(ac3) ;
-		this.rg0mop.startGeneration() ;
-		this.rg1mop.startGeneration() ;
+		this.rgmop.startGeneration() ;
 		// wait 20 seconds
-		Thread.sleep(8000L) ;
+		Thread.sleep(2000L) ;
 		// then stop the generation.
-		this.rg0mop.stopGeneration() ;
-		this.rg1mop.stopGeneration() ;
+		this.rgmop.stopGeneration() ;
 	}
 
 	/**
@@ -212,12 +183,10 @@ extends		AbstractComponent
 		this.doPortDisconnection(this.csop.getPortURI()) ;
 		this.doPortDisconnection(this.avm0op.getPortURI()) ;
 		this.doPortDisconnection(this.avm1op.getPortURI()) ;
-		this.doPortDisconnection(this.rg0mop.getPortURI()) ;
-		this.doPortDisconnection(this.rd0mop.getPortURI()) ;
 		this.doPortDisconnection(this.avm2op.getPortURI()) ;
 		this.doPortDisconnection(this.avm3op.getPortURI()) ;
-		this.doPortDisconnection(this.rg1mop.getPortURI()) ;
-		this.doPortDisconnection(this.rd1mop.getPortURI()) ;
+		this.doPortDisconnection(this.rgmop.getPortURI()) ;
+		this.doPortDisconnection(this.rdmop.getPortURI()) ;
 		super.finalise();
 	}
 
@@ -231,12 +200,10 @@ extends		AbstractComponent
 			this.csop.unpublishPort() ;
 			this.avm0op.unpublishPort() ;
 			this.avm1op.unpublishPort() ;
-			this.rg0mop.unpublishPort() ;
-			this.rd0mop.unpublishPort() ;
 			this.avm2op.unpublishPort() ;
 			this.avm3op.unpublishPort() ;
-			this.rg1mop.unpublishPort() ;
-			this.rd1mop.unpublishPort() ;
+			this.rgmop.unpublishPort() ;
+			this.rdmop.unpublishPort() ;
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
@@ -253,12 +220,10 @@ extends		AbstractComponent
 			this.csop.unpublishPort() ;
 			this.avm0op.unpublishPort() ;
 			this.avm1op.unpublishPort() ;
-			this.rg0mop.unpublishPort() ;
-			this.rd0mop.unpublishPort() ;
 			this.avm2op.unpublishPort() ;
 			this.avm3op.unpublishPort() ;
-			this.rg1mop.unpublishPort() ;
-			this.rd1mop.unpublishPort() ;
+			this.rgmop.unpublishPort() ;
+			this.rdmop.unpublishPort() ;
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
