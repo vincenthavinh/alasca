@@ -52,7 +52,7 @@ public class TestAdmissionController extends AbstractCVM {
 		// each with 2 cores.
 		// --------------------------------------------------------------------
 		String computerURI = "computer0" ;
-		int numberOfProcessors = 2 ;
+		int numberOfProcessors = 4 ;
 		int numberOfCores = 2 ;
 		Set<Integer> admissibleFrequencies = new HashSet<Integer>() ;
 		admissibleFrequencies.add(1500) ;	// Cores can run at 1,5 GHz

@@ -17,6 +17,7 @@ import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerServicesOutboun
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
 import fr.sorbonne_u.datacenter.software.applicationvm.connectors.ApplicationVMManagementConnector;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI;
+import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMIntrospectionInboundPort;
 import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMManagementInboundPort;
 import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMManagementOutboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestNotificationInboundPort;
@@ -199,7 +200,7 @@ public class AdmissionController
 	public String processAskHosting(String requestNotificationInboundPortURI, int nbCoresByAVM) throws Exception {
 		this.logMessage("AdContr. "+ this.ac_URI+"| reçu askHosting() d'un applicationClient.");
 		
-		int nbAVMsByApp = 1;
+		int nbAVMsByApp = 2;
 		
 		/**Try hosting application**/
 		// choix arbitraire pour le moment
@@ -221,13 +222,15 @@ public class AdmissionController
 		//listes de stockage des URIs des avms.
 		ArrayList<String> avms_rsipURIs = new ArrayList<String>();
 		ArrayList<String> avms_amipURIs = new ArrayList<String>();
-		
+		ArrayList<String> avms_iipURIs = new ArrayList<String>();
 		for(int i=0; i<nbAVMsByApp; i++) {
 			//ports des AppVMs
 			String avm_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
 			String avm_amipURI = AbstractPort.generatePortURI(ApplicationVMManagementInboundPort.class);
+			String avm_iipURI = AbstractPort.generatePortURI(ApplicationVMIntrospectionInboundPort.class);
 			avms_rsipURIs.add(avm_rsipURI);
 			avms_amipURIs.add(avm_amipURI);
+			avms_iipURIs.add(avm_iipURI);
 		}
 		
 		/*Creation des composants dynamiques*/
@@ -241,7 +244,8 @@ public class AdmissionController
 						rd_rnipURI, 
 						rd_rsipURI, 
 						requestNotificationInboundPortURI, 
-						avms_rsipURIs});
+						avms_rsipURIs,
+						avms_iipURIs});
 		
 		this.logMessage("AdContr. "+ this.ac_URI+"| creation dynamique de "+rd_URI);
 		
@@ -252,6 +256,7 @@ public class AdmissionController
 					new Object[] {
 							"vm"+ i +"-"+ rd_URI,
 							avms_amipURIs.get(i),
+							avms_iipURIs.get(i),
 							avms_rsipURIs.get(i),
 							rd_rnipURI
 					}
