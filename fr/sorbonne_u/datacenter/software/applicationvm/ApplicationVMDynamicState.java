@@ -30,8 +30,8 @@ implements ApplicationVMDynamicStateI{
 	 * post	true			// no postcondition.
 	 * </pre>
 	 *
-	 * @param applicationVMURI		execution status of the processor cores.
-	 * @param idleStatus	current frequencies of the processor cores.
+	 * @param applicationVMURI		uri of avm.
+	 * @param idleStatus	avm idle or not
 	 */
 	public ApplicationVMDynamicState(String applicationVMURI, boolean idleStatus) {
 		super() ;

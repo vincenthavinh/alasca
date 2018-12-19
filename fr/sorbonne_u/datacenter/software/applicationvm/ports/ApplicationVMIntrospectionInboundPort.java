@@ -100,7 +100,7 @@ implements	ApplicationVMIntrospectionI
 	@Override
 	public Map<ApplicationVMPortTypes, String>	getAVMPortsURI()
 	throws Exception
-	{
+	{	
 		return this.getOwner().handleRequestSync(
 				new AbstractComponent.AbstractService<
 									Map<ApplicationVMPortTypes,
@@ -109,7 +109,7 @@ implements	ApplicationVMIntrospectionI
 					@Override
 					public Map<ApplicationVMPortTypes, String> call()
 					throws Exception
-					{
+					{	
 						return ((ApplicationVM)this.getOwner()).
 									getAVMPortsURI() ;
 					}

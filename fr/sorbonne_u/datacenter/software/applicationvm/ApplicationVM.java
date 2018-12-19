@@ -531,10 +531,22 @@ implements	ProcessorServicesNotificationConsumerI,
 						this.applicationVMManagementInboundPort.getPortURI()) ;
 		ret.put(ApplicationVMPortTypes.INTROSPECTION,
 						this.avmIntrospectionInboundPort.getPortURI()) ;
-		ret.put(ApplicationVMPortTypes.STATIC_STATE,
-						this.avmStaticStateDataInboundPort.getPortURI()) ;
-		ret.put(ApplicationVMPortTypes.DYNAMIC_STATE,
-						this.avmDynamicStateDataInboundPort.getPortURI()) ;
+		if(this.avmStaticStateDataInboundPort == null) {
+			ret.put(ApplicationVMPortTypes.STATIC_STATE,
+					null) ;
+		}
+		else {
+			ret.put(ApplicationVMPortTypes.STATIC_STATE,
+					this.avmStaticStateDataInboundPort.getPortURI()) ;
+		}
+		if(this.avmDynamicStateDataInboundPort == null) {
+			ret.put(ApplicationVMPortTypes.DYNAMIC_STATE,
+					null) ;
+		}
+		else {
+			ret.put(ApplicationVMPortTypes.DYNAMIC_STATE,
+					this.avmDynamicStateDataInboundPort.getPortURI()) ;
+		}
 		return ret ;
 	}
 
@@ -660,7 +672,7 @@ implements	ProcessorServicesNotificationConsumerI,
 	public	ApplicationVMDynamicStateI	getDynamicState()
 	throws Exception
 	{
-		return null ;
+		return new ApplicationVMDynamicState(this.vmURI, this.findIdleCore()!=null) ;
 	}
 
 	// ------------------------------------------------------------------------
