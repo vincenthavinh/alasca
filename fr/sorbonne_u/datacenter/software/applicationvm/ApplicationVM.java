@@ -735,4 +735,12 @@ implements	ProcessorServicesNotificationConsumerI,
 		this.toggleTracing();
 		this.toggleLogging();
 	}
+	
+	public void addAllocateCore(AllocatedCore allocatedCore) {
+		
+	}
+	
+	public void removeAllocateCore(AllocatedCore allocatedCore) {
+		
+	}
 }
