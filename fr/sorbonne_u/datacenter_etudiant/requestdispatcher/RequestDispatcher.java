@@ -1,15 +1,13 @@
 package fr.sorbonne_u.datacenter_etudiant.requestdispatcher;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.PriorityBlockingQueue;
-
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.components.exceptions.ComponentStartException;
-import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM.ApplicationVMPortTypes;
 import fr.sorbonne_u.datacenter.software.connectors.RequestNotificationConnector;
 import fr.sorbonne_u.datacenter.software.connectors.RequestSubmissionConnector;
 import fr.sorbonne_u.datacenter.software.interfaces.RequestI;
@@ -37,7 +35,9 @@ public class RequestDispatcher
 	protected Map<String, Long> req_startTimes;
 	
 	// liens avec les AVMs
+	protected Map<String, AVMtool> reqURIs_avms;
 	protected ArrayList<AVMtool> avms;
+	protected int avm_local_ID = 0;
 	protected int index = 0;
 	
 	// lien avec le RequestGenerator
@@ -75,6 +75,7 @@ public class RequestDispatcher
 		this.req_startTimes = new HashMap<String, Long>();
 		this.last_req_durations = new ArrayBlockingQueue<Long>(10);
 		this.avms = new ArrayList<AVMtool>();
+		this.reqURIs_avms = new HashMap<String, AVMtool>();
 		
 		//init des ports dont dispatcher est le owner
 		
@@ -115,6 +116,7 @@ public class RequestDispatcher
 			tmp.rsop = new RequestSubmissionOutboundPort(this);
 			this.addPort(tmp.rsop);
 			tmp.rsop.publishPort() ;
+			tmp.local_ID = this.avm_local_ID++;
 			
 			this.avms.add(tmp);
 		}
@@ -198,10 +200,18 @@ public class RequestDispatcher
 	
 	@Override
 	public void	acceptRequestSubmissionAndNotify(RequestI r) throws Exception {
-		this.logMessage("ReqDisp. "+ this.rdURI+"| accept request "+ r.getRequestURI()+" submission.");
+		for(AVMtool avm : this.avms) {
+			this.logMessage("avm-"+ avm.local_ID +" nbInstrs: "+ avm.nbInstrs);
+		}
 		
-		AVMtool chosen_avm = this.avms.get(index++%this.avms.size());
+		AVMtool chosen_avm = Collections.min(this.avms);
 		RequestSubmissionOutboundPort rsop = chosen_avm.rsop;
+		
+		chosen_avm.nbInstrs += r.getPredictedNumberOfInstructions();
+		this.reqURIs_avms.put(r.getRequestURI(), chosen_avm);
+
+		this.logMessage("ReqDisp. "+ this.rdURI+"| submits ["
+				+ r.getRequestURI() +"] to  [avm-"+ chosen_avm.local_ID +"].");
 		this.req_startTimes.put(r.getRequestURI(), System.currentTimeMillis());
 		rsop.submitRequestAndNotify(r) ;
 	}
@@ -211,10 +221,12 @@ public class RequestDispatcher
 		long duration = System.currentTimeMillis() - this.req_startTimes.remove(r.getRequestURI());
 		while(this.last_req_durations.offer(duration) == false) this.last_req_durations.remove();
 		
-		this.logMessage("ReqDisp. "+ this.rdURI +
-				"| is notified that request "+ r.getRequestURI() +
-				" has ended with "+ duration +
-				"ms and notify the request generator.") ;
+		AVMtool avm_that_sent = this.reqURIs_avms.remove(r.getRequestURI());
+		avm_that_sent.nbInstrs -= r.getPredictedNumberOfInstructions();
+
+		this.logMessage("ReqDisp. "+ this.rdURI + "| receives ["
+				+ r.getRequestURI() +"] from [avm-"+ avm_that_sent.local_ID +
+				"] in "+ duration +"ms") ;
 		this.logMessage("mean: "+ this.getAverageReqDuration() +", nb: "+ 
 				this.last_req_durations.size());
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
