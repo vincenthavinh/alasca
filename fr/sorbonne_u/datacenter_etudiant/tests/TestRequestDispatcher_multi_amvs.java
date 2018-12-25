@@ -188,8 +188,7 @@ extends		AbstractCVM
 					RequestNotificationInboundPortURIdispatcher,
 					RequestSubmissionInboundPortURIdispatcher,
 					RequestNotificationInboundPortURI,
-					listAVMs,
-					listAVMsIntrospection);
+					listAVMs);
 		this.addDeployedComponent(rd);
 		this.rd.toggleTracing();
 		this.rd.toggleLogging();
@@ -245,7 +244,7 @@ extends		AbstractCVM
 		// AbstractCVM.toggleDebugMode() ;
 		try {
 			final TestRequestDispatcher_multi_amvs trd = new TestRequestDispatcher_multi_amvs() ;
-			trd.startStandardLifeCycle(10000L) ;
+			trd.startStandardLifeCycle(100000L) ;
 			// Augment the time if you want to examine the traces after
 			// the execution of the program.
 			Thread.sleep(100000L) ;

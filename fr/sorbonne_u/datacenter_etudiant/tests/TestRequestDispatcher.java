@@ -154,8 +154,7 @@ extends		AbstractCVM
 					RequestNotificationInboundPortURIdispatcher,
 					RequestSubmissionInboundPortURIdispatcher,
 					RequestNotificationInboundPortURI,
-					listAVMs,
-					listAVMsIntrospection);
+					listAVMs);
 		this.addDeployedComponent(rd);
 		this.rd.toggleTracing();
 		this.rd.toggleLogging();

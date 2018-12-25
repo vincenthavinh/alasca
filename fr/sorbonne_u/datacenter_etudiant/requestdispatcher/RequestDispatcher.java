@@ -3,14 +3,13 @@ package fr.sorbonne_u.datacenter_etudiant.requestdispatcher;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.components.exceptions.ComponentStartException;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM.ApplicationVMPortTypes;
-import fr.sorbonne_u.datacenter.software.applicationvm.connectors.ApplicationVMIntrospectionConnector;
-import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMIntrospectionI;
-import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMIntrospectionOutboundPort;
 import fr.sorbonne_u.datacenter.software.connectors.RequestNotificationConnector;
 import fr.sorbonne_u.datacenter.software.connectors.RequestSubmissionConnector;
 import fr.sorbonne_u.datacenter.software.interfaces.RequestI;
@@ -33,24 +32,23 @@ public class RequestDispatcher
 	//nom de ce composant
 	protected String rdURI;
 	
-	// liste de port des VMs
-	protected ArrayList<String> requestSubmissionInboundPortsURI ; // AVMs
-	protected int index; // l'avm (index%(nb AVMs)) recoit la requete
-	protected ArrayList<String> introspectionInboundPortsURI ;
+	// temps des 10 dernieres requetes
+	ArrayBlockingQueue<Long> last_req_durations;
+	protected Map<String, Long> req_startTimes;
 	
-	// port de la RequestGenerator
+	// liens avec les AVMs
+	protected ArrayList<AVMtool> avms;
+	protected int index = 0;
+	
+	// lien avec le RequestGenerator
 	protected String requestNotificationInboundPortURI ; // RG
-	
-	// ports appartenant au dispatcher
-	protected RequestSubmissionInboundPort requestSubmissionInboundPort ;
-	protected HashMap<String, RequestSubmissionOutboundPort> requestSubmissionOutboundPorts ; // (inboundPort, outboundPort)
-	protected RequestNotificationInboundPort requestNotificationInboundPort ;
 	protected RequestNotificationOutboundPort requestNotificationOutboundPort ;
-	protected ArrayList<ApplicationVMIntrospectionOutboundPort> introspectionOutBoundPorts ;
 	
+	// InboundPorts appartenant au dispatcher
+	protected RequestSubmissionInboundPort requestSubmissionInboundPort ;
+	protected RequestNotificationInboundPort requestNotificationInboundPort ;
 	protected RequestDispatcherManagementInboundPort	requestDispatcherManagementInboundPort ;
 
-	protected Map<String, Long> timeStamp;
 	
 	public RequestDispatcher(
 		String rdURI,
@@ -58,8 +56,7 @@ public class RequestDispatcher
 		String requestNotificationInboundPortURIdispatcher,
 		String requestSubmissionInboundPortURIdispatcher,
 		String requestNotificationInboundPortURI, //RG
-		ArrayList<String> requestSubmissionInboundPortURIs /* AVMs */,
-		ArrayList<String> introspectionInboundPortURIs /* AVMs introspection */) throws Exception {
+		ArrayList<String> requestSubmissionInboundPortURIs /* AVMs */) throws Exception {
 		
 		super(1, 1);
 		
@@ -72,13 +69,12 @@ public class RequestDispatcher
 		assert	requestNotificationInboundPortURI != null ;
 		assert	requestSubmissionInboundPortURIs != null ;
 		assert  requestSubmissionInboundPortURIs.size() != 0;
-		assert  introspectionInboundPortURIs != null;
-		assert  introspectionInboundPortURIs.size() != 0 ;
 		
 		//initialisation
 		this.rdURI = rdURI;
-		this.index = 0;
-		this.timeStamp = new HashMap<String, Long>();
+		this.req_startTimes = new HashMap<String, Long>();
+		this.last_req_durations = new ArrayBlockingQueue<Long>(10);
+		this.avms = new ArrayList<AVMtool>();
 		
 		//init des ports dont dispatcher est le owner
 		
@@ -104,43 +100,33 @@ public class RequestDispatcher
 		
 		//required
 		
-		/*Submission*/
-		this.requestSubmissionOutboundPorts = new HashMap<String, RequestSubmissionOutboundPort>();
-		this.addRequiredInterface(RequestSubmissionI.class) ;
-		for(String requestSubmissionInboundPortURI : requestSubmissionInboundPortURIs) {
-			this.requestSubmissionOutboundPorts.put(requestSubmissionInboundPortURI, new RequestSubmissionOutboundPort(this)) ;
-			this.addPort(this.requestSubmissionOutboundPorts.get(requestSubmissionInboundPortURI)) ;
-			this.requestSubmissionOutboundPorts.get(requestSubmissionInboundPortURI).publishPort() ;
-		}
-		
 		/*Notification*/
 		this.addRequiredInterface(RequestNotificationI.class) ;
 		this.requestNotificationOutboundPort = new RequestNotificationOutboundPort(this) ;
 		this.addPort(this.requestNotificationOutboundPort) ;
 		this.requestNotificationOutboundPort.publishPort() ;
 		
-		/*Introspection*/
-		this.introspectionOutBoundPorts = new ArrayList<ApplicationVMIntrospectionOutboundPort>();
-		this.addRequiredInterface(ApplicationVMIntrospectionI.class);
-		for(int i=0; i<introspectionInboundPortURIs.size(); i++) {
-			this.introspectionOutBoundPorts.add(new ApplicationVMIntrospectionOutboundPort(this));
-			this.addPort(this.introspectionOutBoundPorts.get(i));
-			this.introspectionOutBoundPorts.get(i).publishPort();
-		}
+		//pour les AVMs:
 		
+		/*Submission*/
+		this.addRequiredInterface(RequestSubmissionI.class) ;
+		for(String requestSubmissionInboundPortURI : requestSubmissionInboundPortURIs) {
+			AVMtool tmp = new AVMtool(requestSubmissionInboundPortURI);
+			tmp.rsop = new RequestSubmissionOutboundPort(this);
+			this.addPort(tmp.rsop);
+			tmp.rsop.publishPort() ;
+			
+			this.avms.add(tmp);
+		}
+
 		//init des ports a connecter
-		this.requestSubmissionInboundPortsURI = requestSubmissionInboundPortURIs; //aVMs
 		this.requestNotificationInboundPortURI = requestNotificationInboundPortURI; //RG
-		this.introspectionInboundPortsURI = introspectionInboundPortURIs; // aVMs
-	
+
 		//Postconditions check
-		for(String rsip : requestSubmissionOutboundPorts.keySet()) {
-			assert	requestSubmissionOutboundPorts.get(rsip) != null && requestSubmissionOutboundPorts.get(rsip) instanceof RequestSubmissionI ;
+		for(AVMtool avm : this.avms) {
+			assert avm.rsop != null && avm.rsop instanceof RequestSubmissionI ;
 		}
 		assert	this.requestNotificationOutboundPort != null && this.requestNotificationOutboundPort instanceof RequestNotificationI ;
-		for(ApplicationVMIntrospectionOutboundPort avmiop : introspectionOutBoundPorts) {
-			assert avmiop != null && avmiop instanceof ApplicationVMIntrospectionI ;
-		}
 	}
 	
 	
@@ -160,19 +146,11 @@ public class RequestDispatcher
 				RequestNotificationConnector.class.getCanonicalName()
 		) ;  //Connection RG
 		
-		for(String requestSubmissionInboundPortURI : requestSubmissionInboundPortsURI) {
+		for(AVMtool avm : this.avms) {
 			this.doPortConnection(
-					this.requestSubmissionOutboundPorts.get(requestSubmissionInboundPortURI).getPortURI(),
-					requestSubmissionInboundPortURI,
+					avm.rsop.getPortURI(), 
+					avm.rsipURI, 
 					RequestSubmissionConnector.class.getCanonicalName()
-			) ;  //Connection aVM
-		}
-		
-		for(int i=0; i<introspectionInboundPortsURI.size(); i++) {
-			this.doPortConnection(
-					this.introspectionOutBoundPorts.get(i).getPortURI(),
-					introspectionInboundPortsURI.get(i),
-					ApplicationVMIntrospectionConnector.class.getCanonicalName()
 			);
 		}
 	}
@@ -181,15 +159,10 @@ public class RequestDispatcher
 	@Override
 	public void			finalise() throws Exception
 	{	
-		for(String requestSubmissionInboundPortURI : requestSubmissionInboundPortsURI) {
-			this.doPortDisconnection(
-				requestSubmissionOutboundPorts.get(requestSubmissionInboundPortURI).getPortURI()
-			);
+		for(AVMtool avm : this.avms) {
+			this.doPortDisconnection(avm.rsop.getPortURI());
 		}
 		this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI()) ; //deconnection RG
-		for(ApplicationVMIntrospectionOutboundPort avmiop : introspectionOutBoundPorts) {
-			this.doPortDisconnection(avmiop.getPortURI());
-		}
 		super.finalise() ;
 	}
 	
@@ -200,14 +173,11 @@ public class RequestDispatcher
 		try {
 			this.requestDispatcherManagementInboundPort.unpublishPort();
 			this.requestSubmissionInboundPort.unpublishPort() ;
-			for(String requestSubmissionInboundPortURI : requestSubmissionInboundPortsURI) {
-				requestSubmissionOutboundPorts.get(requestSubmissionInboundPortURI).unpublishPort();
+			for(AVMtool avm : this.avms) {
+				avm.rsop.unpublishPort();
 			}
 			this.requestNotificationInboundPort.unpublishPort();
 			this.requestNotificationOutboundPort.unpublishPort();
-			for(ApplicationVMIntrospectionOutboundPort avmiop : introspectionOutBoundPorts) {
-				avmiop.unpublishPort();
-			}
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
@@ -219,60 +189,49 @@ public class RequestDispatcher
 	// -------------------------------------------------------------------------
 	// Component internal services
 	// -------------------------------------------------------------------------
+	
+	@Override
+	public void acceptRequestSubmission(RequestI r) throws Exception {
+		//TODO not used
+	}
 
 	
 	@Override
 	public void	acceptRequestSubmissionAndNotify(RequestI r) throws Exception {
-		this.timeStamp.put(r.getRequestURI(), System.currentTimeMillis());
-		this.logMessage("ReqDisp. "+ this.rdURI+"| accept request "+ r.getRequestURI()+" submission and dispatch to AVMs.");
-		this.dispatchRequest(r);
-	}
-	
-	@Override
-	public void acceptRequestSubmission(RequestI r) throws Exception {
-		this.logMessage("ReqDisp. "+ this.rdURI+"| accept request "+ r.getRequestURI()+" submission and dispatch to AVMs.");
-		this.dispatchRequestWithOutNotification(r);
+		this.logMessage("ReqDisp. "+ this.rdURI+"| accept request "+ r.getRequestURI()+" submission.");
+		
+		AVMtool chosen_avm = this.avms.get(index++%this.avms.size());
+		RequestSubmissionOutboundPort rsop = chosen_avm.rsop;
+		this.req_startTimes.put(r.getRequestURI(), System.currentTimeMillis());
+		rsop.submitRequestAndNotify(r) ;
 	}
 
 	@Override
 	public void acceptRequestTerminationNotification(RequestI r) throws Exception {
-		long time = System.currentTimeMillis() - this.timeStamp.remove(r.getRequestURI());
+		long duration = System.currentTimeMillis() - this.req_startTimes.remove(r.getRequestURI());
+		while(this.last_req_durations.offer(duration) == false) this.last_req_durations.remove();
+		
 		this.logMessage("ReqDisp. "+ this.rdURI +
 				"| is notified that request "+ r.getRequestURI() +
-				" has ended with "+ time +"ms and notify the request generator.") ;
+				" has ended with "+ duration +
+				"ms and notify the request generator.") ;
+		this.logMessage("mean: "+ this.getAverageReqDuration() +", nb: "+ 
+				this.last_req_durations.size());
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
-	}
-	
-	// TODO changer la méthode de dispatch
-	public void dispatchRequest(RequestI r) throws Exception{
-		RequestSubmissionOutboundPort rsop = requestSubmissionOutboundPorts.get(getIdleAVM());
-		rsop.submitRequestAndNotify(r) ;
-	}
-	
-	public void dispatchRequestWithOutNotification(RequestI r) throws Exception{
-		RequestSubmissionOutboundPort rsop = requestSubmissionOutboundPorts.get(getIdleAVM());
-		rsop.submitRequest(r) ;
-	}
-	
-	// return type: URI de requestSubmissionInboundPort d'une avm
-	private String getIdleAVM() {
-		// renvoie l'avm libre
-		try {
-			for(ApplicationVMIntrospectionOutboundPort avmiop : introspectionOutBoundPorts) {
-				if(avmiop.getDynamicState().isIdle()) {
-					return avmiop.getAVMPortsURI().get(ApplicationVMPortTypes.REQUEST_SUBMISSION);
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		// tous les avms sont occupees, renvoie une avm occupee
-		return requestSubmissionInboundPortsURI.get(index++%requestSubmissionInboundPortsURI.size());
 	}
 
 	public void toggleTracingLogging() {
-		System.out.println("RD "+this.rdURI+" tooggled...");
 		this.toggleTracing();
 		this.toggleLogging();
+	}
+	
+	
+	private long getAverageReqDuration() {
+		long sum_durations = 0;
+		for(Long duration : this.last_req_durations) {
+			sum_durations += duration;
+		}
+		
+		return sum_durations / (long) this.last_req_durations.size();
 	}
 }
