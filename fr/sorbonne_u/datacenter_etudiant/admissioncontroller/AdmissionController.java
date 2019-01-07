@@ -59,7 +59,6 @@ public class AdmissionController
 	protected ApplicationHostingInboundPort ac_ApplicationSubmissionInboundPort;
 	
 	/**Computer**/
-	//outboundport
 	protected ArrayList<String> cp_ComputerServicesInboundPortURIs;
 	protected ArrayList<ComputerServicesOutboundPort> ac_ComputerServicesOutboundPorts;
 	
@@ -109,8 +108,8 @@ public class AdmissionController
 		/**required**/
 		//ComputerServices
 		this.ac_ComputerServicesOutboundPorts = new ArrayList<ComputerServicesOutboundPort>();
+		this.addRequiredInterface(ComputerServicesI.class) ;
 		for(int i=0; i<this.cp_ComputerServicesInboundPortURIs.size(); i++) {
-			this.addRequiredInterface(ComputerServicesI.class) ;
 			this.ac_ComputerServicesOutboundPorts.add(new ComputerServicesOutboundPort(this));
 			this.addPort(this.ac_ComputerServicesOutboundPorts.get(i)) ;
 			this.ac_ComputerServicesOutboundPorts.get(i).publishPort() ;

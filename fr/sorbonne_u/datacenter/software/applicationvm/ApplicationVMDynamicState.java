@@ -1,6 +1,9 @@
 package fr.sorbonne_u.datacenter.software.applicationvm;
 
+import java.util.Set;
+
 import fr.sorbonne_u.datacenter.data.AbstractTimeStampedData;
+import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMDynamicStateI;
 
 public class ApplicationVMDynamicState 
@@ -14,7 +17,7 @@ implements ApplicationVMDynamicStateI{
 	/** uri de l'applicationVM */
 	protected final String applicationVMURI;
 	/** l'état de l'applicationVM */
-	protected final boolean	idleStatus ;
+	protected final Set<AllocatedCore>	coresStatus ;
 	
 	// ------------------------------------------------------------------------
 	// Constructors
@@ -33,13 +36,13 @@ implements ApplicationVMDynamicStateI{
 	 * @param applicationVMURI		uri of avm.
 	 * @param idleStatus	avm idle or not
 	 */
-	public ApplicationVMDynamicState(String applicationVMURI, boolean idleStatus) {
+	public ApplicationVMDynamicState(String applicationVMURI, Set<AllocatedCore> coresStatus) {
 		super() ;
 
 		assert	applicationVMURI != null;
 		
 		this.applicationVMURI = applicationVMURI;
-		this.idleStatus = idleStatus;
+		this.coresStatus = coresStatus;
 	}
 	
 	/**
@@ -51,11 +54,11 @@ implements ApplicationVMDynamicStateI{
 	}
 
 	/**
-	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMDynamicStateI#isIdle()
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMDynamicStateI#getCoresStatus()
 	 */
 	@Override
-	public boolean isIdle() {
-		return idleStatus;
+	public Set<AllocatedCore> getCoresStatus() {
+		return coresStatus;
 	}
 
 }

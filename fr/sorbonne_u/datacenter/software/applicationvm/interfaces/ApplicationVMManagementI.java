@@ -81,4 +81,8 @@ extends		OfferedI,
 	public void connectOutboundPorts() throws Exception;
 	
 	public void toggleTracingLogging() throws Exception;
+	
+	public void addAllocateCore(AllocatedCore allocatedCore) throws Exception;
+	
+	public AllocatedCore removeAllocateCore() throws Exception;
 }

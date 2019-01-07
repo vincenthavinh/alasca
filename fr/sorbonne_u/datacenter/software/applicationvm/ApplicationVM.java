@@ -672,7 +672,8 @@ implements	ProcessorServicesNotificationConsumerI,
 	public	ApplicationVMDynamicStateI	getDynamicState()
 	throws Exception
 	{
-		return new ApplicationVMDynamicState(this.vmURI, this.findIdleCore()!=null) ;
+		return new ApplicationVMDynamicState(this.vmURI,
+											 this.allocatedCoresIdleStatus.keySet()) ;
 	}
 
 	// ------------------------------------------------------------------------
@@ -736,11 +737,37 @@ implements	ProcessorServicesNotificationConsumerI,
 		this.toggleLogging();
 	}
 	
-	public void addAllocateCore(AllocatedCore allocatedCore) {
-		
+	public void addAllocateCore(AllocatedCore allocatedCore) throws Exception {
+		this.allocatedCoresIdleStatus.put(allocatedCore, true)  ;
+		if (!this.processorServicesPorts.containsKey(allocatedCore.processorURI)) {
+			ProcessorServicesOutboundPort p = new ProcessorServicesOutboundPort(this) ;
+			this.addPort(p) ;
+			p.publishPort() ;
+			p.doConnection(
+				allocatedCore.processorInboundPortURI.get(ProcessorPortTypes.SERVICES),
+				ProcessorServicesConnector.class.getCanonicalName()) ;
+			this.processorServicesPorts.put(allocatedCore.processorURI, p) ;
+			ProcessorServicesNotificationInboundPort np = new ProcessorServicesNotificationInboundPort(this) ;
+			this.addPort(np) ;
+			np.publishPort() ;
+			this.processorNotificationInboundPorts.put(allocatedCore.processorURI, np) ;
+		}
 	}
 	
-	public void removeAllocateCore(AllocatedCore allocatedCore) {
-		
+	public AllocatedCore removeAllocateCore() throws Exception {
+		AllocatedCore allocatedCore = this.allocatedCoresIdleStatus.keySet().stream().findFirst().get();
+		this.allocatedCoresIdleStatus.remove(allocatedCore);
+		boolean removeprocessorServicePort = true;
+		for(AllocatedCore ac : this.allocatedCoresIdleStatus.keySet()) {
+			if(ac.processorURI.equals(allocatedCore.processorURI)) {
+				removeprocessorServicePort = false;
+			}
+		}
+		if(removeprocessorServicePort) {
+			this.doPortDisconnection(allocatedCore.processorInboundPortURI.get(ProcessorPortTypes.SERVICES));
+			this.processorServicesPorts.remove(allocatedCore.processorURI);
+			this.processorNotificationInboundPorts.remove(allocatedCore.processorURI);
+		}
+		return allocatedCore;
 	}
 }

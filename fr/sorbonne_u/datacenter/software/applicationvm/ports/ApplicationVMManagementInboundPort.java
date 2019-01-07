@@ -163,4 +163,29 @@ implements	ApplicationVMManagementI
 				}
 		);
 	}
+
+	@Override
+	public void addAllocateCore(AllocatedCore allocatedCore) throws Exception {
+		this.getOwner().handleRequestSync(
+				new AbstractComponent.AbstractService<Void>() {
+					@Override
+					public Void call() throws Exception {
+						((ApplicationVM)this.getOwner()).addAllocateCore(allocatedCore);
+						return null;
+					}
+				}
+		);
+	}
+
+	@Override
+	public AllocatedCore removeAllocateCore() throws Exception {
+		return this.getOwner().handleRequestSync(
+				new AbstractComponent.AbstractService<AllocatedCore>() {
+					@Override
+					public AllocatedCore call() throws Exception {
+						return ((ApplicationVM)this.getOwner()).removeAllocateCore();
+					}
+				}
+		);
+	}
 }

@@ -1,5 +1,7 @@
 package fr.sorbonne_u.datacenter.software.applicationvm.interfaces;
 
+import java.util.Set;
+
 //Copyright Jacques Malenfant, Sorbonne Universite.
 //
 //Jacques.Malenfant@lip6.fr
@@ -36,6 +38,7 @@ package fr.sorbonne_u.datacenter.software.applicationvm.interfaces;
 
 import fr.sorbonne_u.components.interfaces.DataOfferedI;
 import fr.sorbonne_u.components.interfaces.DataRequiredI;
+import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
 import fr.sorbonne_u.datacenter.interfaces.TimeStampingI;
 
 /**
@@ -75,16 +78,8 @@ extends		DataOfferedI.DataI,
 	public String		getApplicationVMURI() ;
 
 	/** 
-	 * return true if the application virtual machine is idle.
+	 * return allocatedCores status of the application virtual machine.
 	 * 
-	 * <p><strong>Contract</strong></p>
-	 * 
-	 * <pre>
-	 * pre	true			// no precondition.
-	 * post	true			// no postcondition.
-	 * </pre>
-	 *
-	 * @return	true if the application virtual machine is idle.
 	 */
-	public boolean		isIdle() ;
+	public Set<AllocatedCore>		getCoresStatus() ;
 }

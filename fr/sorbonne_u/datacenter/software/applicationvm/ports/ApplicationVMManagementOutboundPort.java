@@ -110,4 +110,14 @@ implements	ApplicationVMManagementI
 	public void toggleTracingLogging() throws Exception {
 		((ApplicationVMManagementI)this.connector).toggleTracingLogging();
 	}
+
+	@Override
+	public void addAllocateCore(AllocatedCore allocatedCore) throws Exception {
+		((ApplicationVMManagementI)this.connector).addAllocateCore(allocatedCore);
+	}
+
+	@Override
+	public AllocatedCore removeAllocateCore() throws Exception {
+		return ((ApplicationVMManagementI)this.connector).removeAllocateCore();
+	}
 }
