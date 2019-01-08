@@ -15,4 +15,9 @@ implements PerformanceControllerManagementI{
 	public void toggleTracingLogging() throws Exception {
 		((PerformanceControllerManagementI)this.offering).toggleTracingLogging();
 	}
+	
+	@Override
+	public void checkPerformance(long moyenne) throws Exception {
+		((PerformanceControllerManagementI)this.offering).checkPerformance(moyenne);
+	}
 }

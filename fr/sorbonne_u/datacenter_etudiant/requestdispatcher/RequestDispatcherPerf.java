@@ -19,10 +19,13 @@ import fr.sorbonne_u.datacenter.software.ports.RequestNotificationInboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestNotificationOutboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionInboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionOutboundPort;
-import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI;
-import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherManagementInboundPort;
+import fr.sorbonne_u.datacenter_etudiant.performanceController.connectors.PerformanceControllerManagementConnector;
+import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI;
+import fr.sorbonne_u.datacenter_etudiant.performanceController.ports.PerformanceControllerManagementOutboundPort;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherPerfManagementI;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherPerfManagementInboundPort;
 
-public class RequestDispatcher 
+public class RequestDispatcherPerf 
 	extends AbstractComponent
 	implements RequestSubmissionHandlerI, 
 			   RequestNotificationHandlerI{
@@ -44,18 +47,23 @@ public class RequestDispatcher
 	protected String requestNotificationInboundPortURI ; // RG
 	protected RequestNotificationOutboundPort requestNotificationOutboundPort ;
 	
+	// lien avec le PerformanceController
+	protected String pc_managementInboundPortURI; // PC
+	protected PerformanceControllerManagementOutboundPort pc_managementOutboundPort; 
+	
 	// InboundPorts appartenant au dispatcher
 	protected RequestSubmissionInboundPort requestSubmissionInboundPort ;
 	protected RequestNotificationInboundPort requestNotificationInboundPort ;
-	protected RequestDispatcherManagementInboundPort	requestDispatcherManagementInboundPort ;
+	protected RequestDispatcherPerfManagementInboundPort	requestDispatcherManagementInboundPort ;
 
 	
-	public RequestDispatcher(
+	public RequestDispatcherPerf(
 		String rdURI,
 		String managementInboundPortURIdispatcher,
 		String requestNotificationInboundPortURIdispatcher,
 		String requestSubmissionInboundPortURIdispatcher,
 		String requestNotificationInboundPortURI, //RG
+		String managementInboundPortURIPerformanceController,
 		ArrayList<String> requestSubmissionInboundPortURIs /* AVMs */) throws Exception {
 		
 		super(1, 1);
@@ -94,8 +102,8 @@ public class RequestDispatcher
 		this.requestNotificationInboundPort.publishPort() ;
 		
 		/*Management*/
-		this.addOfferedInterface(RequestDispatcherManagementI.class);
-		this.requestDispatcherManagementInboundPort = new RequestDispatcherManagementInboundPort(managementInboundPortURIdispatcher, this);
+		this.addOfferedInterface(RequestDispatcherPerfManagementI.class);
+		this.requestDispatcherManagementInboundPort = new RequestDispatcherPerfManagementInboundPort(managementInboundPortURIdispatcher, this);
 		this.addPort(this.requestDispatcherManagementInboundPort);
 		this.requestDispatcherManagementInboundPort.publishPort();
 		
@@ -120,6 +128,13 @@ public class RequestDispatcher
 			
 			this.avms.add(tmp);
 		}
+		
+		/*Performance Controller*/
+		this.pc_managementInboundPortURI = managementInboundPortURIPerformanceController;
+		this.addRequiredInterface(PerformanceControllerManagementI.class);
+		this.pc_managementOutboundPort = new PerformanceControllerManagementOutboundPort(this);
+		this.addPort(this.pc_managementOutboundPort);
+		this.pc_managementOutboundPort.publishPort();
 
 		//init des ports a connecter
 		this.requestNotificationInboundPortURI = requestNotificationInboundPortURI; //RG
@@ -142,12 +157,12 @@ public class RequestDispatcher
 	}
 	
 	public void connectOutboundPorts() throws Exception {
+
 		this.doPortConnection(
 				this.requestNotificationOutboundPort.getPortURI(),
 				requestNotificationInboundPortURI,
 				RequestNotificationConnector.class.getCanonicalName()
 		) ;  //Connection RG
-		
 		for(AVMtool avm : this.avms) {
 			this.doPortConnection(
 					avm.rsop.getPortURI(), 
@@ -155,8 +170,12 @@ public class RequestDispatcher
 					RequestSubmissionConnector.class.getCanonicalName()
 			);
 		}
+		this.doPortConnection(
+				this.pc_managementOutboundPort.getPortURI(),
+				this.pc_managementInboundPortURI,
+				PerformanceControllerManagementConnector.class.getCanonicalName()
+			); // connection PC
 	}
-	
 	
 	@Override
 	public void			finalise() throws Exception
@@ -165,6 +184,7 @@ public class RequestDispatcher
 			this.doPortDisconnection(avm.rsop.getPortURI());
 		}
 		this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI()) ; //deconnection RG
+		this.doPortDisconnection(this.pc_managementOutboundPort.getPortURI()); // deconnection PC
 		super.finalise() ;
 	}
 	
@@ -180,6 +200,7 @@ public class RequestDispatcher
 			}
 			this.requestNotificationInboundPort.unpublishPort();
 			this.requestNotificationOutboundPort.unpublishPort();
+			this.pc_managementOutboundPort.unpublishPort();
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
@@ -194,7 +215,7 @@ public class RequestDispatcher
 	
 	@Override
 	public void acceptRequestSubmission(RequestI r) throws Exception {
-		//TODO not used
+		// not used
 	}
 
 	
@@ -232,7 +253,7 @@ public class RequestDispatcher
 		long mean = this.getAverageReqDuration();
 		this.logMessage("mean: "+ mean +", nb: "+ 
 				this.last_req_durations.size());
-		
+		this.pc_managementOutboundPort.checkPerformance(mean);
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}
 

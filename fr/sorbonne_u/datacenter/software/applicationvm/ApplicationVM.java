@@ -139,6 +139,8 @@ implements	ProcessorServicesNotificationConsumerI,
 
 	/** URI of this application VM.										*/
 	protected String							vmURI ;
+	/** URI of the computer where the avm hosted */
+	protected String 							cpURI ;
 	/** Status, idle or in use, of each core allocated to this VM.		*/
 	protected Map<AllocatedCore,Boolean>		allocatedCoresIdleStatus ;
 	/** Map between processor URIs and the outbound ports to call them.	*/
@@ -223,6 +225,7 @@ implements	ProcessorServicesNotificationConsumerI,
 		assert	requestNotificationInboundPortURI != null ;
 
 		this.vmURI = vmURI ;
+		this.cpURI = null;
 		// hash map keeping track of the idle status of cores
 		this.allocatedCoresIdleStatus = new HashMap<AllocatedCore,Boolean>() ;
 		// queue of awaiting tasks
@@ -673,6 +676,7 @@ implements	ProcessorServicesNotificationConsumerI,
 	throws Exception
 	{
 		return new ApplicationVMDynamicState(this.vmURI,
+											 this.cpURI,
 											 this.allocatedCoresIdleStatus.keySet()) ;
 	}
 
@@ -688,7 +692,8 @@ implements	ProcessorServicesNotificationConsumerI,
 	throws Exception
 	{
 		assert	allocatedCores != null && allocatedCores.length != 0 ;
-
+		
+		cpURI = allocatedCores[0].processorURI.split("-")[0];
 		for(int i = 0 ; i < allocatedCores.length ; i++) {
 			this.allocatedCoresIdleStatus.put(allocatedCores[i], true)  ;
 		}
@@ -727,7 +732,6 @@ implements	ProcessorServicesNotificationConsumerI,
 	throws Exception
 	{
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override

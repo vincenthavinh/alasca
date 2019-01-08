@@ -82,4 +82,6 @@ extends		DataOfferedI.DataI,
 	 * 
 	 */
 	public Set<AllocatedCore>		getCoresStatus() ;
+	
+	public String		getComputerURI(); 
 }

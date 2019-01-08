@@ -1,13 +1,11 @@
 package fr.sorbonne_u.datacenter_etudiant.performanceController.ports;
 
-import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.ComponentI;
-import fr.sorbonne_u.components.ports.AbstractInboundPort;
-import fr.sorbonne_u.datacenter_etudiant.performanceController.PerformanceController;
+import fr.sorbonne_u.components.ports.AbstractOutboundPort;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI;
 
 public class PerformanceControllerManagementOutboundPort 
-extends AbstractInboundPort
+extends AbstractOutboundPort
 implements PerformanceControllerManagementI{
 
 	/**
@@ -27,28 +25,16 @@ implements PerformanceControllerManagementI{
 	
 	@Override
 	public void connectOutboundPorts() throws Exception {
-		this.getOwner().handleRequestSync(
-				new AbstractComponent.AbstractService<Void>() {
-					@Override
-					public Void call() throws Exception {
-						((PerformanceController)this.getOwner()).
-								connectOutboundPorts();
-						return null;
-					}
-				}) ;
+		((PerformanceControllerManagementI)this.connector).connectOutboundPorts();
 	}
 	
 	@Override
 	public void toggleTracingLogging() throws Exception {
-		this.getOwner().handleRequestAsync(
-				new AbstractComponent.AbstractService<Void>() {
-					@Override
-					public Void call() throws Exception {
-						((PerformanceController)this.getOwner()).
-								toggleTracingLogging();
-						return null;
-					}
-				}
-		) ;
+		((PerformanceControllerManagementI)this.connector).toggleTracingLogging();
+	}
+	
+	@Override
+	public void checkPerformance(long moyenne) throws Exception {
+		((PerformanceControllerManagementI)this.connector).checkPerformance(moyenne);
 	}
 }

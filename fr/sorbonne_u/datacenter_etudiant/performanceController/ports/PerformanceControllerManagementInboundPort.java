@@ -47,4 +47,17 @@ implements PerformanceControllerManagementI{
 					}
 				}) ;
 	}
+	
+	@Override
+	public void checkPerformance(long moyenne) throws Exception {
+		this.getOwner().handleRequestAsync(
+				new AbstractComponent.AbstractService<Void>() {
+					@Override
+					public Void call() throws Exception {
+						((PerformanceController)this.getOwner()).
+							checkPerformance(moyenne);
+						return null;
+					}
+				}) ;
+	}
 }

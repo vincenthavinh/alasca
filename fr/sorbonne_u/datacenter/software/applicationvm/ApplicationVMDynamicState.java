@@ -16,6 +16,8 @@ implements ApplicationVMDynamicStateI{
 	private static final long serialVersionUID = 1L;
 	/** uri de l'applicationVM */
 	protected final String applicationVMURI;
+	/** uri de l'ordinateur sur lequel l'AVM est hébergé */
+	protected final String computerURI;
 	/** l'état de l'applicationVM */
 	protected final Set<AllocatedCore>	coresStatus ;
 	
@@ -36,11 +38,11 @@ implements ApplicationVMDynamicStateI{
 	 * @param applicationVMURI		uri of avm.
 	 * @param idleStatus	avm idle or not
 	 */
-	public ApplicationVMDynamicState(String applicationVMURI, Set<AllocatedCore> coresStatus) {
+	public ApplicationVMDynamicState(String applicationVMURI, String computerURI, Set<AllocatedCore> coresStatus) {
 		super() ;
 
 		assert	applicationVMURI != null;
-		
+		this.computerURI = computerURI;
 		this.applicationVMURI = applicationVMURI;
 		this.coresStatus = coresStatus;
 	}
@@ -59,6 +61,11 @@ implements ApplicationVMDynamicStateI{
 	@Override
 	public Set<AllocatedCore> getCoresStatus() {
 		return coresStatus;
+	}
+	
+	@Override
+	public String getComputerURI() {
+		return computerURI;
 	}
 
 }

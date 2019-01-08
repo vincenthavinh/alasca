@@ -2,14 +2,14 @@ package fr.sorbonne_u.datacenter_etudiant.requestdispatcher;
 
 import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionOutboundPort;
 
-class AVMtool implements Comparable<AVMtool>{
+public class AVMtool implements Comparable<AVMtool>{
 
-	int local_ID;
-	final String rsipURI;
-	RequestSubmissionOutboundPort rsop;
-	long nbInstrs = 0;
+	public int local_ID;
+	public final String rsipURI;
+	public RequestSubmissionOutboundPort rsop;
+	public long nbInstrs = 0;
 	
-	AVMtool(String rsipURI) {
+	public AVMtool(String rsipURI) {
 		this.rsipURI = rsipURI;
 	}
 

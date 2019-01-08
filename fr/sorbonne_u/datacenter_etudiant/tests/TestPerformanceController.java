@@ -12,8 +12,8 @@ import fr.sorbonne_u.datacenter.hardware.processors.Processor;
 import fr.sorbonne_u.datacenter.hardware.tests.ComputerMonitor;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.PerformanceController;
-import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.RequestDispatcher;
-import fr.sorbonne_u.datacenter_etudiant.tests.integrators.IntegratorRequestDispatcher;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.RequestDispatcherPerf;
+import fr.sorbonne_u.datacenter_etudiant.tests.integrators.IntegratorPerformanceController;
 import fr.sorbonne_u.datacenterclient.requestgenerator.RequestGenerator;
 
 public class				TestPerformanceController
@@ -46,13 +46,14 @@ extends		AbstractCVM
 	protected RequestGenerator						rg ;
 	
 	/**		Request dispatcher component.								*/
-	protected RequestDispatcher 					rd ;
+	protected RequestDispatcherPerf 					rd ;
+	//protected RequestDispatcher 					rd;
 	
 	/**     Performance Controller component. 							*/
 	protected PerformanceController 				pc ;
 	
 	/** Integrator component.											*/
-	protected IntegratorRequestDispatcher								integ ;
+	protected IntegratorPerformanceController								integ ;
 
 	// ------------------------------------------------------------------------
 	// Component virtual machine constructors
@@ -101,6 +102,7 @@ extends		AbstractCVM
 		this.addDeployedComponent(c) ;
 		c.toggleLogging() ;
 		c.toggleTracing() ;
+		c.logMessage("computer0 start");
 		// --------------------------------------------------------------------
 
 		
@@ -131,6 +133,7 @@ extends		AbstractCVM
 		// follow the execution of individual requests.
 		this.vm.toggleTracing() ;
 		this.vm.toggleLogging() ;
+		vm.logMessage("vm0 start");
 		// --------------------------------------------------------------------
 		this.vm1 = new ApplicationVM("vm1",	// application vm component URI
 								    ApplicationVM1ManagementInboundPortURI,
@@ -142,42 +145,12 @@ extends		AbstractCVM
 		// follow the execution of individual requests.
 		this.vm1.toggleTracing() ;
 		this.vm1.toggleLogging() ;
+		vm1.logMessage("vm1 start");
 		// --------------------------------------------------------------------
 		ArrayList<String> listAVMs = new ArrayList<String>();
 		listAVMs.add(RequestSubmissionInboundPortURIAVM0);
 		listAVMs.add(RequestSubmissionInboundPortURIAVM1);
 		
-		// --------------------------------------------------------------------
-		// Creating the request dispatcher component.
-		// --------------------------------------------------------------------
-		this.rd = new RequestDispatcher(
-					"rd",
-					RequestDispatcherManagementInboundPortURIdispatcher,
-					RequestNotificationInboundPortURIdispatcher,
-					RequestSubmissionInboundPortURIdispatcher,
-					RequestNotificationInboundPortURI,
-					listAVMs);
-		this.addDeployedComponent(rd);
-		this.rd.toggleTracing();
-		this.rd.toggleLogging();
-		// --------------------------------------------------------------------
-		// Creating the request generator component.
-		// --------------------------------------------------------------------
-		this.rg = new RequestGenerator(
-					"rg",			// generator component URI
-					500.0,			// mean time between two requests
-					6000000000L,	// mean number of instructions in requests
-					RequestGeneratorManagementInboundPortURI,
-					RequestSubmissionInboundPortURIdispatcher,
-					RequestNotificationInboundPortURI) ;
-		this.addDeployedComponent(rg) ;
-
-		// Toggle on tracing and logging in the request generator to
-		// follow the submission and end of execution notification of
-		// individual requests.
-		this.rg.toggleTracing() ;
-		this.rg.toggleLogging() ;
-		// --------------------------------------------------------------------
 		// --------------------------------------------------------------------
 		// Creating the performance controller component.
 		// --------------------------------------------------------------------
@@ -198,24 +171,59 @@ extends		AbstractCVM
 					avmsIntrospectionInboundPortURIs,	
 					avmsManagementInboundPortURIs,
 					cp_computerServicesInboundPortURIs,
-					2, // FLOOR à changer après
-					5, // CEIL à changer après
-					5  /* NB AVM à changer après */ ) ;
-		this.addDeployedComponent(pc) ;
+					1000, // FLOOR à changer après
+					2000, // CEIL à changer après
+					1  /* NB AVM à changer après */ ) ;
+		this.addDeployedComponent(this.pc) ;
 		this.pc.toggleTracingLogging();
+		pc.logMessage("pc start");
 		// --------------------------------------------------------------------
 		
 		
-		
+		// --------------------------------------------------------------------
+		// Creating the request dispatcher component.
+		// --------------------------------------------------------------------
+		this.rd = new RequestDispatcherPerf(
+					"rd",
+					RequestDispatcherManagementInboundPortURIdispatcher,
+					RequestNotificationInboundPortURIdispatcher,
+					RequestSubmissionInboundPortURIdispatcher,
+					RequestNotificationInboundPortURI,
+					PerformanceControllerManagementInboundPortURI,
+					listAVMs);
+		this.addDeployedComponent(rd);
+		this.rd.toggleTracing();
+		this.rd.toggleLogging();
+		rd.logMessage("rd start");
+		// --------------------------------------------------------------------
+		// Creating the request generator component.
+		// --------------------------------------------------------------------
+		this.rg = new RequestGenerator(
+					"rg",			// generator component URI
+					500.0,			// mean time between two requests
+					6000000000L,	// mean number of instructions in requests
+					RequestGeneratorManagementInboundPortURI,
+					RequestSubmissionInboundPortURIdispatcher,
+					RequestNotificationInboundPortURI) ;
+		this.addDeployedComponent(rg) ;
+
+		// Toggle on tracing and logging in the request generator to
+		// follow the submission and end of execution notification of
+		// individual requests.
+		this.rg.toggleTracing() ;
+		this.rg.toggleLogging() ;
+		rg.logMessage("rg start");
+		// --------------------------------------------------------------------
 		// --------------------------------------------------------------------
 		// Creating the integrator component.
 		// --------------------------------------------------------------------
-		this.integ = new IntegratorRequestDispatcher(
-							ComputerServicesInboundPortURI,
-							ApplicationVM0ManagementInboundPortURI,
-							ApplicationVM1ManagementInboundPortURI,
-							RequestGeneratorManagementInboundPortURI,
-							RequestDispatcherManagementInboundPortURIdispatcher) ;
+		this.integ = new IntegratorPerformanceController(
+						ComputerServicesInboundPortURI,
+						ApplicationVM0ManagementInboundPortURI,
+						ApplicationVM1ManagementInboundPortURI,
+						RequestGeneratorManagementInboundPortURI,
+						RequestDispatcherManagementInboundPortURIdispatcher,
+						PerformanceControllerManagementInboundPortURI) ;
 		this.addDeployedComponent(this.integ) ;
 		// --------------------------------------------------------------------
 
@@ -237,8 +245,8 @@ extends		AbstractCVM
 		// Uncomment next line to execute components in debug mode.
 		// AbstractCVM.toggleDebugMode() ;
 		try {
-			final TestRequestDispatcher trd = new TestRequestDispatcher() ;
-			trd.startStandardLifeCycle(10000L) ;
+			final TestPerformanceController tpc = new TestPerformanceController() ;
+			tpc.startStandardLifeCycle(10000L) ;
 			// Augment the time if you want to examine the traces after
 			// the execution of the program.
 			Thread.sleep(100000L) ;
