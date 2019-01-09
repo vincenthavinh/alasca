@@ -11,5 +11,9 @@ extends OfferedI,
 	
 	public void toggleTracingLogging() throws Exception;
 	
+	public void addAVM(String reqSubURI) throws Exception ;
+	
+	public String removeAVM() throws Exception ;
+	
 	public long getAverageReqDuration() throws Exception;
 }

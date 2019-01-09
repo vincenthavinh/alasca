@@ -2,7 +2,6 @@ package fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports;
 
 import fr.sorbonne_u.components.ComponentI;
 import fr.sorbonne_u.components.ports.AbstractOutboundPort;
-import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherPerfManagementI;
 
 public class RequestDispatcherPerfManagementOutboundPort 
@@ -31,6 +30,15 @@ implements	RequestDispatcherPerfManagementI{
 		((RequestDispatcherPerfManagementI)this.connector).toggleTracingLogging();
 	}
 
+	public void addAVM(String reqSubURI) throws Exception {
+		((RequestDispatcherPerfManagementI)this.connector).addAVM(reqSubURI);
+	}
+
+	@Override
+	public String removeAVM() throws Exception {
+		return ((RequestDispatcherPerfManagementI)this.connector).removeAVM();
+	}
+	
 	@Override
 	public long getAverageReqDuration() throws Exception {
 		return ((RequestDispatcherPerfManagementI)this.connector).getAverageReqDuration();

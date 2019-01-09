@@ -26,7 +26,8 @@ extends		AbstractComponent
 {
 	protected String									rgmipURI ;
 	protected String									rdmipURI ;
-	protected String									csipURI ;
+	protected String									c0sipURI ;
+	protected String									c1sipURI ;
 	protected String									avm0ipURI ;
 	protected String									avm1ipURI ;
 	protected String									pcmipURI ;
@@ -38,7 +39,8 @@ extends		AbstractComponent
 	 *	connections 														*/
 	protected RequestDispatcherPerfManagementOutboundPort rdmop ;
 	/** Port connected to the computer component to access its services.	*/
-	protected ComputerServicesOutboundPort			csop ;
+	protected ComputerServicesOutboundPort			c0sop ;
+	protected ComputerServicesOutboundPort			c1sop ;
 	/** Port connected to the AVM component to allocate it cores.			*/
 	protected ApplicationVMManagementOutboundPort	avm0op ;
 	protected ApplicationVMManagementOutboundPort	avm1op ;
@@ -46,7 +48,8 @@ extends		AbstractComponent
 	protected PerformanceControllerManagementOutboundPort pcmop ;
 	
 	public				IntegratorPerformanceControllerIncrease(
-		String csipURI,
+		String c0sipURI,
+		String c1sipURI,
 		String avm0ipURI,
 		String avm1ipURI,
 		String rgmipURI,
@@ -56,7 +59,8 @@ extends		AbstractComponent
 	{
 		super(1, 0) ;
 
-		assert	csipURI != null 
+		assert	c0sipURI != null 
+				&& c1sipURI != null
 				&& avm0ipURI != null 
 				&& avm1ipURI != null 
 				&& rgmipURI != null 
@@ -67,7 +71,8 @@ extends		AbstractComponent
 		this.rdmipURI = rdmipURI ;
 		this.avm0ipURI = avm0ipURI ;
 		this.avm1ipURI = avm1ipURI ;
-		this.csipURI = csipURI ;
+		this.c0sipURI = c0sipURI ;
+		this.c1sipURI = c1sipURI ;
 		this.pcmipURI = pcmipURI ;
 
 		this.addRequiredInterface(ComputerServicesI.class) ;
@@ -76,9 +81,13 @@ extends		AbstractComponent
 		this.addRequiredInterface(ApplicationVMManagementI.class) ;
 		this.addRequiredInterface(PerformanceControllerManagementI.class);
 
-		this.csop = new ComputerServicesOutboundPort(this) ;
-		this.addPort(this.csop) ;
-		this.csop.publishPort() ;
+		this.c0sop = new ComputerServicesOutboundPort(this) ;
+		this.addPort(this.c0sop) ;
+		this.c0sop.publishPort() ;
+		
+		this.c1sop = new ComputerServicesOutboundPort(this) ;
+		this.addPort(this.c1sop) ;
+		this.c1sop.publishPort() ;
 
 		this.rgmop = new RequestGeneratorManagementOutboundPort(this) ;
 		this.addPort(rgmop) ;
@@ -111,8 +120,12 @@ extends		AbstractComponent
 
 		try {
 			this.doPortConnection(
-				this.csop.getPortURI(),
-				this.csipURI,
+				this.c0sop.getPortURI(),
+				this.c0sipURI,
+				ComputerServicesConnector.class.getCanonicalName()) ;
+			this.doPortConnection(
+				this.c1sop.getPortURI(),
+				this.c1sipURI,
 				ComputerServicesConnector.class.getCanonicalName()) ;
 			this.doPortConnection(
 				this.rgmop.getPortURI(),
@@ -151,13 +164,13 @@ extends		AbstractComponent
 		this.avm1op.connectOutboundPorts();
 //		this.pcmop.connectOutboundPorts();
 
-		AllocatedCore[] ac0 = this.csop.allocateCores(1) ;
+		AllocatedCore[] ac0 = this.c0sop.allocateCores(1) ;
 		this.avm0op.allocateCores(ac0) ;
-		AllocatedCore[] ac1 = this.csop.allocateCores(1) ;
+		AllocatedCore[] ac1 = this.c0sop.allocateCores(1) ;
 		this.avm1op.allocateCores(ac1) ;
 		this.rgmop.startGeneration() ;
 		// wait 20 seconds
-		Thread.sleep(50000L) ;
+		Thread.sleep(100000L) ;
 		// then stop the generation.
 		this.rgmop.stopGeneration() ;
 	}
@@ -168,7 +181,8 @@ extends		AbstractComponent
 	@Override
 	public void			finalise() throws Exception
 	{
-		this.doPortDisconnection(this.csop.getPortURI()) ;
+		this.doPortDisconnection(this.c0sop.getPortURI()) ;
+		this.doPortDisconnection(this.c1sop.getPortURI()) ;
 		this.doPortDisconnection(this.avm0op.getPortURI()) ;
 		this.doPortDisconnection(this.avm1op.getPortURI()) ;
 		this.doPortDisconnection(this.rgmop.getPortURI()) ;
@@ -184,7 +198,8 @@ extends		AbstractComponent
 	public void			shutdown() throws ComponentShutdownException
 	{
 		try {
-			this.csop.unpublishPort() ;
+			this.c0sop.unpublishPort() ;
+			this.c1sop.unpublishPort() ;
 			this.avm0op.unpublishPort() ;
 			this.avm1op.unpublishPort() ;
 			this.rgmop.unpublishPort() ;
@@ -203,7 +218,8 @@ extends		AbstractComponent
 	public void			shutdownNow() throws ComponentShutdownException
 	{
 		try {
-			this.csop.unpublishPort() ;
+			this.c0sop.unpublishPort() ;
+			this.c1sop.unpublishPort() ;
 			this.avm0op.unpublishPort() ;
 			this.avm1op.unpublishPort() ;
 			this.rgmop.unpublishPort() ;

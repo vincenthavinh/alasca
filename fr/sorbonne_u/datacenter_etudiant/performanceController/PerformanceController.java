@@ -20,6 +20,7 @@ import fr.sorbonne_u.datacenter.hardware.processors.connectors.ProcessorManageme
 import fr.sorbonne_u.datacenter.hardware.processors.interfaces.ProcessorIntrospectionI;
 import fr.sorbonne_u.datacenter.hardware.processors.ports.ProcessorIntrospectionOutboundPort;
 import fr.sorbonne_u.datacenter.hardware.processors.ports.ProcessorManagementOutboundPort;
+import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM.ApplicationVMPortTypes;
 import fr.sorbonne_u.datacenter.software.applicationvm.connectors.ApplicationVMIntrospectionConnector;
 import fr.sorbonne_u.datacenter.software.applicationvm.connectors.ApplicationVMManagementConnector;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMIntrospectionI;
@@ -50,6 +51,8 @@ extends AbstractComponent{
 	protected HashMap<AllocatedCore, ProcessorManagementOutboundPort> processorManagementOutboundPorts;
 	protected HashMap<String, ProcessorIntrospectionOutboundPort> processorIntrospectionOutboundPorts;
 	protected HashMap<String, ProcessorManagementOutboundPort> pmip_processorManagementOutboundPorts;
+	protected ArrayList<String> listAVMs_libre;
+	protected HashMap<String, Map<ApplicationVMPortTypes, String>> listAVMs_libre_ports;
 	
 	/**Computer**/
 	protected HashMap<String, String> cp_ComputerServicesInboundPortURIs;
@@ -78,6 +81,8 @@ extends AbstractComponent{
 			HashMap<String,String> cp_computerServicesInboundPortURIs /* computer service */,
 			int seuil_inf,
 			int seuil_sup,
+			ArrayList<String> listAVMs_libre,
+			HashMap<String, Map<ApplicationVMPortTypes, String>> listAVMs_libre_ports,
 			int nb_avms_manipulables) throws Exception {
 		
 		super(1,1);
@@ -95,6 +100,8 @@ extends AbstractComponent{
 		this.cp_ComputerServicesInboundPortURIs = cp_computerServicesInboundPortURIs;
 		this.avmsManagementInboundPortURIs = avmsManagementInboundPortURIs;
 		this.avmsIntrospectionInboundPortURIs = avmsIntrospectionInboundPortURIs;
+		this.listAVMs_libre = listAVMs_libre;
+		this.listAVMs_libre_ports = listAVMs_libre_ports;
 		this.index_avm = 0;
 		this.avmURIs = new ArrayList<String>();
 		for(String avmURI : avmsIntrospectionInboundPortURIs.keySet()) {
@@ -356,6 +363,67 @@ extends AbstractComponent{
 		this.allocatedCoreAdmissibleFrequencies.remove(ac);
 		logMessage("PerfControl. "+ this.pcURI+"| retire un coeur à l'avm "+ avm +".");
 	}
+	
+	private void addAVM() throws Exception {
+		if(listAVMs_libre.isEmpty()) {
+			logMessage("PerfControl. "+ this.pcURI + "| aucune augmentation de la performance n'a pu être effectuée.");
+			return;
+		}
+		String avmURI = listAVMs_libre.remove(0);
+		Map<ApplicationVMPortTypes, String> avmPorts = listAVMs_libre_ports.get(avmURI);
+		String avm_reqSub = avmPorts.get(ApplicationVMPortTypes.REQUEST_SUBMISSION);
+		String avm_intro = avmPorts.get(ApplicationVMPortTypes.INTROSPECTION);
+		String avm_manage = avmPorts.get(ApplicationVMPortTypes.MANAGEMENT);
+		
+		for(String cpuri : cp_ComputerServicesInboundPortURIs.keySet()) {
+			AllocatedCore ac = allocateCore(cpuri);
+			if(ac != null) {
+				
+				this.avmsIntrospectionInboundPortURIs.put(avmURI, avm_intro);
+				this.avmsIntrospectionOutboundPorts.put(avmURI, new ApplicationVMIntrospectionOutboundPort(this));
+				this.addPort(this.avmsIntrospectionOutboundPorts.get(avmURI)) ;
+				this.avmsIntrospectionOutboundPorts.get(avmURI).publishPort() ;
+				this.doPortConnection(
+						this.avmsIntrospectionOutboundPorts.get(avmURI).getPortURI(),
+						this.avmsIntrospectionInboundPortURIs.get(avmURI),
+						ApplicationVMIntrospectionConnector.class.getCanonicalName()) ;
+				
+				this.avmsManagementInboundPortURIs.put(avmURI, avm_manage);
+				this.avmsManagementOutboundPorts.put(avmURI, new ApplicationVMManagementOutboundPort(this));
+				this.addPort(this.avmsManagementOutboundPorts.get(avmURI)) ;
+				this.avmsManagementOutboundPorts.get(avmURI).publishPort() ;
+				this.doPortConnection(
+						this.avmsManagementOutboundPorts.get(avmURI).getPortURI(),
+						this.avmsManagementInboundPortURIs.get(avmURI),
+						ApplicationVMManagementConnector.class.getCanonicalName()) ;
+				
+				AllocatedCore[] ac_tab = new AllocatedCore[1];
+				ac_tab[0] = ac;
+				this.avmsManagementOutboundPorts.get(avmURI).allocateCores(ac_tab);
+				this.avmURIs.add(avmURI);
+				
+				connectProcessorPorts(ac);
+				rdmop.addAVM(avm_reqSub);
+				logMessage("PerfControl. "+ this.pcURI + "| ajoute une avm.");
+				return;
+			}
+		}
+		logMessage("PerfControl. "+ this.pcURI + "| aucune augmentation de la performance n'a pu être effectuée.");
+	}
+	
+//	private void removeAVM() throws Exception {
+//		if(this.avmURIs.size() == 1) {
+//			logMessage("PerfControl. "+ this.pcURI+"| aucune diminution de la performance n'a pu être effectuée.");
+//			return;
+//		}
+//		String reqSubURI = rdManagementOutboundPort.removeAVM();
+//		for(String avm : this.listAVMs_libre_ports.keySet()) {
+//			if(this.listAVMs_libre_ports.get(avm).get(ApplicationVMPortTypes.REQUEST_SUBMISSION).equals(reqSubURI)) {
+//				
+//				return;
+//			}
+//		}
+//	}
 	
 	private AllocatedCore allocateCore(String cpuri) throws Exception { //default 1
 		AllocatedCore[] allocatedCores = new AllocatedCore[0];

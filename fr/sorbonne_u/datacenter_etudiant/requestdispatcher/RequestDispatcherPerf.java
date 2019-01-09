@@ -272,4 +272,29 @@ public class RequestDispatcherPerf
 		
 		return sum_durations / (long) this.last_req_durations.size();
 	}
+	
+	public void addAVM(String avm_reqSubURI) throws Exception {
+		AVMtool tmp = new AVMtool(avm_reqSubURI);
+		tmp.rsop = new RequestSubmissionOutboundPort(this);
+		this.addPort(tmp.rsop);
+		tmp.rsop.publishPort() ;
+		tmp.local_ID = this.avm_local_ID++;
+		this.avms.add(tmp);
+		
+		this.doPortConnection(
+				tmp.rsop.getPortURI(), 
+				tmp.rsipURI, 
+				RequestSubmissionConnector.class.getCanonicalName()
+		);
+	}
+	
+	public String removeAVM() throws Exception {
+		if(this.avms.isEmpty()) {
+			return null;
+		}
+		AVMtool avm = this.avms.remove(0);
+		this.doPortDisconnection(avm.rsop.getPortURI());
+		avm.rsop.unpublishPort();
+		return avm.rsipURI;
+	}
 }
