@@ -10,10 +10,10 @@ import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerServicesOutboun
 import fr.sorbonne_u.datacenter.software.applicationvm.connectors.ApplicationVMManagementConnector;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI;
 import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMManagementOutboundPort;
-import fr.sorbonne_u.datacenter_etudiant.performanceController.connectors.PerformanceControllerManagementConnector;
+//import fr.sorbonne_u.datacenter_etudiant.performanceController.connectors.PerformanceControllerManagementConnector;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.ports.PerformanceControllerManagementOutboundPort;
-import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherManagementConnector;
+//import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherManagementConnector;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherPerfManagementConnector;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherPerfManagementI;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherPerfManagementOutboundPort;
@@ -157,7 +157,7 @@ extends		AbstractComponent
 		this.avm1op.allocateCores(ac1) ;
 		this.rgmop.startGeneration() ;
 		// wait 20 seconds
-		Thread.sleep(200000L) ;
+		Thread.sleep(50000L) ;
 		// then stop the generation.
 		this.rgmop.stopGeneration() ;
 	}

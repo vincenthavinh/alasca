@@ -16,7 +16,7 @@ import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.RequestDispatcherPerf
 import fr.sorbonne_u.datacenter_etudiant.tests.integrators.IntegratorPerformanceController;
 import fr.sorbonne_u.datacenterclient.requestgenerator.RequestGenerator;
 
-public class				TestPerformanceController
+public class				TestPerformanceControllerDecrease
 extends		AbstractCVM
 {
 	public static final String	ComputerServicesInboundPortURI = "cs-ibp" ;
@@ -59,7 +59,7 @@ extends		AbstractCVM
 	// Component virtual machine constructors
 	// ------------------------------------------------------------------------
 
-	public				TestPerformanceController()
+	public				TestPerformanceControllerDecrease()
 	throws Exception
 	{
 		super();
@@ -91,8 +91,8 @@ extends		AbstractCVM
 							computerURI,
 							admissibleFrequencies,
 							processingPower,  
-							1500,		// Test scenario 1, frequency = 1,5 GHz
-							// 3000,	// Test scenario 2, frequency = 3 GHz
+							//1500,		// Test scenario 1, frequency = 1,5 GHz
+							3000,	// Test scenario 2, frequency = 3 GHz
 							1500,		// max frequency gap within a processor
 							numberOfProcessors,
 							numberOfCores,
@@ -171,8 +171,8 @@ extends		AbstractCVM
 					avmsIntrospectionInboundPortURIs,	
 					avmsManagementInboundPortURIs,
 					cp_computerServicesInboundPortURIs,
-					1000, // FLOOR à changer après
-					2000, // CEIL à changer après
+					50000, // FLOOR à changer après
+					60000, // CEIL à changer après
 					1  /* NB AVM à changer après */ ) ;
 		this.addDeployedComponent(this.pc) ;
 		this.pc.toggleTracingLogging();
@@ -245,7 +245,7 @@ extends		AbstractCVM
 		// Uncomment next line to execute components in debug mode.
 		// AbstractCVM.toggleDebugMode() ;
 		try {
-			final TestPerformanceController tpc = new TestPerformanceController() ;
+			final TestPerformanceControllerDecrease tpc = new TestPerformanceControllerDecrease() ;
 			tpc.startStandardLifeCycle(50000L) ;
 			// Augment the time if you want to examine the traces after
 			// the execution of the program.

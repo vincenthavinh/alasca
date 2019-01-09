@@ -4,10 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
@@ -16,11 +13,9 @@ import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
 import fr.sorbonne_u.datacenter.hardware.computers.connectors.ComputerServicesConnector;
 import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI;
 import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerServicesOutboundPort;
-import fr.sorbonne_u.datacenter.hardware.processors.Processor;
 import fr.sorbonne_u.datacenter.hardware.processors.Processor.ProcessorPortTypes;
 import fr.sorbonne_u.datacenter.hardware.processors.connectors.ProcessorIntrospectionConnector;
 import fr.sorbonne_u.datacenter.hardware.processors.connectors.ProcessorManagementConnector;
-import fr.sorbonne_u.datacenter.hardware.processors.connectors.ProcessorServicesNotificationConnector;
 import fr.sorbonne_u.datacenter.hardware.processors.interfaces.ProcessorIntrospectionI;
 import fr.sorbonne_u.datacenter.hardware.processors.ports.ProcessorIntrospectionOutboundPort;
 import fr.sorbonne_u.datacenter.hardware.processors.ports.ProcessorManagementOutboundPort;
@@ -48,6 +43,7 @@ extends AbstractComponent{
 	protected HashMap<AllocatedCore, ArrayList<Integer>> allocatedCoreAdmissibleFrequencies;
 	protected HashMap<AllocatedCore, ProcessorManagementOutboundPort> processorManagementOutboundPorts;
 	protected HashMap<String, ProcessorIntrospectionOutboundPort> processorIntrospectionOutboundPorts;
+	protected HashMap<String, ProcessorManagementOutboundPort> pmip_processorManagementOutboundPorts;
 	
 	/**Computer**/
 	protected HashMap<String, String> cp_ComputerServicesInboundPortURIs;
@@ -99,7 +95,7 @@ extends AbstractComponent{
 		this.addOfferedInterface(ProcessorIntrospectionI.class);
 		this.processorIntrospectionOutboundPorts = new HashMap<String, ProcessorIntrospectionOutboundPort>();
 		this.processorManagementOutboundPorts = new HashMap<AllocatedCore, ProcessorManagementOutboundPort>();
-		
+		this.pmip_processorManagementOutboundPorts = new HashMap<String, ProcessorManagementOutboundPort>();
 		/*Management*/
 		this.addOfferedInterface(PerformanceControllerManagementI.class);
 		this.pcmip = new PerformanceControllerManagementInboundPort(pc_management_ipURI, this);
@@ -186,8 +182,8 @@ extends AbstractComponent{
 		for(String processor : this.processorIntrospectionOutboundPorts.keySet()) {
 			this.doPortDisconnection(this.processorIntrospectionOutboundPorts.get(processor).getPortURI());
 		}
-		for(AllocatedCore ac : this.processorManagementOutboundPorts.keySet()) {
-			this.doPortDisconnection(this.processorManagementOutboundPorts.get(ac).getPortURI());
+		for(String processor : this.pmip_processorManagementOutboundPorts.keySet()) {
+			this.doPortDisconnection(this.pmip_processorManagementOutboundPorts.get(processor).getPortURI());
 		}
 		super.finalise() ;
 	}
@@ -251,9 +247,9 @@ extends AbstractComponent{
 			int index = this.allocatedCoreAdmissibleFrequencies.get(ac).lastIndexOf(this.allocatedCoreStates.get(ac));
 			if(index < (this.allocatedCoreAdmissibleFrequencies.get(ac).size()-1)) {
 				int freq = this.allocatedCoreAdmissibleFrequencies.get(ac).get(index+1);
-				this.processorManagementOutboundPorts.get(ac).setCoreFrequency(ac.coreNo, freq);;
+				this.processorManagementOutboundPorts.get(ac).setCoreFrequency(ac.coreNo, freq);
 				this.logMessage("PerfControl. "+ this.pcURI + "| coeur "+ac.processorURI+"-"+ac.coreNo+" passe de "+this.allocatedCoreStates.get(ac)+"Hz à "+freq+"Hz.");
-				this.allocatedCoreStates.put(ac, freq);
+				this.allocatedCoreStates.replace(ac, freq);
 				nothingChange = false;
 				break;
 			}
@@ -272,7 +268,7 @@ extends AbstractComponent{
 				int freq = this.allocatedCoreAdmissibleFrequencies.get(ac).get(index-1);
 				this.processorManagementOutboundPorts.get(ac).setCoreFrequency(ac.coreNo, freq);
 				this.logMessage("PerfControl. "+ this.pcURI + "| coeur "+ac.processorURI+"-"+ac.coreNo+" passe de "+this.allocatedCoreStates.get(ac)+"Hz à "+freq+"Hz.");
-				this.allocatedCoreStates.put(ac, freq);
+				this.allocatedCoreStates.replace(ac, freq);
 				nothingChange = false;
 				break;
 			}
@@ -291,6 +287,7 @@ extends AbstractComponent{
 		AllocatedCore ac = allocateCore(cpuri);
 		if(ac != null) {
 			avmmop.addAllocateCore(ac);
+			this.connectProcessorPorts(ac);
 			this.number_of_cores_of_avm.put(avm, this.number_of_cores_of_avm.get(avm)+1);
 			logMessage("PerfControl. "+ this.pcURI+"| ajoute un coeur à l'avm "+ avm +".");
 		}
@@ -303,11 +300,17 @@ extends AbstractComponent{
 	private void findAVMAndRemoveAllocateCore() throws Exception {
 		String avm = Collections.max(this.number_of_cores_of_avm.entrySet(),
 									  Comparator.comparingInt(Map.Entry::getValue)).getKey();
-		
+		if(this.number_of_cores_of_avm.get(avm) == 0) {
+			logMessage("PerfControl. "+ this.pcURI+"| aucune diminution de la performance n'a pu être effectuée.");
+			// retire AVM
+			return;
+		}
 		AllocatedCore ac = this.avmsManagementOutboundPorts.get(avm).removeAllocateCore();
 		String computer_uri = ac.processorURI.split("-")[0];
 		this.pc_ComputerServicesOutboundPorts.get(computer_uri).releaseCore(ac);
 		this.number_of_cores_of_avm.put(avm, this.number_of_cores_of_avm.get(avm)-1);
+		this.allocatedCoreStates.remove(ac);
+		this.allocatedCoreAdmissibleFrequencies.remove(ac);
 		logMessage("PerfControl. "+ this.pcURI+"| retire un coeur à l'avm "+ avm +".");
 	}
 	
@@ -335,33 +338,37 @@ extends AbstractComponent{
 	private void updateProcessorData() throws Exception {
 		for(String avmuri : avmsIntrospectionOutboundPorts.keySet()) {
 			for(AllocatedCore ac : this.avmsIntrospectionOutboundPorts.get(avmuri).getDynamicState().getCoresStatus()) {
-				String piip = ac.processorInboundPortURI.get(ProcessorPortTypes.INTROSPECTION);
-				String pmip = ac.processorInboundPortURI.get(ProcessorPortTypes.MANAGEMENT);
-				if(!processorIntrospectionOutboundPorts.keySet().contains(piip)) {
-					ProcessorIntrospectionOutboundPort p = new ProcessorIntrospectionOutboundPort(this);
-					this.addPort(p);
-					p.publishPort() ;
-					this.doPortConnection(
-							p.getPortURI(), 
-							piip,
-							ProcessorIntrospectionConnector.class.getCanonicalName()) ;
-					processorIntrospectionOutboundPorts.put(piip, p);
-					
-					ProcessorManagementOutboundPort pm = new ProcessorManagementOutboundPort(this);
-					this.addPort(pm);
-					pm.publishPort();
-					this.doPortConnection(
-							pm.getPortURI(), 
-							pmip, 
-							ProcessorManagementConnector.class.getCanonicalName()) ;
-					processorManagementOutboundPorts.put(ac, pm);
-					
-				}
-				allocatedCoreStates.put(ac, processorIntrospectionOutboundPorts.get(piip).getDynamicState().getCurrentCoreFrequency(ac.coreNo));
-				ArrayList<Integer> sortedList = new ArrayList<Integer>(processorIntrospectionOutboundPorts.get(piip).getStaticState().getAdmissibleFrequencies());
-				Collections.sort(sortedList);
-				allocatedCoreAdmissibleFrequencies.put(ac, sortedList);
+				this.connectProcessorPorts(ac);
 			}
 		}
+	}
+	
+	private void connectProcessorPorts(AllocatedCore ac) throws Exception {
+		String piip = ac.processorInboundPortURI.get(ProcessorPortTypes.INTROSPECTION);
+		String pmip = ac.processorInboundPortURI.get(ProcessorPortTypes.MANAGEMENT);
+		if(!processorIntrospectionOutboundPorts.keySet().contains(piip)) {
+			ProcessorIntrospectionOutboundPort p = new ProcessorIntrospectionOutboundPort(this);
+			this.addPort(p);
+			p.publishPort() ;
+			this.doPortConnection(
+					p.getPortURI(), 
+					piip,
+					ProcessorIntrospectionConnector.class.getCanonicalName()) ;
+			processorIntrospectionOutboundPorts.put(piip, p);
+			
+			ProcessorManagementOutboundPort pm = new ProcessorManagementOutboundPort(this);
+			this.addPort(pm);
+			pm.publishPort();
+			this.doPortConnection(
+					pm.getPortURI(), 
+					pmip, 
+					ProcessorManagementConnector.class.getCanonicalName()) ;
+			pmip_processorManagementOutboundPorts.put(pmip, pm);
+		}
+		allocatedCoreStates.put(ac, processorIntrospectionOutboundPorts.get(piip).getDynamicState().getCurrentCoreFrequency(ac.coreNo));
+		ArrayList<Integer> sortedList = new ArrayList<Integer>(processorIntrospectionOutboundPorts.get(piip).getStaticState().getAdmissibleFrequencies());
+		Collections.sort(sortedList);
+		allocatedCoreAdmissibleFrequencies.put(ac, sortedList);
+		processorManagementOutboundPorts.put(ac, this.pmip_processorManagementOutboundPorts.get(pmip));
 	}
 }

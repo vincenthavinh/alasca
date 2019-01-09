@@ -42,6 +42,7 @@ public class RequestDispatcherPerf
 	protected ArrayList<AVMtool> avms;
 	protected int avm_local_ID = 0;
 	protected int index = 0;
+	protected int nb_req = 0;
 	
 	// lien avec le RequestGenerator
 	protected String requestNotificationInboundPortURI ; // RG
@@ -253,7 +254,10 @@ public class RequestDispatcherPerf
 		long mean = this.getAverageReqDuration();
 		this.logMessage("mean: "+ mean +", nb: "+ 
 				this.last_req_durations.size());
-		this.pc_managementOutboundPort.checkPerformance(mean);
+		this.nb_req++;
+		if(nb_req%5 == 0) {
+			this.pc_managementOutboundPort.checkPerformance(mean);
+		}
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}
 
