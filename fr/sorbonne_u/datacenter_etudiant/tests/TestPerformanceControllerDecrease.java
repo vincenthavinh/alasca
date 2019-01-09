@@ -13,7 +13,7 @@ import fr.sorbonne_u.datacenter.hardware.tests.ComputerMonitor;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.PerformanceController;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.RequestDispatcherPerf;
-import fr.sorbonne_u.datacenter_etudiant.tests.integrators.IntegratorPerformanceController;
+import fr.sorbonne_u.datacenter_etudiant.tests.integrators.IntegratorPerformanceControllerDecrease;
 import fr.sorbonne_u.datacenterclient.requestgenerator.RequestGenerator;
 
 public class				TestPerformanceControllerDecrease
@@ -53,7 +53,7 @@ extends		AbstractCVM
 	protected PerformanceController 				pc ;
 	
 	/** Integrator component.											*/
-	protected IntegratorPerformanceController								integ ;
+	protected IntegratorPerformanceControllerDecrease								integ ;
 
 	// ------------------------------------------------------------------------
 	// Component virtual machine constructors
@@ -217,7 +217,7 @@ extends		AbstractCVM
 		// --------------------------------------------------------------------
 		// Creating the integrator component.
 		// --------------------------------------------------------------------
-		this.integ = new IntegratorPerformanceController(
+		this.integ = new IntegratorPerformanceControllerDecrease(
 						ComputerServicesInboundPortURI,
 						ApplicationVM0ManagementInboundPortURI,
 						ApplicationVM1ManagementInboundPortURI,

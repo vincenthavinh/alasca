@@ -13,10 +13,10 @@ import fr.sorbonne_u.datacenter.hardware.tests.ComputerMonitor;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.PerformanceController;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.RequestDispatcherPerf;
-import fr.sorbonne_u.datacenter_etudiant.tests.integrators.IntegratorPerformanceController;
+import fr.sorbonne_u.datacenter_etudiant.tests.integrators.IntegratorPerformanceControllerIncrease;
 import fr.sorbonne_u.datacenterclient.requestgenerator.RequestGenerator;
 
-public class				TestPerformanceController
+public class				TestPerformanceControllerIncrease
 extends		AbstractCVM
 {
 	public static final String	ComputerServicesInboundPortURI = "cs-ibp" ;
@@ -53,13 +53,13 @@ extends		AbstractCVM
 	protected PerformanceController 				pc ;
 	
 	/** Integrator component.											*/
-	protected IntegratorPerformanceController								integ ;
+	protected IntegratorPerformanceControllerIncrease								integ ;
 
 	// ------------------------------------------------------------------------
 	// Component virtual machine constructors
 	// ------------------------------------------------------------------------
 
-	public				TestPerformanceController()
+	public				TestPerformanceControllerIncrease()
 	throws Exception
 	{
 		super();
@@ -217,7 +217,7 @@ extends		AbstractCVM
 		// --------------------------------------------------------------------
 		// Creating the integrator component.
 		// --------------------------------------------------------------------
-		this.integ = new IntegratorPerformanceController(
+		this.integ = new IntegratorPerformanceControllerIncrease(
 						ComputerServicesInboundPortURI,
 						ApplicationVM0ManagementInboundPortURI,
 						ApplicationVM1ManagementInboundPortURI,
@@ -245,7 +245,7 @@ extends		AbstractCVM
 		// Uncomment next line to execute components in debug mode.
 		// AbstractCVM.toggleDebugMode() ;
 		try {
-			final TestPerformanceController tpc = new TestPerformanceController() ;
+			final TestPerformanceControllerIncrease tpc = new TestPerformanceControllerIncrease() ;
 			tpc.startStandardLifeCycle(50000L) ;
 			// Augment the time if you want to examine the traces after
 			// the execution of the program.

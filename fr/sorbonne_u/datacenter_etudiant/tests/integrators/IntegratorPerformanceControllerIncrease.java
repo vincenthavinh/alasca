@@ -21,7 +21,7 @@ import fr.sorbonne_u.datacenterclient.requestgenerator.connectors.RequestGenerat
 import fr.sorbonne_u.datacenterclient.requestgenerator.interfaces.RequestGeneratorManagementI;
 import fr.sorbonne_u.datacenterclient.requestgenerator.ports.RequestGeneratorManagementOutboundPort;
 
-public class				IntegratorPerformanceController
+public class				IntegratorPerformanceControllerIncrease
 extends		AbstractComponent
 {
 	protected String									rgmipURI ;
@@ -45,7 +45,7 @@ extends		AbstractComponent
 	/** Port connected to the Performance controller to manage its connections */
 	protected PerformanceControllerManagementOutboundPort pcmop ;
 	
-	public				IntegratorPerformanceController(
+	public				IntegratorPerformanceControllerIncrease(
 		String csipURI,
 		String avm0ipURI,
 		String avm1ipURI,
@@ -151,9 +151,9 @@ extends		AbstractComponent
 		this.avm1op.connectOutboundPorts();
 //		this.pcmop.connectOutboundPorts();
 
-		AllocatedCore[] ac0 = this.csop.allocateCores(2) ;
+		AllocatedCore[] ac0 = this.csop.allocateCores(1) ;
 		this.avm0op.allocateCores(ac0) ;
-		AllocatedCore[] ac1 = this.csop.allocateCores(2) ;
+		AllocatedCore[] ac1 = this.csop.allocateCores(1) ;
 		this.avm1op.allocateCores(ac1) ;
 		this.rgmop.startGeneration() ;
 		// wait 20 seconds
