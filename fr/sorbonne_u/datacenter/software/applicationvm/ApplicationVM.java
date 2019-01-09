@@ -438,8 +438,8 @@ implements	ProcessorServicesNotificationConsumerI,
 		this.logMessage(this.vmURI + " terminates request " +
 											t.getRequest().getRequestURI()) ;
 		AllocatedCore ac = this.runningTasks.remove(t.getTaskURI()) ;
-		this.allocatedCoresIdleStatus.remove(ac) ;
-		this.allocatedCoresIdleStatus.put(ac, true) ;
+		//this.allocatedCoresIdleStatus.remove(ac);
+		this.allocatedCoresIdleStatus.replace(ac, true);
 		if (this.tasksToNotify.contains(t.getTaskURI())) {
 			this.tasksToNotify.remove(t.getTaskURI()) ;
 			this.requestNotificationOutboundPort.

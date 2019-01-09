@@ -246,7 +246,7 @@ extends		AbstractCVM
 		// AbstractCVM.toggleDebugMode() ;
 		try {
 			final TestPerformanceControllerDecrease tpc = new TestPerformanceControllerDecrease() ;
-			tpc.startStandardLifeCycle(50000L) ;
+			tpc.startStandardLifeCycle(100000L) ;
 			// Augment the time if you want to examine the traces after
 			// the execution of the program.
 			Thread.sleep(1000000L) ;

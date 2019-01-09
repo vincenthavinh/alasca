@@ -300,7 +300,7 @@ extends AbstractComponent{
 	private void findAVMAndRemoveAllocateCore() throws Exception {
 		String avm = Collections.max(this.number_of_cores_of_avm.entrySet(),
 									  Comparator.comparingInt(Map.Entry::getValue)).getKey();
-		if(this.number_of_cores_of_avm.get(avm) == 0) {
+		if(this.number_of_cores_of_avm.get(avm) == 1) {
 			logMessage("PerfControl. "+ this.pcURI+"| aucune diminution de la performance n'a pu être effectuée.");
 			// retire AVM
 			return;
