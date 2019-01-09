@@ -157,7 +157,7 @@ extends		AbstractComponent
 		this.avm1op.allocateCores(ac1) ;
 		this.rgmop.startGeneration() ;
 		// wait 20 seconds
-		Thread.sleep(100000L) ;
+		Thread.sleep(10000000L) ;
 		// then stop the generation.
 		this.rgmop.stopGeneration() ;
 	}

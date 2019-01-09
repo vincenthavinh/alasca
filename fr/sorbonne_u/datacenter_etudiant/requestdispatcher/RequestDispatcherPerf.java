@@ -255,9 +255,6 @@ public class RequestDispatcherPerf
 		this.logMessage("mean: "+ mean +", nb: "+ 
 				this.last_req_durations.size());
 		this.nb_req++;
-		if(nb_req%5 == 0) {
-			this.pc_managementOutboundPort.checkPerformance(mean);
-		}
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}
 
@@ -267,7 +264,7 @@ public class RequestDispatcherPerf
 	}
 	
 	
-	private long getAverageReqDuration() {
+	public long getAverageReqDuration() {
 		long sum_durations = 0;
 		for(Long duration : this.last_req_durations) {
 			sum_durations += duration;

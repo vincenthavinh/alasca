@@ -17,4 +17,9 @@ implements	RequestDispatcherPerfManagementI {
 		((RequestDispatcherPerfManagementI)this.offering).toggleTracingLogging();
 	}
 
+	@Override
+	public long getAverageReqDuration() throws Exception {
+		return ((RequestDispatcherPerfManagementI)this.offering).getAverageReqDuration();
+	}
+
 }

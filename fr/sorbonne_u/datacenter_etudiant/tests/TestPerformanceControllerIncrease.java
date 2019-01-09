@@ -168,6 +168,7 @@ extends		AbstractCVM
 		this.pc = new PerformanceController(
 					"pc",			// performance controller component URI
 					PerformanceControllerManagementInboundPortURI,
+					RequestDispatcherManagementInboundPortURIdispatcher,
 					avmsIntrospectionInboundPortURIs,	
 					avmsManagementInboundPortURIs,
 					cp_computerServicesInboundPortURIs,

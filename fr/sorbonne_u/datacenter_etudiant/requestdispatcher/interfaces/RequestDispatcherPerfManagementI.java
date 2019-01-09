@@ -10,4 +10,6 @@ extends OfferedI,
 	public void	connectOutboundPorts() throws Exception ;
 	
 	public void toggleTracingLogging() throws Exception;
+	
+	public long getAverageReqDuration() throws Exception;
 }

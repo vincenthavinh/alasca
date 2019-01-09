@@ -168,11 +168,12 @@ extends		AbstractCVM
 		this.pc = new PerformanceController(
 					"pc",			// performance controller component URI
 					PerformanceControllerManagementInboundPortURI,
+					RequestDispatcherManagementInboundPortURIdispatcher,
 					avmsIntrospectionInboundPortURIs,	
 					avmsManagementInboundPortURIs,
 					cp_computerServicesInboundPortURIs,
-					50000, // FLOOR à changer après
-					60000, // CEIL à changer après
+					500000, // FLOOR à changer après
+					600000, // CEIL à changer après
 					1  /* NB AVM à changer après */ ) ;
 		this.addDeployedComponent(this.pc) ;
 		this.pc.toggleTracingLogging();

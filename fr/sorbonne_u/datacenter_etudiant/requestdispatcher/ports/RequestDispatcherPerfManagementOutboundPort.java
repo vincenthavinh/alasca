@@ -7,7 +7,7 @@ import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDis
 
 public class RequestDispatcherPerfManagementOutboundPort 
 extends		AbstractOutboundPort
-implements	RequestDispatcherManagementI{
+implements	RequestDispatcherPerfManagementI{
 
 	private static final long serialVersionUID = 1L;
 
@@ -29,5 +29,10 @@ implements	RequestDispatcherManagementI{
 	@Override
 	public void toggleTracingLogging() throws Exception {
 		((RequestDispatcherPerfManagementI)this.connector).toggleTracingLogging();
+	}
+
+	@Override
+	public long getAverageReqDuration() throws Exception {
+		return ((RequestDispatcherPerfManagementI)this.connector).getAverageReqDuration();
 	}
 }

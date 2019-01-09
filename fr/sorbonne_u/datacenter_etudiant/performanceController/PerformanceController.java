@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
@@ -27,6 +28,11 @@ import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMIntros
 import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMManagementOutboundPort;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.ports.PerformanceControllerManagementInboundPort;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherPerfManagementConnector;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherPerfManagementI;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherManagementOutboundPort;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherPerfManagementOutboundPort;
 
 public class PerformanceController 
 extends AbstractComponent{	
@@ -59,9 +65,14 @@ extends AbstractComponent{
 	
 	protected PerformanceControllerManagementInboundPort pcmip;
 	
+	/**Request Dispatcher**/
+	protected String rdmipURI;
+	protected RequestDispatcherPerfManagementOutboundPort rdmop;
+	
 	public PerformanceController(
 			String pcURI,
 			String pc_management_ipURI,
+			String rd_management_ipURI,
 			HashMap<String,String> avmsIntrospectionInboundPortURIs /* AVMs introspection */,
 			HashMap<String,String> avmsManagementInboundPortURIs /* AVMs management */,
 			HashMap<String,String> cp_computerServicesInboundPortURIs /* computer service */,
@@ -80,6 +91,7 @@ extends AbstractComponent{
 		this.SEUIL_INF = seuil_inf;
 		this.SEUIL_SUP = seuil_sup;
 		this.NB_AVMS_MANIPULABLES = nb_avms_manipulables;
+		this.rdmipURI = rd_management_ipURI;
 		this.cp_ComputerServicesInboundPortURIs = cp_computerServicesInboundPortURIs;
 		this.avmsManagementInboundPortURIs = avmsManagementInboundPortURIs;
 		this.avmsIntrospectionInboundPortURIs = avmsIntrospectionInboundPortURIs;
@@ -101,6 +113,7 @@ extends AbstractComponent{
 		this.pcmip = new PerformanceControllerManagementInboundPort(pc_management_ipURI, this);
 		this.addPort(this.pcmip);
 		this.pcmip.publishPort();
+		
 		
 		/**required**/
 		//ComputerServices
@@ -129,6 +142,13 @@ extends AbstractComponent{
 			this.addPort(this.avmsManagementOutboundPorts.get(avmuri)) ;
 			this.avmsManagementOutboundPorts.get(avmuri).publishPort() ;
 		}
+		
+		//ReqDisp Management
+		this.addRequiredInterface(RequestDispatcherPerfManagementI.class);
+		this.rdmop = new RequestDispatcherPerfManagementOutboundPort(this);
+		this.addPort(this.rdmop);
+		this.rdmop.publishPort();
+		
 	}
 	
 	// Component life cycle
@@ -145,6 +165,11 @@ extends AbstractComponent{
 	}
 	
 	public void connectOutboundPorts() throws Exception {
+		this.doPortConnection(
+				this.rdmop.getPortURI(), 
+				this.rdmipURI, 
+				RequestDispatcherPerfManagementConnector.class.getCanonicalName());
+		
 		for(String cpuri : this.pc_ComputerServicesOutboundPorts.keySet()){
 			this.doPortConnection(
 					this.pc_ComputerServicesOutboundPorts.get(cpuri).getPortURI(),
@@ -170,6 +195,8 @@ extends AbstractComponent{
 	@Override
 	public void			finalise() throws Exception
 	{	
+		this.doPortDisconnection(this.rdmop.getPortURI());
+		
 		for(String cpuri : this.pc_ComputerServicesOutboundPorts.keySet()){
 			this.doPortDisconnection(this.pc_ComputerServicesOutboundPorts.get(cpuri).getPortURI()) ;
 		}
@@ -192,6 +219,8 @@ extends AbstractComponent{
 	public void			shutdown() throws ComponentShutdownException
 	{
 		try {
+			
+			this.rdmop.unpublishPort();
 			this.pcmip.unpublishPort();
 			for(String cpuri : this.pc_ComputerServicesOutboundPorts.keySet()){
 				this.pc_ComputerServicesOutboundPorts.get(cpuri).unpublishPort() ;
@@ -215,16 +244,30 @@ extends AbstractComponent{
 		
 	}
 
-	
 	public void toggleTracingLogging() {
 		this.toggleTracing();
 		this.toggleLogging();
+	}
+	
+	@Override
+	public void execute() throws Exception {
+		super.execute();
+		
+		periodicCheckMean(3);
 	}
 	
 	// -------------------------------------------------------------------------
 	// Component internal services
 	// -------------------------------------------------------------------------
 	
+	public void periodicCheckMean(int interval) throws Exception {
+		while(true) {
+			TimeUnit.SECONDS.sleep(interval);
+			long moyenne = this.rdmop.getAverageReqDuration();
+			checkPerformance(moyenne);
+		}
+	}
+
 	public void checkPerformance(long moyenne) throws Exception {
 		if(this.allocatedCoreStates.isEmpty()) {
 			this.updateProcessorData();
