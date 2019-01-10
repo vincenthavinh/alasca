@@ -19,9 +19,6 @@ import fr.sorbonne_u.datacenter.software.ports.RequestNotificationInboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestNotificationOutboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionInboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionOutboundPort;
-import fr.sorbonne_u.datacenter_etudiant.performanceController.connectors.PerformanceControllerManagementConnector;
-import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI;
-import fr.sorbonne_u.datacenter_etudiant.performanceController.ports.PerformanceControllerManagementOutboundPort;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherPerfManagementI;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherPerfManagementInboundPort;
 
@@ -48,10 +45,6 @@ public class RequestDispatcherPerf
 	protected String requestNotificationInboundPortURI ; // RG
 	protected RequestNotificationOutboundPort requestNotificationOutboundPort ;
 	
-	// lien avec le PerformanceController
-	protected String pc_managementInboundPortURI; // PC
-	protected PerformanceControllerManagementOutboundPort pc_managementOutboundPort; 
-	
 	// InboundPorts appartenant au dispatcher
 	protected RequestSubmissionInboundPort requestSubmissionInboundPort ;
 	protected RequestNotificationInboundPort requestNotificationInboundPort ;
@@ -64,7 +57,6 @@ public class RequestDispatcherPerf
 		String requestNotificationInboundPortURIdispatcher,
 		String requestSubmissionInboundPortURIdispatcher,
 		String requestNotificationInboundPortURI, //RG
-		String managementInboundPortURIPerformanceController,
 		ArrayList<String> requestSubmissionInboundPortURIs /* AVMs */) throws Exception {
 		
 		super(1, 1);
@@ -129,13 +121,6 @@ public class RequestDispatcherPerf
 			
 			this.avms.add(tmp);
 		}
-		
-		/*Performance Controller*/
-		this.pc_managementInboundPortURI = managementInboundPortURIPerformanceController;
-		this.addRequiredInterface(PerformanceControllerManagementI.class);
-		this.pc_managementOutboundPort = new PerformanceControllerManagementOutboundPort(this);
-		this.addPort(this.pc_managementOutboundPort);
-		this.pc_managementOutboundPort.publishPort();
 
 		//init des ports a connecter
 		this.requestNotificationInboundPortURI = requestNotificationInboundPortURI; //RG
@@ -171,11 +156,6 @@ public class RequestDispatcherPerf
 					RequestSubmissionConnector.class.getCanonicalName()
 			);
 		}
-		this.doPortConnection(
-				this.pc_managementOutboundPort.getPortURI(),
-				this.pc_managementInboundPortURI,
-				PerformanceControllerManagementConnector.class.getCanonicalName()
-			); // connection PC
 	}
 	
 	@Override
@@ -185,7 +165,6 @@ public class RequestDispatcherPerf
 			this.doPortDisconnection(avm.rsop.getPortURI());
 		}
 		this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI()) ; //deconnection RG
-		this.doPortDisconnection(this.pc_managementOutboundPort.getPortURI()); // deconnection PC
 		super.finalise() ;
 	}
 	
@@ -201,7 +180,6 @@ public class RequestDispatcherPerf
 			}
 			this.requestNotificationInboundPort.unpublishPort();
 			this.requestNotificationOutboundPort.unpublishPort();
-			this.pc_managementOutboundPort.unpublishPort();
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
@@ -252,8 +230,7 @@ public class RequestDispatcherPerf
 				+ r.getRequestURI() +"] from [avm-"+ avm_that_sent.local_ID +
 				"] in "+ duration +"ms") ;
 		long mean = this.getAverageReqDuration();
-		this.logMessage("mean: "+ mean +", nb: "+ 
-				this.last_req_durations.size());
+		this.logMessage("mean: "+ mean +", nb: "+ this.last_req_durations.size());
 		this.nb_req++;
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}

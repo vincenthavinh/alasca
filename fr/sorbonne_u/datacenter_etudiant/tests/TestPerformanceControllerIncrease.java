@@ -243,7 +243,6 @@ extends		AbstractCVM
 					RequestNotificationInboundPortURIdispatcher,
 					RequestSubmissionInboundPortURIdispatcher,
 					RequestNotificationInboundPortURI,
-					PerformanceControllerManagementInboundPortURI,
 					listAVMs);
 		this.addDeployedComponent(rd);
 		this.rd.toggleTracing();
