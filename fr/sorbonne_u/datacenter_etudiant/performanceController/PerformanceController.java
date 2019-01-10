@@ -260,14 +260,14 @@ extends AbstractComponent{
 	public void execute() throws Exception {
 		super.execute();
 		
-		periodicCheckMean(3);
+		controlAverageReqDuration(3);
 	}
 	
 	// -------------------------------------------------------------------------
 	// Component internal services
 	// -------------------------------------------------------------------------
 	
-	public void periodicCheckMean(int interval) throws Exception {
+	public void controlAverageReqDuration(int interval) throws Exception {
 		while(true) {
 			TimeUnit.SECONDS.sleep(interval);
 			long moyenne = this.rdmop.getAverageReqDuration();
@@ -284,15 +284,24 @@ extends AbstractComponent{
 		}
 		this.logMessage("PerfControl. "+ this.pcURI+"| temps moyenne "+moyenne+".");
 		if(moyenne < SEUIL_INF) {
-			this.findCoreAndDecreaseFrequency();
+			if(!this.decreaseFrequency()) {
+				//TODO
+//				if(!this.findAVMAndRemoveAllocateCore()) {
+//					this.removeAVM();
+//				}
+			}
 		}
 		if(moyenne > SEUIL_SUP) {
-			this.findCoreAndIncreaseFrequency();
+			if(!this.increaseFrequency()) {
+				//TODO
+//				if(!this.findAVMAndAddAllocateCore()) {
+//					this.addAVM();
+//				}
+			}
 		}
 	}
 	
-	private void findCoreAndIncreaseFrequency() throws Exception {
-		boolean nothingChange = true;
+	private boolean increaseFrequency() throws Exception {
 		for(AllocatedCore ac : this.allocatedCoreStates.keySet()) {
 			int index = this.allocatedCoreAdmissibleFrequencies.get(ac).lastIndexOf(this.allocatedCoreStates.get(ac));
 			if(index < (this.allocatedCoreAdmissibleFrequencies.get(ac).size()-1)) {
@@ -300,18 +309,14 @@ extends AbstractComponent{
 				this.processorManagementOutboundPorts.get(ac).setCoreFrequency(ac.coreNo, freq);
 				this.logMessage("PerfControl. "+ this.pcURI + "| coeur "+ac.processorURI+"-"+ac.coreNo+" passe de "+this.allocatedCoreStates.get(ac)+"Hz à "+freq+"Hz.");
 				this.allocatedCoreStates.replace(ac, freq);
-				nothingChange = false;
-				break;
+				return true;
 			}
 		}
-		if(nothingChange) {
-			this.logMessage("PerfControl. "+ this.pcURI + "| ne peut plus augmenter la fréquence des coeurs.");
-			this.findAVMAndAddAllocateCore();
-		}
+		this.logMessage("PerfControl. "+ this.pcURI + "| ne peut plus augmenter la fréquence des coeurs.");
+		return false;
 	}
 	
-	private void findCoreAndDecreaseFrequency() throws Exception {
-		boolean nothingChange = true;
+	private boolean decreaseFrequency() throws Exception {
 		for(AllocatedCore ac : this.allocatedCoreStates.keySet()) {
 			int index = this.allocatedCoreAdmissibleFrequencies.get(ac).indexOf(this.allocatedCoreStates.get(ac));
 			if(index > 0) {
@@ -319,14 +324,11 @@ extends AbstractComponent{
 				this.processorManagementOutboundPorts.get(ac).setCoreFrequency(ac.coreNo, freq);
 				this.logMessage("PerfControl. "+ this.pcURI + "| coeur "+ac.processorURI+"-"+ac.coreNo+" passe de "+this.allocatedCoreStates.get(ac)+"Hz à "+freq+"Hz.");
 				this.allocatedCoreStates.replace(ac, freq);
-				nothingChange = false;
-				break;
+				return true;
 			}
 		}
-		if(nothingChange) {
-			this.logMessage("PerfControl. "+ this.pcURI + "| ne peut plus diminuer la fréquence des coeurs.");
-			this.findAVMAndRemoveAllocateCore();
-		}
+		this.logMessage("PerfControl. "+ this.pcURI + "| ne peut plus diminuer la fréquence des coeurs.");
+		return false;
 	}
 	
 	private void findAVMAndAddAllocateCore() throws Exception {
