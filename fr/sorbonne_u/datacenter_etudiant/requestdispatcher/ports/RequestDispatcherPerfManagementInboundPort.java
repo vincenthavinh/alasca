@@ -75,14 +75,15 @@ implements	RequestDispatcherPerfManagementI {
 	}
 
 	@Override
-	public String removeAVM() throws Exception {
-		return this.getOwner().handleRequestSync(
-				new AbstractComponent.AbstractService<String>() {
-					@Override
-					public String call() throws Exception {
-						return ((RequestDispatcherPerf)this.getOwner()).
-										removeAVM() ;
-					}
-				}) ;
+	public void removeAVM(String avm_rsipURI) throws Exception {
+		this.getOwner().handleRequestSync(
+			new AbstractComponent.AbstractService<Void>() {
+				@Override
+				public Void call() throws Exception {
+					((RequestDispatcherPerf)this.getOwner()).
+									removeAVM(avm_rsipURI) ;
+					return null;
+				}
+			}) ;
 	}
 }

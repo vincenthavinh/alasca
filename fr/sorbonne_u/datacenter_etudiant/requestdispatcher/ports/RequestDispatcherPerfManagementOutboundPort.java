@@ -35,8 +35,8 @@ implements	RequestDispatcherPerfManagementI{
 	}
 
 	@Override
-	public String removeAVM() throws Exception {
-		return ((RequestDispatcherPerfManagementI)this.connector).removeAVM();
+	public void removeAVM(String avm_rsipURI) throws Exception {
+		((RequestDispatcherPerfManagementI)this.connector).removeAVM(avm_rsipURI);
 	}
 	
 	@Override

@@ -265,13 +265,19 @@ public class RequestDispatcherPerf
 		);
 	}
 	
-	public String removeAVM() throws Exception {
-		if(this.avms.isEmpty()) {
-			return null;
+	public void removeAVM(String avm_rsipURI) throws Exception {
+		AVMtool avm_toremove = null;
+		for(AVMtool avm : avms) {
+			if(avm.rsipURI.equals(avm_rsipURI)) {
+				avm_toremove = avm;
+				break;
+			}
 		}
-		AVMtool avm = this.avms.remove(0);
-		this.doPortDisconnection(avm.rsop.getPortURI());
-		avm.rsop.unpublishPort();
-		return avm.rsipURI;
+		if(avm_toremove != null) {
+			this.doPortDisconnection(avm_toremove.rsop.getPortURI());
+			this.avms.remove(avm_toremove);
+			avm_toremove.rsop.unpublishPort();
+			this.removePort(avm_toremove.rsop);
+		}
 	}
 }

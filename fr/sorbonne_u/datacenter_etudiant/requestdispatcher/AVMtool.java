@@ -4,10 +4,10 @@ import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionOutboundPort;
 
 public class AVMtool implements Comparable<AVMtool>{
 
-	public int local_ID;
-	public final String rsipURI;
-	public RequestSubmissionOutboundPort rsop;
-	public long nbInstrs = 0;
+	int local_ID;
+	final String rsipURI;
+	RequestSubmissionOutboundPort rsop;
+	long nbInstrs = 0;
 	
 	public AVMtool(String rsipURI) {
 		this.rsipURI = rsipURI;

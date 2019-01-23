@@ -2,6 +2,7 @@ package fr.sorbonne_u.datacenter_etudiant.admissioncontroller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
@@ -15,6 +16,7 @@ import fr.sorbonne_u.datacenter.hardware.computers.connectors.ComputerServicesCo
 import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI;
 import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerServicesOutboundPort;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
+import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM.ApplicationVMPortTypes;
 import fr.sorbonne_u.datacenter.software.applicationvm.connectors.ApplicationVMManagementConnector;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI;
 import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMIntrospectionInboundPort;
@@ -22,8 +24,10 @@ import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMManage
 import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMManagementOutboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestNotificationInboundPort;
 import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionInboundPort;
+import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationHostingHandlerI;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationHostingI;
+import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.AdmissionControllerServicesInboundPort;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.ApplicationHostingInboundPort;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.RequestDispatcher;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherManagementConnector;
@@ -37,7 +41,9 @@ public class AdmissionController
 	
 	/**URI de ce composant**/
 	protected String ac_URI;
-
+	/** admission controller inbound port through which management methods are called.	*/
+	protected AdmissionControllerServicesInboundPort admissionControllerServicesInboundPort;
+	
 	/**RequestDispatchers*/
 	//outboundports
 	/* clefs: RequestNotificationInboundPortURI du la Client Application.
@@ -76,7 +82,8 @@ public class AdmissionController
 			String ac_URI,
 			String ac_ApplicationSubmissionInboundPortURI,
 			ArrayList<String> cp_computerServicesInboundPortURIs,
-			String dcc_DynamicComponentCreationInboundPortURI
+			String dcc_DynamicComponentCreationInboundPortURI,
+			String ac_AdmissionControllerServicesInboundPortURI
 	) throws Exception {
 		super(1,1);
 		
@@ -86,6 +93,7 @@ public class AdmissionController
 		assert dcc_DynamicComponentCreationInboundPortURI != null;
 		assert cp_ComputerServicesInboundPortURIs != null;
 		assert cp_computerServicesInboundPortURIs.size() != 0;
+		assert ac_AdmissionControllerServicesInboundPortURI != null;
 		
 		//initilisation
 		
@@ -94,7 +102,6 @@ public class AdmissionController
 		this.dcc_DynamicComponentCreationInboundPortURI = dcc_DynamicComponentCreationInboundPortURI;
 		
 		this.ac_RequestDispatcherManagementOutboundPorts = new HashMap<String, RequestDispatcherManagementOutboundPort>();
-//		this.ac_ApplicationVMs = new HashMap<String, ArrayList<ApplicationVM>>();
 		this.ac_ApplicationVMManagementOutboundPorts = new HashMap<String, ArrayList<ApplicationVMManagementOutboundPort>>();
 		//initialisation des ports
 		
@@ -104,6 +111,14 @@ public class AdmissionController
 		this.ac_ApplicationSubmissionInboundPort = new ApplicationHostingInboundPort(ac_ApplicationSubmissionInboundPortURI, this);
 		this.addPort(this.ac_ApplicationSubmissionInboundPort) ;
 		this.ac_ApplicationSubmissionInboundPort.publishPort() ;
+		
+		// Adding admission controller interfaces, creating and publishing the related ports
+		this.addOfferedInterface(AdmissionControllerServicesI.class);
+		this.admissionControllerServicesInboundPort = 
+				new AdmissionControllerServicesInboundPort(
+						ac_AdmissionControllerServicesInboundPortURI, this);
+		this.addPort(admissionControllerServicesInboundPort);
+		this.admissionControllerServicesInboundPort.publishPort();
 		
 		/**required**/
 		//ComputerServices
@@ -121,8 +136,7 @@ public class AdmissionController
 		this.ac_DynamicComponentCreationOutboundPort.publishPort();
 
 		//Postconditions
-		assert  this.ac_ComputerServicesOutboundPorts != null ;//&& this.ac_ComputerServicesOutboundPorts instanceof ComputerServicesI ;
-//		assert  this.applicationVMManagementOutboundPort_AC != null && this.applicationVMManagementOutboundPort_AC instanceof ApplicationVMManagementI;
+		assert  this.ac_ComputerServicesOutboundPorts != null ;
 		assert  this.ac_DynamicComponentCreationOutboundPort != null && this.ac_DynamicComponentCreationOutboundPort instanceof DynamicComponentCreationI;
 	}
 
@@ -187,6 +201,7 @@ public class AdmissionController
 					avmmop.unpublishPort();
 				}
 			}
+			this.admissionControllerServicesInboundPort.unpublishPort();
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
@@ -334,7 +349,7 @@ public class AdmissionController
 	}
 	
 	// TODO ne pas parcourir tous les ordinateurs
-	private AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception {
+	public AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception {
 		AllocatedCore[] allocatedCores = new AllocatedCore[0];
 
 		for(ComputerServicesOutboundPort csop : this.ac_ComputerServicesOutboundPorts) {
@@ -349,5 +364,13 @@ public class AdmissionController
 		}
 		logMessage("AdContr. "+ this.ac_URI+"| Aucun coeur n'a pu être alloué.");
 		return allocatedCores;
+	}
+	
+	public void recycleFreeAVM(String AVMuri) throws Exception{
+		
+	}
+	
+	public Map<ApplicationVMPortTypes, String> allocateFreeAVM() throws Exception{
+		return null;
 	}
 }

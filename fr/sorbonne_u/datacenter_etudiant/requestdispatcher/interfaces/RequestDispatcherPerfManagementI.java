@@ -13,7 +13,7 @@ extends OfferedI,
 	
 	public void addAVM(String reqSubURI) throws Exception ;
 	
-	public String removeAVM() throws Exception ;
+	public void removeAVM(String avm_rsipURI) throws Exception ;
 	
 	public long getAverageReqDuration() throws Exception;
 }

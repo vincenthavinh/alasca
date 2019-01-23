@@ -22,10 +22,13 @@ public class TestAdmissionController extends AbstractCVM {
 	public static final String	cp_ComputerDynamicStateDataInboundPortURI = "cds-dip" ;
 
 	//admission controller
-	public static final String ac_ApplicationSubmissionInboundPortURI = "asip" ;
+	public static final String ac_ApplicationSubmissionInboundPortURI = "ac-asip" ;
+	public static final String ac_AdmissionControllerServicesInboundPortURI = "ac-ibp" ;
 	
 	//client application
-	public static final String	ca_ApplicationNotificationInboundPortURI = "anip" ;
+	public static final String	ca0_ApplicationNotificationInboundPortURI = "ca0-anip" ;
+	public static final String	ca1_ApplicationNotificationInboundPortURI = "ca1-anip" ;
+	public static final String	ca2_ApplicationNotificationInboundPortURI = "ca2-anip" ;
 	
 	//dynamic component creator 
 	public static final String dcc_DynamicComponentCreationInboundPortURI = AbstractCVM.DCC_INBOUNDPORT_URI_SUFFIX ;
@@ -33,7 +36,9 @@ public class TestAdmissionController extends AbstractCVM {
 	/** static components **/
 	protected ComputerMonitor cm ;
 	protected AdmissionController ac ;
-	protected ClientApplication ca;
+	protected ClientApplication ca0;
+	protected ClientApplication ca1;
+	protected ClientApplication ca2;
 
 	
 	
@@ -102,7 +107,8 @@ public class TestAdmissionController extends AbstractCVM {
 				ac_URI, 
 				ac_ApplicationSubmissionInboundPortURI, 
 				csipURIs,
-				dcc_DynamicComponentCreationInboundPortURI);
+				dcc_DynamicComponentCreationInboundPortURI,
+				ac_AdmissionControllerServicesInboundPortURI);
 		this.addDeployedComponent(this.ac);
 		this.ac.toggleTracing() ;
 		this.ac.toggleLogging() ;
@@ -113,38 +119,38 @@ public class TestAdmissionController extends AbstractCVM {
 		// Il faut lui passer l'admission controller pour communiquer avec
 		// --------------------------------------------------------------------
 		String ca0_URI = "ca0";
-		this.ca = new ClientApplication(
+		this.ca0 = new ClientApplication(
 				ca0_URI, 
-				ca_ApplicationNotificationInboundPortURI, 
+				ca0_ApplicationNotificationInboundPortURI, 
 				ac_ApplicationSubmissionInboundPortURI, 
 				2,
 				"rg-"+ca0_URI, 500.0, 6000000000L);
-		this.addDeployedComponent(this.ca);
-		this.ca.toggleTracing() ;
-		this.ca.toggleLogging() ;
+		this.addDeployedComponent(this.ca0);
+		this.ca0.toggleTracing() ;
+		this.ca0.toggleLogging() ;
 		
 		
 		String ca1_URI = "ca1";
-		this.ca = new ClientApplication(
+		this.ca1 = new ClientApplication(
 				ca1_URI, 
-				ca_ApplicationNotificationInboundPortURI, 
+				ca1_ApplicationNotificationInboundPortURI, 
 				ac_ApplicationSubmissionInboundPortURI, 
 				2,
 				"rg-"+ca1_URI, 500.0, 6000000000L);
-		this.addDeployedComponent(this.ca);
-		this.ca.toggleTracing() ;
-		this.ca.toggleLogging() ;
+		this.addDeployedComponent(this.ca1);
+		this.ca1.toggleTracing() ;
+		this.ca1.toggleLogging() ;
 		
 		String ca2_URI = "ca2";
-		this.ca = new ClientApplication(
+		this.ca2 = new ClientApplication(
 				ca2_URI, 
-				ca_ApplicationNotificationInboundPortURI, 
+				ca2_ApplicationNotificationInboundPortURI, 
 				ac_ApplicationSubmissionInboundPortURI, 
 				2,
 				"rg-"+ca2_URI, 500.0, 6000000000L);
-		this.addDeployedComponent(this.ca);
-		this.ca.toggleTracing() ;
-		this.ca.toggleLogging() ;
+		this.addDeployedComponent(this.ca2);
+		this.ca2.toggleTracing() ;
+		this.ca2.toggleLogging() ;
 		
 		// --------------------------------------------------------------------
 
