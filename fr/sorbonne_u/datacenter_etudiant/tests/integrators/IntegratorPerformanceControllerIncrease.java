@@ -14,9 +14,9 @@ import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMManage
 import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.ports.PerformanceControllerManagementOutboundPort;
 //import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherManagementConnector;
-import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherPerfManagementConnector;
-import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherPerfManagementI;
-import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherPerfManagementOutboundPort;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherManagementConnector;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherManagementOutboundPort;
 import fr.sorbonne_u.datacenterclient.requestgenerator.connectors.RequestGeneratorManagementConnector;
 import fr.sorbonne_u.datacenterclient.requestgenerator.interfaces.RequestGeneratorManagementI;
 import fr.sorbonne_u.datacenterclient.requestgenerator.ports.RequestGeneratorManagementOutboundPort;
@@ -37,7 +37,7 @@ extends		AbstractComponent
 	protected RequestGeneratorManagementOutboundPort	rgmop ;
 	/** Port connected to the request dispatcher component to manage its
 	 *	connections 														*/
-	protected RequestDispatcherPerfManagementOutboundPort rdmop ;
+	protected RequestDispatcherManagementOutboundPort rdmop ;
 	/** Port connected to the computer component to access its services.	*/
 	protected ComputerServicesOutboundPort			c0sop ;
 	protected ComputerServicesOutboundPort			c1sop ;
@@ -77,7 +77,7 @@ extends		AbstractComponent
 
 		this.addRequiredInterface(ComputerServicesI.class) ;
 		this.addRequiredInterface(RequestGeneratorManagementI.class) ;
-		this.addRequiredInterface(RequestDispatcherPerfManagementI.class) ;
+		this.addRequiredInterface(RequestDispatcherManagementI.class) ;
 		this.addRequiredInterface(ApplicationVMManagementI.class) ;
 		this.addRequiredInterface(PerformanceControllerManagementI.class);
 
@@ -93,7 +93,7 @@ extends		AbstractComponent
 		this.addPort(rgmop) ;
 		this.rgmop.publishPort() ;
 		
-		this.rdmop = new RequestDispatcherPerfManagementOutboundPort(this) ;
+		this.rdmop = new RequestDispatcherManagementOutboundPort(this) ;
 		this.addPort(rdmop) ;
 		this.rdmop.publishPort() ;
 
@@ -134,7 +134,7 @@ extends		AbstractComponent
 			this.doPortConnection(
 				this.rdmop.getPortURI(), 
 				rdmipURI, 
-				RequestDispatcherPerfManagementConnector.class.getCanonicalName()) ;
+				RequestDispatcherManagementConnector.class.getCanonicalName()) ;
 			this.doPortConnection(
 				this.avm0op.getPortURI(),
 				avm0ipURI,

@@ -17,4 +17,18 @@ implements	RequestDispatcherManagementI {
 		((RequestDispatcherManagementI)this.offering).toggleTracingLogging();
 	}
 
+	@Override
+	public void addAVM(String reqSubURI) throws Exception {
+		((RequestDispatcherManagementI)this.offering).addAVM(reqSubURI);
+	}
+
+	@Override
+	public void removeAVM(String avm_rsipURI) throws Exception {
+		((RequestDispatcherManagementI)this.offering).removeAVM(avm_rsipURI);
+	}
+
+	@Override
+	public long getAverageReqDuration() throws Exception {
+		return ((RequestDispatcherManagementI)this.offering).getAverageReqDuration();
+	}
 }

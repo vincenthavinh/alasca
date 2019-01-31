@@ -18,13 +18,13 @@ implements ApplicationHostingI {
 	}
 	
 	@Override
-	public String askHosting(String requestNotificationInboundPortURI, int nbCores) throws Exception {
+	public String askHosting(String requestNotificationInboundPortURI, int nbCores, int seuil_inf, int seuil_sup) throws Exception {
 		return this.getOwner().handleRequestSync(
 				new AbstractComponent.AbstractService<String>() {
 					@Override
 					public String call() throws Exception {
 						return ((ApplicationHostingHandlerI)this.getOwner()).
-							processAskHosting(requestNotificationInboundPortURI, nbCores) ;
+							processAskHosting(requestNotificationInboundPortURI, nbCores, seuil_inf, seuil_sup) ;
 					}
 				}) ;
 	}

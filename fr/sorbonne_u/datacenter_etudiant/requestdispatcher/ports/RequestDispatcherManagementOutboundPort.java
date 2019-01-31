@@ -29,4 +29,18 @@ implements	RequestDispatcherManagementI{
 	public void toggleTracingLogging() throws Exception {
 		((RequestDispatcherManagementI)this.connector).toggleTracingLogging();
 	}
+
+	public void addAVM(String reqSubURI) throws Exception {
+		((RequestDispatcherManagementI)this.connector).addAVM(reqSubURI);
+	}
+
+	@Override
+	public void removeAVM(String avm_rsipURI) throws Exception {
+		((RequestDispatcherManagementI)this.connector).removeAVM(avm_rsipURI);
+	}
+	
+	@Override
+	public long getAverageReqDuration() throws Exception {
+		return ((RequestDispatcherManagementI)this.connector).getAverageReqDuration();
+	}
 }

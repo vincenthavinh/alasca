@@ -736,9 +736,9 @@ implements	ProcessorServicesNotificationConsumerI,
 
 	@Override
 	public void toggleTracingLogging() throws Exception {
-		System.out.println( "VM " +this.vmURI +" tooggled...");
 		this.toggleTracing();
 		this.toggleLogging();
+		this.logMessage( "AVM " +this.vmURI +" start");
 	}
 	
 	public void addAllocateCore(AllocatedCore allocatedCore) throws Exception {

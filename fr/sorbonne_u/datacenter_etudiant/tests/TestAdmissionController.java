@@ -1,6 +1,5 @@
 package fr.sorbonne_u.datacenter_etudiant.tests;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,7 +27,6 @@ public class TestAdmissionController extends AbstractCVM {
 	//client application
 	public static final String	ca0_ApplicationNotificationInboundPortURI = "ca0-anip" ;
 	public static final String	ca1_ApplicationNotificationInboundPortURI = "ca1-anip" ;
-	public static final String	ca2_ApplicationNotificationInboundPortURI = "ca2-anip" ;
 	
 	//dynamic component creator 
 	public static final String dcc_DynamicComponentCreationInboundPortURI = AbstractCVM.DCC_INBOUNDPORT_URI_SUFFIX ;
@@ -38,12 +36,10 @@ public class TestAdmissionController extends AbstractCVM {
 	protected AdmissionController ac ;
 	protected ClientApplication ca0;
 	protected ClientApplication ca1;
-	protected ClientApplication ca2;
 
 	
 	
 	public TestAdmissionController() throws Exception {
-		// TODO Auto-generated constructor stub
 		super();
 	}
 	
@@ -99,8 +95,8 @@ public class TestAdmissionController extends AbstractCVM {
 		// Create the Admission Controller component.
 		// Il faut lui passer le(s) ordinateur(s) existant(s).
 		// --------------------------------------------------------------------
-		ArrayList<String> csipURIs = new ArrayList<String>();
-		csipURIs.add(cp_ComputerServicesInboundPortURI);
+		HashMap<String, String> csipURIs = new HashMap<String, String>();
+		csipURIs.put(computerURI, cp_ComputerServicesInboundPortURI);
 		
 		String ac_URI = "ac0";
 		this.ac = new AdmissionController(
@@ -124,7 +120,12 @@ public class TestAdmissionController extends AbstractCVM {
 				ca0_ApplicationNotificationInboundPortURI, 
 				ac_ApplicationSubmissionInboundPortURI, 
 				2,
-				"rg-"+ca0_URI, 500.0, 6000000000L);
+				"rg-"+ca0_URI,
+				500.0,
+				6000000000L,
+				2000, // performance controller seuil inf
+				3000 // performance controller seuil inf 
+		);
 		this.addDeployedComponent(this.ca0);
 		this.ca0.toggleTracing() ;
 		this.ca0.toggleLogging() ;
@@ -136,21 +137,15 @@ public class TestAdmissionController extends AbstractCVM {
 				ca1_ApplicationNotificationInboundPortURI, 
 				ac_ApplicationSubmissionInboundPortURI, 
 				2,
-				"rg-"+ca1_URI, 500.0, 6000000000L);
+				"rg-"+ca1_URI, 
+				500.0, 
+				6000000000L,
+				10000, // performance controller seuil inf
+				12000 // performance controller seuil inf 
+		);
 		this.addDeployedComponent(this.ca1);
 		this.ca1.toggleTracing() ;
 		this.ca1.toggleLogging() ;
-		
-		String ca2_URI = "ca2";
-		this.ca2 = new ClientApplication(
-				ca2_URI, 
-				ca2_ApplicationNotificationInboundPortURI, 
-				ac_ApplicationSubmissionInboundPortURI, 
-				2,
-				"rg-"+ca2_URI, 500.0, 6000000000L);
-		this.addDeployedComponent(this.ca2);
-		this.ca2.toggleTracing() ;
-		this.ca2.toggleLogging() ;
 		
 		// --------------------------------------------------------------------
 
@@ -173,7 +168,7 @@ public class TestAdmissionController extends AbstractCVM {
 			tac.startStandardLifeCycle(100000L) ;
 			// Augment the time if you want to examine the traces after
 			// the execution of the program.
-			Thread.sleep(100000L) ;
+			Thread.sleep(10000000L) ;
 			// Exit from Java (closes all trace windows...).
 			System.exit(0) ;
 		} catch (Exception e) {

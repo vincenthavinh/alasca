@@ -49,4 +49,41 @@ implements	RequestDispatcherManagementI {
 					}
 				}) ;
 	}
+
+	@Override
+	public long getAverageReqDuration() throws Exception {
+		return this.getOwner().handleRequestSync(
+				new AbstractComponent.AbstractService<Long>() {
+					@Override
+					public Long call() throws Exception {
+						return ((RequestDispatcher)this.getOwner()).getAverageReqDuration();
+					}
+				}) ;
+	}
+	
+	@Override
+	public void addAVM(String reqSubURI) throws Exception {
+		this.getOwner().handleRequestAsync(
+				new AbstractComponent.AbstractService<Void>() {
+					@Override
+					public Void call() throws Exception {
+						((RequestDispatcher)this.getOwner()).
+								addAVM(reqSubURI);
+						return null;
+					}
+				}) ;
+	}
+
+	@Override
+	public void removeAVM(String avm_rsipURI) throws Exception {
+		this.getOwner().handleRequestSync(
+			new AbstractComponent.AbstractService<Void>() {
+				@Override
+				public Void call() throws Exception {
+					((RequestDispatcher)this.getOwner()).
+									removeAVM(avm_rsipURI) ;
+					return null;
+				}
+			}) ;
+	}
 }

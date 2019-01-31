@@ -29,6 +29,11 @@ import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.Applicat
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationHostingI;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.AdmissionControllerServicesInboundPort;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.ApplicationHostingInboundPort;
+import fr.sorbonne_u.datacenter_etudiant.performanceController.PerformanceController;
+import fr.sorbonne_u.datacenter_etudiant.performanceController.connectors.PerformanceControllerManagementConnector;
+import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI;
+import fr.sorbonne_u.datacenter_etudiant.performanceController.ports.PerformanceControllerManagementInboundPort;
+import fr.sorbonne_u.datacenter_etudiant.performanceController.ports.PerformanceControllerManagementOutboundPort;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.RequestDispatcher;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherManagementConnector;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI;
@@ -50,6 +55,7 @@ public class AdmissionController
 	 * valeurs : le management port RequestDispatcher cree dynamiquement 
 	 * 			 pour gerer les requetes de cette application				*/
 	protected HashMap<String, RequestDispatcherManagementOutboundPort> ac_RequestDispatcherManagementOutboundPorts;
+	protected int rd_number;
 	
 	/**ApplicationVMs**/
 	//outboundports
@@ -57,22 +63,26 @@ public class AdmissionController
 	/* clefs: RequestNotificationInboundPortURI du la Client Application.
 	 * valeurs : les Submission ports des ApplicationVMs creees dynamiquement 
 	 * 			 pour gerer les requetes de cette application				*/
-//	protected HashMap<String, ArrayList<ApplicationVM>> ac_ApplicationVMs;
 	protected HashMap<String, ArrayList<ApplicationVMManagementOutboundPort>> ac_ApplicationVMManagementOutboundPorts;
+	
+	/**PerformanceControllers**/
+	protected HashMap<String, PerformanceControllerManagementOutboundPort> ac_PerformanceControllerManagementOutboundPorts;
+	protected HashMap<String, PerformanceController> ac_PerformanceController;
 	
 	/**Client**/
 	//inboundport
 	protected ApplicationHostingInboundPort ac_ApplicationSubmissionInboundPort;
 	
 	/**Computer**/
-	protected ArrayList<String> cp_ComputerServicesInboundPortURIs;
-	protected ArrayList<ComputerServicesOutboundPort> ac_ComputerServicesOutboundPorts;
+	protected HashMap<String, String> cp_ComputerServicesInboundPortURIs;
+	protected HashMap<String, ComputerServicesOutboundPort> ac_ComputerServicesOutboundPorts;
 	
 	/**DynamicComponentCreator**/
 	//outboundport
 	protected String dcc_DynamicComponentCreationInboundPortURI;
 	protected DynamicComponentCreationOutboundPort ac_DynamicComponentCreationOutboundPort;
 
+	protected int index_free_avm;
 	
 	//--------------------------------------------------------------------
 	//METHODS
@@ -81,7 +91,7 @@ public class AdmissionController
 	public AdmissionController(
 			String ac_URI,
 			String ac_ApplicationSubmissionInboundPortURI,
-			ArrayList<String> cp_computerServicesInboundPortURIs,
+			HashMap<String, String> cp_computerServicesInboundPortURIs,
 			String dcc_DynamicComponentCreationInboundPortURI,
 			String ac_AdmissionControllerServicesInboundPortURI
 	) throws Exception {
@@ -91,7 +101,7 @@ public class AdmissionController
 		assert ac_URI != null;
 		assert ac_ApplicationSubmissionInboundPortURI != null;
 		assert dcc_DynamicComponentCreationInboundPortURI != null;
-		assert cp_ComputerServicesInboundPortURIs != null;
+		assert cp_computerServicesInboundPortURIs != null;
 		assert cp_computerServicesInboundPortURIs.size() != 0;
 		assert ac_AdmissionControllerServicesInboundPortURI != null;
 		
@@ -103,6 +113,12 @@ public class AdmissionController
 		
 		this.ac_RequestDispatcherManagementOutboundPorts = new HashMap<String, RequestDispatcherManagementOutboundPort>();
 		this.ac_ApplicationVMManagementOutboundPorts = new HashMap<String, ArrayList<ApplicationVMManagementOutboundPort>>();
+		this.ac_PerformanceControllerManagementOutboundPorts = new HashMap<String, PerformanceControllerManagementOutboundPort>();
+		this.ac_PerformanceController = new HashMap<String, PerformanceController>();
+		
+		this.index_free_avm = 0;
+		this.rd_number = 0;
+		
 		//initialisation des ports
 		
 		/**offered**/
@@ -122,13 +138,14 @@ public class AdmissionController
 		
 		/**required**/
 		//ComputerServices
-		this.ac_ComputerServicesOutboundPorts = new ArrayList<ComputerServicesOutboundPort>();
+		this.ac_ComputerServicesOutboundPorts = new HashMap<String, ComputerServicesOutboundPort>();
 		this.addRequiredInterface(ComputerServicesI.class) ;
-		for(int i=0; i<this.cp_ComputerServicesInboundPortURIs.size(); i++) {
-			this.ac_ComputerServicesOutboundPorts.add(new ComputerServicesOutboundPort(this));
-			this.addPort(this.ac_ComputerServicesOutboundPorts.get(i)) ;
-			this.ac_ComputerServicesOutboundPorts.get(i).publishPort() ;
+		for(String cpURI : cp_ComputerServicesInboundPortURIs.keySet()) {
+			this.ac_ComputerServicesOutboundPorts.put(cpURI, new ComputerServicesOutboundPort(this));
+			this.addPort(this.ac_ComputerServicesOutboundPorts.get(cpURI)) ;
+			this.ac_ComputerServicesOutboundPorts.get(cpURI).publishPort() ;
 		}
+		
 		//DynamicComponentCreation
 		this.addRequiredInterface(DynamicComponentCreationI.class);
 		this.ac_DynamicComponentCreationOutboundPort = new DynamicComponentCreationOutboundPort(this);
@@ -148,10 +165,10 @@ public class AdmissionController
 		super.start() ;
 
 		try {
-			for(int i=0; i<this.ac_ComputerServicesOutboundPorts.size(); i++){
+			for(String cpURI : cp_ComputerServicesInboundPortURIs.keySet()) {
 				this.doPortConnection(
-						this.ac_ComputerServicesOutboundPorts.get(i).getPortURI(),
-						this.cp_ComputerServicesInboundPortURIs.get(i),
+						this.ac_ComputerServicesOutboundPorts.get(cpURI).getPortURI(),
+						this.cp_ComputerServicesInboundPortURIs.get(cpURI),
 						ComputerServicesConnector.class.getCanonicalName()) ;
 			}
 			this.doPortConnection(
@@ -166,8 +183,8 @@ public class AdmissionController
 	@Override
 	public void			finalise() throws Exception
 	{	
-		for(ComputerServicesOutboundPort csop : this.ac_ComputerServicesOutboundPorts){
-			this.doPortDisconnection(csop.getPortURI()) ;
+		for(String cpURI : ac_ComputerServicesOutboundPorts.keySet()) {
+			this.doPortDisconnection(ac_ComputerServicesOutboundPorts.get(cpURI).getPortURI()) ;
 		}
 		
 		this.doPortDisconnection(this.ac_DynamicComponentCreationOutboundPort.getPortURI()) ;
@@ -189,8 +206,8 @@ public class AdmissionController
 	{
 		try {
 			this.ac_ApplicationSubmissionInboundPort.unpublishPort() ;
-			for(ComputerServicesOutboundPort csop : this.ac_ComputerServicesOutboundPorts){
-				csop.unpublishPort() ;
+			for(String cpURI : ac_ComputerServicesOutboundPorts.keySet()) {
+				ac_ComputerServicesOutboundPorts.get(cpURI).unpublishPort();
 			}
 			this.ac_DynamicComponentCreationOutboundPort.unpublishPort() ;
 			for(RequestDispatcherManagementOutboundPort rdmop : this.ac_RequestDispatcherManagementOutboundPorts.values()) {
@@ -211,7 +228,7 @@ public class AdmissionController
 
 	
 	@Override
-	public String processAskHosting(String requestNotificationInboundPortURI, int nbCoresByAVM) throws Exception {
+	public String processAskHosting(String requestNotificationInboundPortURI, int nbCoresByAVM, int seul_inf, int seul_sup) throws Exception {
 		this.logMessage("AdContr. "+ this.ac_URI+"| reçu askHosting() d'un applicationClient.");
 		
 		int nbAVMsByApp = 2;
@@ -228,23 +245,36 @@ public class AdmissionController
 		/*generation des URIs des composants dynamiques*/
 		
 		//ports du RequestDispatcher
-		String rd_URI = "rd"+ this.ac_RequestDispatcherManagementOutboundPorts.size() +"-"+ this.ac_URI;
+		String rd_URI = "rd"+ rd_number++;
 		String rd_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
 		String rd_rnipURI = AbstractPort.generatePortURI(RequestNotificationInboundPort.class);
 		String rd_rdmipURI = AbstractPort.generatePortURI(RequestDispatcherManagementInboundPort.class);
 		
 		//listes de stockage des URIs des avms.
+		ArrayList<String> avms_URI = new ArrayList<String>();
 		ArrayList<String> avms_rsipURIs = new ArrayList<String>();
 		ArrayList<String> avms_amipURIs = new ArrayList<String>();
 		ArrayList<String> avms_iipURIs = new ArrayList<String>();
+
 		for(int i=0; i<nbAVMsByApp; i++) {
 			//ports des AppVMs
+			String avm_URI = "vm"+ i +"-"+ rd_URI;
 			String avm_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
 			String avm_amipURI = AbstractPort.generatePortURI(ApplicationVMManagementInboundPort.class);
 			String avm_iipURI = AbstractPort.generatePortURI(ApplicationVMIntrospectionInboundPort.class);
+			avms_URI.add(avm_URI);
 			avms_rsipURIs.add(avm_rsipURI);
 			avms_amipURIs.add(avm_amipURI);
 			avms_iipURIs.add(avm_iipURI);
+		}
+		
+		//port du performance controller
+		String pc_management_ipURI = AbstractPort.generatePortURI(PerformanceControllerManagementInboundPort.class);
+		ArrayList<String> computers_URI = new ArrayList<String>();
+		ArrayList<String> computersServices_URI = new ArrayList<String>();
+		for(String computerURI : cp_ComputerServicesInboundPortURIs.keySet()) {
+			computers_URI.add(computerURI);
+			computersServices_URI.add(cp_ComputerServicesInboundPortURIs.get(computerURI));
 		}
 		
 		/*Creation des composants dynamiques*/
@@ -258,8 +288,7 @@ public class AdmissionController
 						rd_rnipURI, 
 						rd_rsipURI, 
 						requestNotificationInboundPortURI, 
-						avms_rsipURIs,
-						avms_iipURIs});
+						avms_rsipURIs});
 		
 		this.logMessage("AdContr. "+ this.ac_URI+"| creation dynamique de "+rd_URI);
 		
@@ -278,7 +307,41 @@ public class AdmissionController
 			
 			this.logMessage("AdContr. "+ this.ac_URI+"| creation dynamique de "+"vm"+ i +"-"+ rd_URI);
 		}
-		
+		PerformanceController pc = new PerformanceController(
+				"pc-"+rd_URI,
+				pc_management_ipURI,
+				rd_rdmipURI, 
+				avms_URI, 
+				avms_iipURIs, 
+				avms_amipURIs,
+				computers_URI,
+				computersServices_URI,
+				seul_inf,
+				seul_sup,
+				admissionControllerServicesInboundPort.getPortURI()
+		);
+		ac_PerformanceController.put(requestNotificationInboundPortURI, pc);
+		//Performance controller
+		// pb pour le creer avec dynamic component
+//		this.ac_DynamicComponentCreationOutboundPort.createComponent(
+//				PerformanceController.class.getCanonicalName(), 
+//				new Object[]{
+//						"pc-"+rd_URI,
+//						pc_management_ipURI,
+//						rd_rdmipURI, 
+//						avms_URI, 
+//						avms_iipURIs, 
+//						avms_amipURIs,
+//						computers_URI,
+//						computersServices_URI,
+//						seul_inf,
+//						seul_sup,
+//						admissionControllerServicesInboundPort.getPortURI()
+//				}
+//		);
+//		
+		this.logMessage("AdContr. "+ this.ac_URI+"| creation de "+"pc-"+rd_URI);
+
 		/*Connexion de l'AdmissionController avec les composants dynamiques*/
 
 		//RequestDispatcherManagementOutboundPort de l'AC
@@ -317,6 +380,18 @@ public class AdmissionController
 		}
 		this.ac_ApplicationVMManagementOutboundPorts.put(requestNotificationInboundPortURI, avmmop_list);
 		
+		//PerformanceControllerOutboundPorts de l'AC
+		this.addRequiredInterface(PerformanceControllerManagementI.class);
+		PerformanceControllerManagementOutboundPort pcmop = new PerformanceControllerManagementOutboundPort(this);
+		this.addPort(pcmop);
+		pcmop.publishPort();
+		this.doPortConnection(
+				pcmop.getPortURI(), 
+				pc_management_ipURI, 
+				PerformanceControllerManagementConnector.class.getCanonicalName()
+		);
+		pcmop.toggleTracingLogging();
+		this.ac_PerformanceControllerManagementOutboundPorts.put(requestNotificationInboundPortURI, pcmop);
 		//retourne la RequestSubmissionInboundPortURI du Request Dispatcher.
 		return rd_rsipURI;
 	}
@@ -335,6 +410,9 @@ public class AdmissionController
 				avmmop.connectOutboundPorts();
 			}
 			
+			//connexion des outboundports du performanceController
+			this.ac_PerformanceControllerManagementOutboundPorts.get(requestNotificationInboundPortURI).connectOutboundPorts();
+			ac_PerformanceController.get(requestNotificationInboundPortURI).execute();
 			logMessage("AdContr. "+ this.ac_URI+"| ReqDisp dynamique et ReqGen du client connectés.");
 			
 		} catch (ComponentStartException e) {
@@ -352,7 +430,8 @@ public class AdmissionController
 	public AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception {
 		AllocatedCore[] allocatedCores = new AllocatedCore[0];
 
-		for(ComputerServicesOutboundPort csop : this.ac_ComputerServicesOutboundPorts) {
+		for(String cpURI : this.ac_ComputerServicesOutboundPorts.keySet()) {
+			ComputerServicesOutboundPort csop = this.ac_ComputerServicesOutboundPorts.get(cpURI);
 			allocatedCores = csop.allocateCores(nbCore) ;
 			if(allocatedCores.length == nbCore) {
 				logMessage("AdContr. "+ this.ac_URI+"| "+ allocatedCores.length + " coeur(s) alloué(s) depuis " + csop.getServerPortURI());
@@ -371,6 +450,23 @@ public class AdmissionController
 	}
 	
 	public Map<ApplicationVMPortTypes, String> allocateFreeAVM() throws Exception{
-		return null;
+		String avm_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
+		String avm_amipURI = AbstractPort.generatePortURI(ApplicationVMManagementInboundPort.class);
+		String avm_iipURI = AbstractPort.generatePortURI(ApplicationVMIntrospectionInboundPort.class);
+		
+		ApplicationVM avm = new ApplicationVM(
+						"free_vm"+index_free_avm,
+						avm_amipURI,
+						avm_iipURI,
+						avm_rsipURI,
+						null
+		);
+		
+		Map<ApplicationVMPortTypes, String> free_avm_ports = new HashMap<ApplicationVMPortTypes, String>();
+		free_avm_ports.put(ApplicationVMPortTypes.REQUEST_SUBMISSION, avm_rsipURI);
+		free_avm_ports.put(ApplicationVMPortTypes.MANAGEMENT, avm_amipURI);
+		free_avm_ports.put(ApplicationVMPortTypes.INTROSPECTION, avm_iipURI);
+		
+		return free_avm_ports;
 	}
 }

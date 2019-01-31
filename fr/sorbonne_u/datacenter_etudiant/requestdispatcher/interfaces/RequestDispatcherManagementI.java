@@ -10,4 +10,10 @@ extends OfferedI,
 	public void	connectOutboundPorts() throws Exception ;
 	
 	public void toggleTracingLogging() throws Exception;
+	
+	public void addAVM(String reqSubURI) throws Exception ;
+	
+	public void removeAVM(String avm_rsipURI) throws Exception ;
+	
+	public long getAverageReqDuration() throws Exception;
 }

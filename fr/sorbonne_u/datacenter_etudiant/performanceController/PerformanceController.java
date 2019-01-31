@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import fr.sorbonne_u.components.AbstractComponent;
 import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.components.exceptions.ComponentStartException;
+import fr.sorbonne_u.datacenter.TimeManagement;
 import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
 import fr.sorbonne_u.datacenter.hardware.computers.connectors.ComputerServicesConnector;
 import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI;
@@ -20,6 +21,7 @@ import fr.sorbonne_u.datacenter.hardware.processors.connectors.ProcessorManageme
 import fr.sorbonne_u.datacenter.hardware.processors.interfaces.ProcessorIntrospectionI;
 import fr.sorbonne_u.datacenter.hardware.processors.ports.ProcessorIntrospectionOutboundPort;
 import fr.sorbonne_u.datacenter.hardware.processors.ports.ProcessorManagementOutboundPort;
+import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM.ApplicationVMPortTypes;
 import fr.sorbonne_u.datacenter.software.applicationvm.connectors.ApplicationVMIntrospectionConnector;
 import fr.sorbonne_u.datacenter.software.applicationvm.connectors.ApplicationVMManagementConnector;
@@ -32,9 +34,9 @@ import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.Admissio
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.AdmissionControllerServicesOutboundPort;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.ports.PerformanceControllerManagementInboundPort;
-import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherPerfManagementConnector;
-import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherPerfManagementI;
-import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherPerfManagementOutboundPort;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherManagementConnector;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI;
+import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherManagementOutboundPort;
 
 public class PerformanceController 
 extends AbstractComponent{	
@@ -69,7 +71,7 @@ extends AbstractComponent{
 	
 	/**Request Dispatcher**/
 	protected String rdmipURI;
-	protected RequestDispatcherPerfManagementOutboundPort rdmop;
+	protected RequestDispatcherManagementOutboundPort rdmop;
 	
 	/**Admission Controller*/
 	protected String admissionControllerServicesInboundPortURI;
@@ -79,12 +81,15 @@ extends AbstractComponent{
 			String pcURI,
 			String pc_management_ipURI,
 			String rd_management_ipURI,
-			HashMap<String,String> avmsIntrospectionInboundPortURIs /* AVMs introspection */,
-			HashMap<String,String> avmsManagementInboundPortURIs /* AVMs management */,
-			HashMap<String,String> cp_computerServicesInboundPortURIs /* computer service */,
+			ArrayList<String> avms_URI, /* AVMs URI */
+			ArrayList<String> avmsIntrospectionInboundPortURIs /* AVMs introspection */,
+			ArrayList<String> avmsManagementInboundPortURIs /* AVMs management */,
+			ArrayList<String> computers_URI, /*Computer URI*/
+			ArrayList<String> cp_computerServicesInboundPortURIs /* computer service */,
 			int seuil_inf,
 			int seuil_sup,
-			String admissionControllerServicesInboundPortURI) throws Exception {
+			String admissionControllerServicesInboundPortURI
+	) throws Exception {
 		
 		super(1,1);
 		//Preconditions
@@ -98,15 +103,24 @@ extends AbstractComponent{
 		this.SEUIL_INF = seuil_inf;
 		this.SEUIL_SUP = seuil_sup;
 		this.rdmipURI = rd_management_ipURI;
-		this.cp_ComputerServicesInboundPortURIs = cp_computerServicesInboundPortURIs;
-		this.avmsManagementInboundPortURIs = avmsManagementInboundPortURIs;
-		this.avmsIntrospectionInboundPortURIs = avmsIntrospectionInboundPortURIs;
+		
+		// n'utilise pas HashMap directement dans le constructeur en raison du DynamicCreator ne supporte pas les hashMap
+		this.cp_ComputerServicesInboundPortURIs = new HashMap<String, String>();
+		for(int i=0; i<computers_URI.size(); i++) {
+			this.cp_ComputerServicesInboundPortURIs.put(computers_URI.get(i), cp_computerServicesInboundPortURIs.get(i));
+		}
+		
+		this.avmsManagementInboundPortURIs = new HashMap<String, String>();
+		this.avmsIntrospectionInboundPortURIs = new HashMap<String, String>();
+		for(int i=0; i<avms_URI.size(); i++) {
+			this.avmsManagementInboundPortURIs.put(avms_URI.get(i), avmsManagementInboundPortURIs.get(i));
+			this.avmsIntrospectionInboundPortURIs.put(avms_URI.get(i), avmsIntrospectionInboundPortURIs.get(i));
+		}
+		
 		this.admissionControllerServicesInboundPortURI = admissionControllerServicesInboundPortURI;
 		this.index_avm = 0;
-		this.avmURIs = new ArrayList<String>();
-		for(String avmURI : avmsIntrospectionInboundPortURIs.keySet()) {
-			avmURIs.add(avmURI);
-		}
+		this.avmURIs = avms_URI;
+		this.listAVMs_libre = new ArrayList<String>();
 		this.number_of_cores_of_avm = new HashMap<String, Integer>();
 		this.allocatedCoreAdmissibleFrequencies = new HashMap<AllocatedCore, ArrayList<Integer>>();
 		this.allocatedCoreStates = new HashMap<AllocatedCore, Integer>();
@@ -151,8 +165,8 @@ extends AbstractComponent{
 		}
 		
 		//ReqDisp Management
-		this.addRequiredInterface(RequestDispatcherPerfManagementI.class);
-		this.rdmop = new RequestDispatcherPerfManagementOutboundPort(this);
+		this.addRequiredInterface(RequestDispatcherManagementI.class);
+		this.rdmop = new RequestDispatcherManagementOutboundPort(this);
 		this.addPort(this.rdmop);
 		this.rdmop.publishPort();
 		
@@ -170,18 +184,18 @@ extends AbstractComponent{
 	public void			start() throws ComponentStartException
 	{
 		super.start() ;
-		try{
-			this.connectOutboundPorts();
-		}catch(Exception e) {
-			throw new ComponentStartException();
-		}
+//		try{
+//			this.connectOutboundPorts();
+//		}catch(Exception e) {
+//			throw new ComponentStartException();
+//		}
 	}
 	
 	public void connectOutboundPorts() throws Exception {
 		this.doPortConnection(
 				this.rdmop.getPortURI(), 
 				this.rdmipURI, 
-				RequestDispatcherPerfManagementConnector.class.getCanonicalName());
+				RequestDispatcherManagementConnector.class.getCanonicalName());
 		
 		for(String cpuri : this.pc_ComputerServicesOutboundPorts.keySet()){
 			this.doPortConnection(
@@ -266,13 +280,13 @@ extends AbstractComponent{
 	public void toggleTracingLogging() {
 		this.toggleTracing();
 		this.toggleLogging();
+		this.logMessage( "PC " +this.pcURI +" start");
 	}
 	
 	@Override
 	public void execute() throws Exception {
 		super.execute();
-		
-		controlAverageReqDuration(3);
+		controlAverageReqDuration(3000);
 	}
 	
 	// -------------------------------------------------------------------------
@@ -280,11 +294,31 @@ extends AbstractComponent{
 	// -------------------------------------------------------------------------
 	
 	public void controlAverageReqDuration(int interval) throws Exception {
-		while(true) {
-			TimeUnit.SECONDS.sleep(interval);
-			long moyenne = this.rdmop.getAverageReqDuration();
-			checkPerformance(moyenne);
-		}
+//		while(true) {
+//			TimeUnit.SECONDS.sleep(interval);
+//			long moyenne = this.rdmop.getAverageReqDuration();
+//			checkPerformance(moyenne);
+//		}
+		this.scheduleTaskAtFixedRate(
+				new AbstractComponent.AbstractTask() {
+					@Override
+					public void run() {
+						try {
+							long moyenne = ((PerformanceController)this.getOwner()).getRdmop().getAverageReqDuration();
+							((PerformanceController)this.getOwner()).checkPerformance(moyenne);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				},
+				TimeManagement.acceleratedDelay(interval),
+				TimeManagement.acceleratedDelay(interval),
+				TimeUnit.MILLISECONDS
+		) ;
+	}
+	
+	public RequestDispatcherManagementOutboundPort getRdmop() {
+		return rdmop;
 	}
 
 	public void checkPerformance(long moyenne) throws Exception {

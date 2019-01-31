@@ -39,6 +39,7 @@ public class RequestDispatcher
 	protected ArrayList<AVMtool> avms;
 	protected int avm_local_ID = 0;
 	protected int index = 0;
+	protected int nb_req = 0;
 	
 	// lien avec le RequestGenerator
 	protected String requestNotificationInboundPortURI ; // RG
@@ -73,14 +74,13 @@ public class RequestDispatcher
 		//initialisation
 		this.rdURI = rdURI;
 		this.req_startTimes = new HashMap<String, Long>();
-		this.last_req_durations = new ArrayBlockingQueue<Long>(10);
+		this.last_req_durations = new ArrayBlockingQueue<Long>(5);
 		this.avms = new ArrayList<AVMtool>();
 		this.reqURIs_avms = new HashMap<String, AVMtool>();
 		
 		//init des ports dont dispatcher est le owner
 		
 		//offered
-		
 		/*Submission*/
 		this.addOfferedInterface(RequestSubmissionI.class) ;
 		this.requestSubmissionInboundPort = new RequestSubmissionInboundPort(requestSubmissionInboundPortURIdispatcher, this);
@@ -142,12 +142,12 @@ public class RequestDispatcher
 	}
 	
 	public void connectOutboundPorts() throws Exception {
+
 		this.doPortConnection(
 				this.requestNotificationOutboundPort.getPortURI(),
 				requestNotificationInboundPortURI,
 				RequestNotificationConnector.class.getCanonicalName()
 		) ;  //Connection RG
-		
 		for(AVMtool avm : this.avms) {
 			this.doPortConnection(
 					avm.rsop.getPortURI(), 
@@ -156,7 +156,6 @@ public class RequestDispatcher
 			);
 		}
 	}
-	
 	
 	@Override
 	public void			finalise() throws Exception
@@ -194,7 +193,7 @@ public class RequestDispatcher
 	
 	@Override
 	public void acceptRequestSubmission(RequestI r) throws Exception {
-		//TODO not used
+		// not used
 	}
 
 	
@@ -230,24 +229,57 @@ public class RequestDispatcher
 				+ r.getRequestURI() +"] from [avm-"+ avm_that_sent.local_ID +
 				"] in "+ duration +"ms") ;
 		long mean = this.getAverageReqDuration();
-		this.logMessage("mean: "+ mean +", nb: "+ 
-				this.last_req_durations.size());
-		
+		this.logMessage("mean: "+ mean +", nb: "+ this.last_req_durations.size());
+		this.nb_req++;
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}
 
 	public void toggleTracingLogging() {
 		this.toggleTracing();
 		this.toggleLogging();
+		this.logMessage( "RD " +this.rdURI +" start");
 	}
 	
 	
-	private long getAverageReqDuration() {
+	public long getAverageReqDuration() {
 		long sum_durations = 0;
 		for(Long duration : this.last_req_durations) {
 			sum_durations += duration;
 		}
-		
+		if(sum_durations == 0) {
+			return 0;
+		}
 		return sum_durations / (long) this.last_req_durations.size();
+	}
+	
+	public void addAVM(String avm_reqSubURI) throws Exception {
+		AVMtool tmp = new AVMtool(avm_reqSubURI);
+		tmp.rsop = new RequestSubmissionOutboundPort(this);
+		this.addPort(tmp.rsop);
+		tmp.rsop.publishPort() ;
+		tmp.local_ID = this.avm_local_ID++;
+		this.avms.add(tmp);
+		
+		this.doPortConnection(
+				tmp.rsop.getPortURI(), 
+				tmp.rsipURI, 
+				RequestSubmissionConnector.class.getCanonicalName()
+		);
+	}
+	
+	public void removeAVM(String avm_rsipURI) throws Exception {
+		AVMtool avm_toremove = null;
+		for(AVMtool avm : avms) {
+			if(avm.rsipURI.equals(avm_rsipURI)) {
+				avm_toremove = avm;
+				break;
+			}
+		}
+		if(avm_toremove != null) {
+			this.doPortDisconnection(avm_toremove.rsop.getPortURI());
+			this.avms.remove(avm_toremove);
+			avm_toremove.rsop.unpublishPort();
+			this.removePort(avm_toremove.rsop);
+		}
 	}
 }

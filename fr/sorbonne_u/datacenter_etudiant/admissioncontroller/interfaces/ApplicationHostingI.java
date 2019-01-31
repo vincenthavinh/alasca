@@ -13,7 +13,7 @@ extends OfferedI,
 	 * @return l'URI du RequestSubmissionInboundPort auquel se connecter.
 	 * @throws Exception
 	 */
-	public String askHosting(String requestNotificationInboundPortURI, int nbCores) throws Exception;
+	public String askHosting(String requestNotificationInboundPortURI, int nbCores, int seuil_inf, int seuil_sup) throws Exception;
 
 	/**
 	 * Demande a l'Host de l'application de connecter ses OutboundPorts.

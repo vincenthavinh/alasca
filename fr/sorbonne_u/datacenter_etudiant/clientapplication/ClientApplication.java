@@ -33,6 +33,9 @@ extends AbstractComponent {
 	protected String rg_RequestSubmissionInboundPortURI;
 	protected String rg_RequestNotificationInboundPortURI;
 	
+	/** params du performance controller*/
+	protected int pc_seuil_inf;
+	protected int pc_seuil_sup;
 	
 	public ClientApplication(
 			
@@ -45,26 +48,26 @@ extends AbstractComponent {
 			//params du request generator
 			String rg_URI,
 			double rg_meanInterArrivalTime,
-			long rg_meanNumberOfInstructions
-//			String rg_rgmipURI,
-//			String rg_rsipURI,
-//			String rg_rnipURI
+			long rg_meanNumberOfInstructions,
+			
+			//params du performance controller
+			int pc_seuil_inf,
+			int pc_seuil_sup
 	
 	) throws Exception {
 		super(1, 1) ;
 
-		//svgd des params du request generator
+		//sauvegarde des params du request generator
 		this.rg_URI = rg_URI;
 		this.rg_meanInterArrivalTime = rg_meanInterArrivalTime;
 		this.rg_meanNumberOfInstructions = rg_meanNumberOfInstructions;
-//		this.rg_rgmipURI = rg_rgmipURI;
-//		this.rg_rsipURI = rg_rsipURI;
-//		this.rg_rnipURI = rg_rnipURI;
 		
 		//initialisation
 		this.ca_URI = ca_URI;
 		this.ac_ApplicationSubmissionInboundPortURI = ac_ApplicationSubmissionInboundPortURI;
 		this.nbCores_required = nbCores_required;
+		this.pc_seuil_inf = pc_seuil_inf;
+		this.pc_seuil_sup = pc_seuil_sup;
 		
 		//initialisation des ports
 		
@@ -102,7 +105,7 @@ extends AbstractComponent {
 		
 		this.rg_RequestNotificationInboundPortURI = AbstractPort.generatePortURI(RequestNotificationInboundPort.class);
 		this.rg_RequestGeneratorManagementInboundPortURI = AbstractPort.generatePortURI(RequestGeneratorManagementInboundPort.class);
-		this.rg_RequestSubmissionInboundPortURI = this.ca_ApplicationSubmissionOutboundPort.askHosting(rg_RequestNotificationInboundPortURI, nbCores_required);
+		this.rg_RequestSubmissionInboundPortURI = this.ca_ApplicationSubmissionOutboundPort.askHosting(rg_RequestNotificationInboundPortURI, nbCores_required, pc_seuil_inf, pc_seuil_sup);
 	
 		logMessage("CliApp. "+  this.ca_URI +"| a recu [" +this.rg_RequestSubmissionInboundPortURI+ "] de l'Admission Controller.");
 		
@@ -151,9 +154,6 @@ extends AbstractComponent {
 	public void	shutdown() throws ComponentShutdownException {
 		try {
 			this.ca_ApplicationSubmissionOutboundPort.unpublishPort();
-//			this.rsop.unpublishPort() ;
-//			this.rnip.unpublishPort() ;
-//			this.rgmip.unpublishPort() ;
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
