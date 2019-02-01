@@ -17,7 +17,7 @@ implements PerformanceControllerManagementI{
 	}
 	
 	@Override
-	public void checkPerformance(long moyenne) throws Exception {
-		((PerformanceControllerManagementI)this.offering).checkPerformance(moyenne);
+	public void checkPerformance() throws Exception {
+		((PerformanceControllerManagementI)this.offering).checkPerformance();
 	}
 }

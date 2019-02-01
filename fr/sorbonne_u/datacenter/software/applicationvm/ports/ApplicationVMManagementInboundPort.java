@@ -132,12 +132,18 @@ implements	ApplicationVMManagementI
 				}) ;
 	}
 
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#connectWithRequestSubmissioner()
+	 */
 	@Override
 	public void			connectWithRequestSubmissioner() throws Exception {
 		// TODO Auto-generated method stub
 		
 	}
 
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#connectOutboundPorts()
+	 */
 	@Override
 	public void connectOutboundPorts() throws Exception {
 		this.getOwner().handleRequestSync(
@@ -150,7 +156,42 @@ implements	ApplicationVMManagementI
 						}
 				);
 	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#connectOutboundPorts(String)
+	 */
+	@Override
+	public void connectOutboundPorts(String requestNotificationInboundPortURI) throws Exception {
+		this.getOwner().handleRequestSync(
+						new AbstractComponent.AbstractService<Void>() {
+							@Override
+							public Void call() throws Exception {
+								((ApplicationVM)this.getOwner()).connectOutboundPorts(requestNotificationInboundPortURI);
+								return null;
+							}
+						}
+				);
+	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#disconnectOutboundPorts()
+	 */
+	@Override
+	public void disconnectOutboundPorts() throws Exception {
+		this.getOwner().handleRequestSync(
+						new AbstractComponent.AbstractService<Void>() {
+							@Override
+							public Void call() throws Exception {
+								((ApplicationVM)this.getOwner()).disconnectOutboundPorts();
+								return null;
+							}
+						}
+				);
+	}
 
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#toggleTracingLogging()
+	 */
 	@Override
 	public void toggleTracingLogging() throws Exception {
 		this.getOwner().handleRequestSync(
@@ -163,7 +204,10 @@ implements	ApplicationVMManagementI
 				}
 		);
 	}
-
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#addAllocateCore(fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore)
+	 */
 	@Override
 	public void addAllocateCore(AllocatedCore allocatedCore) throws Exception {
 		this.getOwner().handleRequestSync(
@@ -177,6 +221,9 @@ implements	ApplicationVMManagementI
 		);
 	}
 
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#removeAllocateCore()
+	 */
 	@Override
 	public AllocatedCore removeAllocateCore() throws Exception {
 		return this.getOwner().handleRequestSync(

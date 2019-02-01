@@ -77,11 +77,30 @@ extends		DataOfferedI.DataI,
 	 */
 	public String		getApplicationVMURI() ;
 
-	/** 
-	 * return allocatedCores status of the application virtual machine.
+	/**
+	 * Récupère les états des coeurs alloués à l'avm
 	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	true			// no precondition.
+	 * post	true			// no postcondition.
+	 * </pre>
+	 * 
+	 * @return un ensemble de coeur alloue a cet avm
 	 */
 	public Set<AllocatedCore>		getCoresStatus() ;
 	
+	/**
+	 * Récupère l'uri de l'ordinateur dans lequel l'avm s'est hébergée
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	true			// no precondition.
+	 * post	true			// no postcondition.
+	 * </pre>
+	 *
+	 * @return uri de l'ordinateur dans lequel l'avm s'est hébergée
+	 */
 	public String		getComputerURI(); 
 }

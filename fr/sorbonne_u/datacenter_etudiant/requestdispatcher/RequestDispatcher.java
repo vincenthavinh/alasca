@@ -22,6 +22,37 @@ import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionOutboundPort;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherManagementInboundPort;
 
+/**
+ * La classe <code>RequestDispatcher</code> implémente le composant représentant un répartiteur 
+ * de requêtes dans le centre de calcul
+ *
+ * <p><strong>Description</strong></p>
+ * 
+ * Le répartireur de requête s’interpose entre le générateur de requêtes et les machines virtuelles,
+ * il reçoit toutes les requêtes du générateur de requêtes et les répartit entre les machine 
+ * virtuelles allouées à cette application.
+ * 
+ * À la réception d’une requête, le répartiteur parcourt la liste des machines virtuelles dont 
+ * il dispose et soumet la requête à une des instances (On soumet à l'avm qui a le moins
+ * d'instructions à exécuter sous la main).
+ * 
+ * <p><strong>Invariant</strong></p>
+ * 
+ * TODO: complete!
+ * 
+ * <pre>
+ * invariant		rdURI != null
+ * invariant		managementInboundPortURIdispatcher != null
+ * invariant		requestNotificationInboundPortURIdispatcher != null
+ * invariant		requestSubmissionInboundPortURIdispatcher != null
+ * invariant		requestNotificationInboundPortURI != null
+ * invariant		requestSubmissionInboundPortURIs != null && requestSubmissionInboundPortURIs.size() != 0
+ * </pre>
+ * 
+ * <p>Created on : February 1, 2019</p>
+ * 
+ * @author	<a>Chao LIN</a>
+ */
 public class RequestDispatcher 
 	extends AbstractComponent
 	implements RequestSubmissionHandlerI, 
@@ -30,27 +61,66 @@ public class RequestDispatcher
 	//nom de ce composant
 	protected String rdURI;
 	
-	// temps des 10 dernieres requetes
-	ArrayBlockingQueue<Long> last_req_durations;
+	// stock le temps d'exécution que prend les n dernières requêtes
+	protected ArrayBlockingQueue<Long> last_req_durations;
+	// stock le temps de début des requêtes
 	protected Map<String, Long> req_startTimes;
 	
 	// liens avec les AVMs
+	/**
+	 * Key: rsipURI de l'avm
+	 * Value: fr.sorbonne_u.datacenter_etudiant.requestdispatcher.AVMtool
+	 * AVMtool contient des informations des ports concernant cet avm
+	 */
 	protected Map<String, AVMtool> reqURIs_avms;
+	/** Liste des avms */
 	protected ArrayList<AVMtool> avms;
+	/** On donne un id local à chaque avm de notre répartiteur pour les traces d'exécution*/
 	protected int avm_local_ID = 0;
-	protected int index = 0;
-	protected int nb_req = 0;
 	
 	// lien avec le RequestGenerator
 	protected String requestNotificationInboundPortURI ; // RG
-	protected RequestNotificationOutboundPort requestNotificationOutboundPort ;
+	protected RequestNotificationOutboundPort requestNotificationOutboundPort ; // Connect to RG
 	
 	// InboundPorts appartenant au dispatcher
 	protected RequestSubmissionInboundPort requestSubmissionInboundPort ;
 	protected RequestNotificationInboundPort requestNotificationInboundPort ;
 	protected RequestDispatcherManagementInboundPort	requestDispatcherManagementInboundPort ;
 
-	
+	/**
+	 * Créer une nouvelle répartiteur de requête
+	 * 
+	 * @param vmURI										URI of the newly created VM.
+	 * @param applicationVMManagementInboundPortURI		URI of the VM management inbound port.
+	 * @param applicationVMIntrospectionInboundPortURI 	URI of the VM introspection inbound port.
+	 * @param requestSubmissionInboundPortURI			URI of the request submission inbound port.
+	 * @param requestNotificationInboundPortURI			URI of the request notification inbound port.
+	 * @throws Exception								<i>todo.</i>
+	 */
+	/**
+	 * Créer un répartiteur de requête en donnant son URI et les inbound ports
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	rdURI != null
+	 * pre	managementInboundPortURIdispatcher != null
+	 * pre	requestNotificationInboundPortURIdispatcher != null
+	 * pre	requestSubmissionInboundPortURIdispatcher != null
+	 * pre	requestNotificationInboundPortURI != null
+	 * pre	requestSubmissionInboundPortURIs != null && requestSubmissionInboundPortURIs.size() != 0
+	 * 
+	 * post	true			// no postcondition.
+	 * </pre>
+	 * 
+	 * @param rdURI											URI of newly create RD
+	 * @param managementInboundPortURIdispatcher			URI of the RD management inbound port.
+	 * @param requestNotificationInboundPortURIdispatcher	URI of the request notification inbound port.
+	 * @param requestSubmissionInboundPortURIdispatcher		URI of the request submission inbound port.
+	 * @param requestNotificationInboundPortURI				URI of the request notification inbound port of request generator.
+	 * @param requestSubmissionInboundPortURIs				URI of the request submission inbound port of VMs.
+	 * @throws Exception
+	 */
 	public RequestDispatcher(
 		String rdURI,
 		String managementInboundPortURIdispatcher,
@@ -230,7 +300,6 @@ public class RequestDispatcher
 				"] in "+ duration +"ms") ;
 		long mean = this.getAverageReqDuration();
 		this.logMessage("mean: "+ mean +", nb: "+ this.last_req_durations.size());
-		this.nb_req++;
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}
 

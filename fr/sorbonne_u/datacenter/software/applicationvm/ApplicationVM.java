@@ -111,8 +111,8 @@ import fr.sorbonne_u.datacenter.software.ports.RequestSubmissionInboundPort;
  * <pre>
  * invariant		vmURI != null
  * invariant		applicationVMManagementInboundPortURI != null
+ * invariant		applicationVMIntrospectionInboundPortURI != null
  * invariant		requestSubmissionInboundPortURI != null
- * invariant		requestNotificationOutboundPortURI != null
  * </pre>
  * 
  * <p>Created on : April 9, 2015</p>
@@ -155,7 +155,7 @@ implements	ProcessorServicesNotificationConsumerI,
 	protected Map<String,AllocatedCore>		runningTasks ;
 	/** Queue of tasks waiting to be started.							*/
 	protected Queue<TaskI>					taskQueue ;
-	/* Set of task URIs	which termination will need to be notified.		*/
+	/** Set of task URIs	which termination will need to be notified.		*/
 	protected HashSet<String>				tasksToNotify ;
 	/** Inbound port offering the management interface.					*/
 	protected ApplicationVMManagementInboundPort
@@ -166,6 +166,7 @@ implements	ProcessorServicesNotificationConsumerI,
 	protected RequestNotificationOutboundPort
 											requestNotificationOutboundPort ;
 	protected String							requestNotificationInboundPortURI ;
+	/** Inbound port offering the introspection interface*/
 	protected ApplicationVMIntrospectionInboundPort
 											avmIntrospectionInboundPort ;
 	/** data inbound port through which it pushes the static state data.	*/
@@ -194,15 +195,16 @@ implements	ProcessorServicesNotificationConsumerI,
 	 * <pre>
 	 * pre	vmURI != null
 	 * pre	applicationVMManagementInboundPortURI != null
+	 * pre	applicationVMIntrospectionInboundPortURI != null
 	 * pre	requestSubmissionInboundPortURI != null
-	 * pre	requestNotificationOutboundPortURI != null
 	 * post	true			// no postcondition.
 	 * </pre>
 	 *
-	 * @param vmURI									URI of the newly created VM.
-	 * @param applicationVMManagementInboundPortURI	URI of the VM management inbound port.
-	 * @param requestSubmissionInboundPortURI		URI of the request submission inbound port.
-	 * @param requestNotificationInboundPortURI		URI of the request notification inbound port.
+	 * @param vmURI										URI of the newly created VM.
+	 * @param applicationVMManagementInboundPortURI		URI of the VM management inbound port.
+	 * @param applicationVMIntrospectionInboundPortURI 	URI of the VM introspection inbound port.
+	 * @param requestSubmissionInboundPortURI			URI of the request submission inbound port.
+	 * @param requestNotificationInboundPortURI			URI of the request notification inbound port.
 	 * @throws Exception								<i>todo.</i>
 	 */
 	public				ApplicationVM(
@@ -287,11 +289,22 @@ implements	ProcessorServicesNotificationConsumerI,
 	
 	@Override
 	public void connectOutboundPorts() throws Exception {
-			this.doPortConnection(
-				this.requestNotificationOutboundPort.getPortURI(),
-				this.requestNotificationInboundPortURI,
-				RequestNotificationConnector.class.getCanonicalName()
-			) ;
+		this.doPortConnection(
+			this.requestNotificationOutboundPort.getPortURI(),
+			this.requestNotificationInboundPortURI,
+			RequestNotificationConnector.class.getCanonicalName()
+		) ;
+	}
+	
+	@Override
+	public void connectOutboundPorts(String requestNotificationInboundPortURI) throws Exception {
+		assert requestNotificationInboundPortURI != null;
+		this.requestNotificationInboundPortURI = requestNotificationInboundPortURI;
+		this.doPortConnection(
+			this.requestNotificationOutboundPort.getPortURI(),
+			this.requestNotificationInboundPortURI,
+			RequestNotificationConnector.class.getCanonicalName()
+		) ;
 	}
 
 	@Override
@@ -304,6 +317,12 @@ implements	ProcessorServicesNotificationConsumerI,
 			p.doDisconnection() ;
 		}
 		super.finalise() ;
+	}
+	
+	@Override
+	public void disconnectOutboundPorts() throws Exception {
+		this.doPortDisconnection(this.requestNotificationInboundPortURI);
+		this.requestNotificationInboundPortURI = null;
 	}
 
 	/**
@@ -733,7 +752,10 @@ implements	ProcessorServicesNotificationConsumerI,
 	{
 		// TODO Auto-generated method stub
 	}
-
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#toggleTracingLogging()
+	 */
 	@Override
 	public void toggleTracingLogging() throws Exception {
 		this.toggleTracing();
@@ -741,7 +763,12 @@ implements	ProcessorServicesNotificationConsumerI,
 		this.logMessage( "AVM " +this.vmURI +" start");
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#addAllocateCore(fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore)
+	 */	
 	public void addAllocateCore(AllocatedCore allocatedCore) throws Exception {
+		assert allocatedCore != null;
+		
 		this.allocatedCoresIdleStatus.put(allocatedCore, true)  ;
 		if (!this.processorServicesPorts.containsKey(allocatedCore.processorURI)) {
 			ProcessorServicesOutboundPort p = new ProcessorServicesOutboundPort(this) ;
@@ -758,6 +785,9 @@ implements	ProcessorServicesNotificationConsumerI,
 		}
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#removeAllocateCore()
+	 */	
 	public AllocatedCore removeAllocateCore() throws Exception {
 		AllocatedCore allocatedCore = this.allocatedCoresIdleStatus.keySet().stream().findFirst().get();
 		this.allocatedCoresIdleStatus.remove(allocatedCore);

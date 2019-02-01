@@ -40,6 +40,54 @@ import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDis
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherManagementInboundPort;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherManagementOutboundPort;
 
+/**
+ * The class <code>ApplicationVM</code> implements the component representing
+ * an application VM in the data center.
+ *
+ * <p><strong>Description</strong></p>
+ * 
+ * The Application VM (AVM) component simulates the execution of web
+ * applications by receiving requests, executing them and notifying the
+ * emitter of the end of execution of its request (as a way to simulate
+ * the return of the result).
+ * 
+ * The AVM is allocated cores on processors of a single computer and uses them
+ * to execute the submitted requests.  It maintain a queue for requests waiting
+ * a core to become idle before beginning their execution.
+ * 
+ * As a component, the AVM offers a request submission service through the
+ * interface <code>RequestSubmissionI</code> implemented by
+ * <code>RequestSubmissionInboundPort</code> inbound port. To notify the end
+ * of the execution of requests, the AVM requires the interface
+ * <code>RequestNotificationI</code> through the
+ * <code>RequestNotificationOutboundPort</code> outbound port.
+ * 
+ * The AVM can be managed (essentially allocated cores) and it offers the
+ * interface <code>ApplicationVMManagementI</code> through the inbound port
+ * <code>ApplicationVMManagementInboundPort</code> for this.
+ * 
+ * AVM uses cores on processors to execute requests. To pass the request to
+ * the cores, it requires the interface <code>ProcessorServicesI</code>
+ * through <code>ProcessorServicesOutboundPort</code>. It receives the
+ * notifications of the end of execution of the requests by offering the
+ * interface <code>ProcessorServicesNotificationI</code> through the
+ * inbound port <code>ProcessorServicesNotificationInboundPort</code>.
+ * 
+ * <p><strong>Invariant</strong></p>
+ * 
+ * TODO: complete!
+ * 
+ * <pre>
+ * invariant		vmURI != null
+ * invariant		applicationVMManagementInboundPortURI != null
+ * invariant		requestSubmissionInboundPortURI != null
+ * invariant		requestNotificationOutboundPortURI != null
+ * </pre>
+ * 
+ * <p>Created on : February 1, 2019</p>
+ * 
+ * @author	<a>Chao LIN</a>
+ */
 public class AdmissionController 
 	extends AbstractComponent
 	implements ApplicationHostingHandlerI {
@@ -82,6 +130,8 @@ public class AdmissionController
 	protected String dcc_DynamicComponentCreationInboundPortURI;
 	protected DynamicComponentCreationOutboundPort ac_DynamicComponentCreationOutboundPort;
 
+	/**AVM libre*/
+	protected HashMap<String, ApplicationVM> avms_libre;
 	protected int index_free_avm;
 	
 	//--------------------------------------------------------------------
@@ -116,6 +166,7 @@ public class AdmissionController
 		this.ac_PerformanceControllerManagementOutboundPorts = new HashMap<String, PerformanceControllerManagementOutboundPort>();
 		this.ac_PerformanceController = new HashMap<String, PerformanceController>();
 		
+		this.avms_libre = new HashMap<String, ApplicationVM>();
 		this.index_free_avm = 0;
 		this.rd_number = 0;
 		
@@ -198,6 +249,16 @@ public class AdmissionController
 				this.doPortDisconnection(avmmop.getPortURI());
 			}
 		}
+		
+		for(String rnibp : this.ac_PerformanceControllerManagementOutboundPorts.keySet()) {
+			this.doPortDisconnection(this.ac_PerformanceControllerManagementOutboundPorts.get(rnibp).getPortURI());
+			this.ac_PerformanceController.get(rnibp).finalise();
+		}
+		
+		for(ApplicationVM avm : this.avms_libre.values()) {
+			avm.finalise();
+		}
+		
 		super.finalise() ;
 	}
 	
@@ -219,6 +280,15 @@ public class AdmissionController
 				}
 			}
 			this.admissionControllerServicesInboundPort.unpublishPort();
+			
+			for(String rnibp : this.ac_PerformanceControllerManagementOutboundPorts.keySet()) {
+				this.ac_PerformanceControllerManagementOutboundPorts.get(rnibp).unpublishPort();
+				this.ac_PerformanceController.get(rnibp).shutdown();
+			}
+			
+			for(ApplicationVM avm : this.avms_libre.values()) {
+				avm.shutdown();
+			}
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
@@ -311,6 +381,7 @@ public class AdmissionController
 				"pc-"+rd_URI,
 				pc_management_ipURI,
 				rd_rdmipURI, 
+				rd_rnipURI,
 				avms_URI, 
 				avms_iipURIs, 
 				avms_amipURIs,
@@ -446,26 +517,31 @@ public class AdmissionController
 	}
 	
 	public void recycleFreeAVM(String AVMuri) throws Exception{
-		
+		this.avms_libre.get(AVMuri).disconnectOutboundPorts();
 	}
 	
 	public Map<ApplicationVMPortTypes, String> allocateFreeAVM() throws Exception{
 		String avm_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
 		String avm_amipURI = AbstractPort.generatePortURI(ApplicationVMManagementInboundPort.class);
 		String avm_iipURI = AbstractPort.generatePortURI(ApplicationVMIntrospectionInboundPort.class);
-		
+		String avm_uri = "free_vm" + this.index_free_avm++;
 		ApplicationVM avm = new ApplicationVM(
-						"free_vm"+index_free_avm,
+						avm_uri,
 						avm_amipURI,
 						avm_iipURI,
 						avm_rsipURI,
 						null
 		);
+		this.avms_libre.put(avm_uri, avm);
+		
+		this.logMessage("AdContr. "+ this.ac_URI+"| creation de "+avm_uri);
 		
 		Map<ApplicationVMPortTypes, String> free_avm_ports = new HashMap<ApplicationVMPortTypes, String>();
 		free_avm_ports.put(ApplicationVMPortTypes.REQUEST_SUBMISSION, avm_rsipURI);
 		free_avm_ports.put(ApplicationVMPortTypes.MANAGEMENT, avm_amipURI);
 		free_avm_ports.put(ApplicationVMPortTypes.INTROSPECTION, avm_iipURI);
+		
+		avm.toggleTracingLogging();
 		
 		return free_avm_ports;
 	}

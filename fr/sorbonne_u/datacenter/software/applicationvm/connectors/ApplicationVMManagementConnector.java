@@ -74,27 +74,58 @@ implements	ApplicationVMManagementI
 		((ApplicationVMManagementI)this.offering).allocateCores(allocatedCores) ; ;
 	}
 
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#connectWithRequestSubmissioner()
+	 */
 	@Override
 	public void connectWithRequestSubmissioner() throws Exception {
 		// TODO Auto-generated method stub
 		
 	}
 
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#connectOutboundPorts()
+	 */
 	@Override
 	public void connectOutboundPorts() throws Exception {
 		((ApplicationVMManagementI)this.offering).connectOutboundPorts();
 	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#connectOutboundPorts(String)
+	 */
+	@Override
+	public void connectOutboundPorts(String requestNotificationInboundPortURI) throws Exception {
+		((ApplicationVMManagementI)this.offering).connectOutboundPorts(requestNotificationInboundPortURI);
+	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#disconnectOutboundPorts()
+	 */
+	@Override
+	public void disconnectOutboundPorts() throws Exception {
+		((ApplicationVMManagementI)this.offering).disconnectOutboundPorts();
+	}
 
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#toggleTracingLogging()
+	 */
 	@Override
 	public void toggleTracingLogging() throws Exception {
 		((ApplicationVMManagementI)this.offering).toggleTracingLogging();
 	}
 
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#addAllocateCore(fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore)
+	 */
 	@Override
 	public void addAllocateCore(AllocatedCore allocatedCore) throws Exception {
 		((ApplicationVMManagementI)this.offering).addAllocateCore(allocatedCore);
 	}
-
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#removeAllocateCore()
+	 */
 	@Override
 	public AllocatedCore removeAllocateCore() throws Exception {
 		return ((ApplicationVMManagementI)this.offering).removeAllocateCore();

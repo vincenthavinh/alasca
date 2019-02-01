@@ -63,6 +63,9 @@ implements ApplicationVMDynamicStateI{
 		return coresStatus;
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMDynamicStateI#getComputerURI()
+	 */
 	@Override
 	public String getComputerURI() {
 		return computerURI;

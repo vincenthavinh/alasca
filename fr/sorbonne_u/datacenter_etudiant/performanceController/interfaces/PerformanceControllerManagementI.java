@@ -11,5 +11,5 @@ public void	connectOutboundPorts() throws Exception ;
 
 public void toggleTracingLogging() throws Exception;
 
-public void checkPerformance(long moyenne) throws Exception;
+public void checkPerformance() throws Exception;
 }

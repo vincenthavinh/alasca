@@ -74,15 +74,104 @@ extends		OfferedI,
 	public void			allocateCores(AllocatedCore[] allocatedCores)
 	throws Exception ;
 
+	/**
+	 * todo
+	 * @throws Exception
+	 */
 	public void			connectWithRequestSubmissioner()
 	throws Exception ;
 	
 	// Ajout
+	/**
+	 * Connecte les outboundports de l'avm 
+	 * Lors de la création dynamique du composant avm, on ne peut pas connecter directement 
+	 * les outboundports car il est possible que les inboundports ne soient pas encore créés
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	true 			// no precondition.
+	 * post	true			// no postcondition.
+	 * </pre>
+	 * 
+	 * @throws Exception <i>todo.</i>
+	 */
 	public void connectOutboundPorts() throws Exception;
 	
+	/**
+	 * Connecte les outboundports de l'avm 
+	 * Différent du precedent, cette méthode sert à l'avm libre de se connecter au composant
+	 * qui va recevoir les notifications
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	requestNotificationInboundPortURI != null 
+	 * post	true			// no postcondition.
+	 * </pre>
+	 * 
+	 * @param requestNotificationInboundPortURI		uri du composant ou l'avm envoie la notification de terminaison d'un requete
+	 * @throws Exception
+	 */
+	public void connectOutboundPorts(String requestNotificationInboundPortURI) throws Exception;
+	
+	/**
+	 * Déconnecte les outboundports de l'avm 
+	 * Utiliser pour l'avm libre pour se déconnecter du composant qui va recevoir 
+	 * les notifications
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	true			// no precondition.
+	 * post	true			// no postcondition.
+	 * </pre>
+	 * 
+	 * @throws Exception
+	 */
+	public void disconnectOutboundPorts() throws Exception;
+	
+	/**
+	 * Pour ouvrir la fenêtre contenant les traces d'exécution plus rapidement
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	true			// no precondition.
+	 * post	true			// no postcondition.
+	 * </pre>
+	 * 
+	 * @throws Exception
+	 */
 	public void toggleTracingLogging() throws Exception;
 	
+	/**
+	 * Ajoute un coeur à cet avm, pour augmenter la performance
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	allocatedCore != null
+	 * post	true			// no postcondition.
+	 * </pre>
+	 * 
+	 * @param allocatedCore		un coeur qu'on a réservé pour cet avm
+	 * @throws Exception
+	 */
 	public void addAllocateCore(AllocatedCore allocatedCore) throws Exception;
 	
+	/**
+	 * Retire un coeur à cet avm, pour diminuer la performance
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	true			// no precondition.
+	 * post	true			// no postcondition.
+	 * </pre>
+	 * 
+	 * @return un coeur qui a été alloué à cet avm
+	 * @throws Exception
+	 */
 	public AllocatedCore removeAllocateCore() throws Exception;
 }

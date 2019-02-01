@@ -49,13 +49,13 @@ implements PerformanceControllerManagementI{
 	}
 	
 	@Override
-	public void checkPerformance(long moyenne) throws Exception {
+	public void checkPerformance() throws Exception {
 		this.getOwner().handleRequestAsync(
 				new AbstractComponent.AbstractService<Void>() {
 					@Override
 					public Void call() throws Exception {
 						((PerformanceController)this.getOwner()).
-							checkPerformance(moyenne);
+							checkPerformance();
 						return null;
 					}
 				}) ;
