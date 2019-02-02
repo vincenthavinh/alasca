@@ -109,6 +109,9 @@ public class AdmissionController
 
 	/**AVM libre*/
 	protected HashMap<String, ApplicationVM> avms_libre;
+	// on recycle les avms libre qu'on nous a rendu
+	protected ArrayList<Map<ApplicationVMPortTypes, String>> avms_libre_recyclees;
+	// index pour les uris des avms libre
 	protected int index_free_avm;
 	
 	/**
@@ -163,6 +166,8 @@ public class AdmissionController
 		this.avms_libre = new HashMap<String, ApplicationVM>();
 		this.index_free_avm = 0;
 		this.rd_number = 0;
+		
+		this.avms_libre_recyclees = new ArrayList<Map<ApplicationVMPortTypes, String>>();
 		
 		//initialisation des ports
 		
@@ -536,17 +541,34 @@ public class AdmissionController
 	 * @see fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI#recycleFreeAVM(String)
 	 */
 	public void recycleFreeAVM(String AVMuri) throws Exception{
-		this.avms_libre.get(AVMuri).disconnectOutboundPorts();
+		ApplicationVM avm = this.avms_libre.get(AVMuri);
+		avm.disconnectOutboundPorts();
+		this.avms_libre_recyclees.add(avm.getAVMPortsURI());
 	}
 	
 	/**
 	 * @see fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI#allocateFreeAVM()
 	 */
 	public Map<ApplicationVMPortTypes, String> allocateFreeAVM() throws Exception{
+		if(!this.avms_libre_recyclees.isEmpty()) {
+			return this.avms_libre_recyclees.remove(0);
+		}
 		String avm_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
 		String avm_amipURI = AbstractPort.generatePortURI(ApplicationVMManagementInboundPort.class);
 		String avm_iipURI = AbstractPort.generatePortURI(ApplicationVMIntrospectionInboundPort.class);
 		String avm_uri = "free_vm" + this.index_free_avm++;
+		
+		// le dynamicComponentCreator n'accepte pas de paramètre null
+//		this.ac_DynamicComponentCreationOutboundPort.createComponent(
+//				ApplicationVM.class.getCanonicalName(),
+//				new Object[] {
+//						avm_uri,
+//						avm_amipURI,
+//						avm_iipURI,
+//						avm_rsipURI,
+//						null
+//				}
+//		);
 		ApplicationVM avm = new ApplicationVM(
 						avm_uri,
 						avm_amipURI,

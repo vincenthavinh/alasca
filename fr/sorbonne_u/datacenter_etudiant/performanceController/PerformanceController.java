@@ -585,6 +585,7 @@ implements PerformanceControllerManagementI{
 					this.avmsManagementOutboundPorts.get(avmURI).getPortURI(),
 					this.avmsManagementInboundPortURIs.get(avmURI),
 					ApplicationVMManagementConnector.class.getCanonicalName()) ;
+			
 			this.avmsManagementOutboundPorts.get(avmURI).connectOutboundPorts(this.rd_rnipURI);
 			this.avmsManagementOutboundPorts.get(avmURI).allocateCores(ac);
 			this.avmURIs.add(avmURI);
