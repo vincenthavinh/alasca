@@ -22,6 +22,7 @@ import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.Admissio
  * 
  * <p>Created on : January 16, 2019</p>
  * 
+ * @author	<a>Chao LIN</a>
  */
 public class				AdmissionControllerServicesOutboundPort
 extends		AbstractOutboundPort

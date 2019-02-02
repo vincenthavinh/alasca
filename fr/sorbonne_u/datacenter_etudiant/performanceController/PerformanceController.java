@@ -37,14 +37,46 @@ import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDis
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherManagementOutboundPort;
 
+/**
+ * La classe <code>PerformanceController</code> manipule les ressources des ordinateurs et des
+ * avm pour controller la performance souhaitée par l'application.
+ *
+ * <p><strong>Description</strong></p>
+ * 
+ * Le controlleur de performance varie les fréquences des coeurs alloués aux avms, attribue ou
+ * reprend des coeurs aux avms, ajoute ou retire des avms libres à une application pour que le
+ * temps moyen d'exécution d'une requête soit dans les seuils demandés par le client lors de 
+ * l'hébergement de l'application.
+ * 
+ * <p><strong>Invariant</strong></p>
+ * TODO: complete!
+ * <pre>
+ * invariant		pcURI != null
+ * invariant		pc_management_ipURI != null
+ * invariant		rd_management_ipURI != null
+ * invariant		rd_request_notification_ipURI != null
+ * invariant		avms_URI != null && avms_URI.size() != 0
+ * invariant		avmsIntrospectionInboundPortURIs != null && avms_URI.size() != 0
+ * invariant		avmsManagementInboundPortURIs != null && avms_URI.size() != 0
+ * invariant		computers_URI != null && avms_URI.size() != 0
+ * invariant		cp_computerServicesInboundPortURIs != null && avms_URI.size() != 0
+ * invariant		admissionControllerServicesInboundPortURI != null
+ * invariant		pc_seuil_inf <= pc_seuil_sup
+ 
+ * </pre>
+ * 
+ * <p>Created on : February 1, 2019</p>
+ * 
+ * @author	<a>Chao LIN</a>
+ */
 public class PerformanceController 
-extends AbstractComponent{	
+extends AbstractComponent
+implements PerformanceControllerManagementI{	
 	protected String pcURI;
 	
-	//var
+	/** attributs pour stoker les informations des coeurs, des processeurs et des avms/avms libres */
 	protected final int SEUIL_INF;
 	protected final int SEUIL_SUP;
-	protected int index_avm;
 	protected ArrayList<String> avmURIs;
 	protected HashMap<String, Integer> number_of_cores_of_avm;
 	protected HashMap<AllocatedCore, Integer> allocatedCoreStates;
@@ -58,7 +90,7 @@ extends AbstractComponent{
 	protected HashMap<String, String> cp_ComputerServicesInboundPortURIs;
 	protected HashMap<String, ComputerServicesOutboundPort> pc_ComputerServicesOutboundPorts;
 	// une map avec l'uri de l'ordinateur et la liste des avms qui héberge sur cet ordinateur
-	// utiliser pour augmenter le nombre de coeur
+	// utiliser pour augmenter le nombre de coeur d'une avm (et que le coeur appartient à l'ordinateur dont l'avm s'est hébergé)
 	protected HashMap<String, ArrayList<String>> computer_list_avm; 
 	
 	/**AVMs introspections**/
@@ -80,6 +112,42 @@ extends AbstractComponent{
 	protected String admissionControllerServicesInboundPortURI;
 	protected AdmissionControllerServicesOutboundPort acsop;
 	
+	/**
+	 * Créer un controlleur de performance en donnant son URI et les inbound ports
+	 * On utilise que des ArrayList dans le constructeur car le dynamicComponentCreator ne supporte
+	 * pas de créer un component avec des HashMap dans les paramètres
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre		pcURI != null
+	 * pre		pc_management_ipURI != null
+	 * pre		rd_management_ipURI != null
+	 * pre		rd_request_notification_ipURI != null
+	 * pre		avms_URI != null && avms_URI.size() != 0
+	 * pre		avmsIntrospectionInboundPortURIs != null && avms_URI.size() != 0
+	 * pre		avmsManagementInboundPortURIs != null && avms_URI.size() != 0
+	 * pre		computers_URI != null && avms_URI.size() != 0
+	 * pre		cp_computerServicesInboundPortURIs != null && avms_URI.size() != 0
+	 * pre		admissionControllerServicesInboundPortURI != null
+	 * pre		pc_seuil_inf <= pc_seuil_sup
+	 * post	true			// no postcondition.
+	 * </pre>
+	 * 
+	 * @param pcURI										URI du controlleur de performance
+	 * @param pc_management_ipURI						URI du management inbound port du controlleur de performance
+	 * @param rd_management_ipURI						URI du management inbound port du répartiteur de requête
+	 * @param rd_request_notification_ipURI				URI du notification de requête du répartiteur de requête (connection aux avms libre)
+	 * @param avms_URI									URIs des avms attribué à l'application
+	 * @param avmsIntrospectionInboundPortURIs			URIs du introspection inbound port des avms
+	 * @param avmsManagementInboundPortURIs				URIs du management inbound port des avms
+	 * @param computers_URI								URIs des ordinateurs
+	 * @param cp_computerServicesInboundPortURIs		URIs du services inbound port des ordinateurs
+	 * @param seuil_inf									Seuil inférieur du temps moyen d'exécution souhaité
+	 * @param seuil_sup									Seuil supérieur du temps moyen d'exécution souhaité
+	 * @param admissionControllerServicesInboundPortURI	URI du services inbound port du controlleur d'admission 
+	 * @throws Exception
+	 */
 	public PerformanceController(
 			String pcURI,
 			String pc_management_ipURI,
@@ -103,19 +171,29 @@ extends AbstractComponent{
 		assert pcURI != null && pc_management_ipURI != null;
 		assert admissionControllerServicesInboundPortURI != null;
 		
+		/**Variables*/
 		this.pcURI = pcURI;
 		this.SEUIL_INF = seuil_inf;
 		this.SEUIL_SUP = seuil_sup;
 		this.rdmipURI = rd_management_ipURI;
 		this.rd_rnipURI = rd_request_notification_ipURI;
 		this.computer_list_avm = new HashMap<String, ArrayList<String>>();
+		this.admissionControllerServicesInboundPortURI = admissionControllerServicesInboundPortURI;
+		this.avmURIs = avms_URI;
+		this.listAVMs_libre = new ArrayList<String>();
+		this.number_of_cores_of_avm = new HashMap<String, Integer>();
+		this.allocatedCoreAdmissibleFrequencies = new HashMap<AllocatedCore, ArrayList<Integer>>();
+		this.allocatedCoreStates = new HashMap<AllocatedCore, Integer>();
 		
-		// n'utilise pas HashMap directement dans le constructeur en raison du DynamicCreator ne supporte pas les hashMap
+		
+		/**Ordinateur*/
+		// n'utilise pas HashMap directement dans le constructeur en raison du DynamicCreator ne supporte pas les hashMap comme paramètre
 		this.cp_ComputerServicesInboundPortURIs = new HashMap<String, String>();
 		for(int i=0; i<computers_URI.size(); i++) {
 			this.cp_ComputerServicesInboundPortURIs.put(computers_URI.get(i), cp_computerServicesInboundPortURIs.get(i));
 		}
 		
+		/**AVMs*/
 		this.avmsManagementInboundPortURIs = new HashMap<String, String>();
 		this.avmsIntrospectionInboundPortURIs = new HashMap<String, String>();
 		for(int i=0; i<avms_URI.size(); i++) {
@@ -123,18 +201,12 @@ extends AbstractComponent{
 			this.avmsIntrospectionInboundPortURIs.put(avms_URI.get(i), avmsIntrospectionInboundPortURIs.get(i));
 		}
 		
-		this.admissionControllerServicesInboundPortURI = admissionControllerServicesInboundPortURI;
-		this.index_avm = 0;
-		this.avmURIs = avms_URI;
-		this.listAVMs_libre = new ArrayList<String>();
-		this.number_of_cores_of_avm = new HashMap<String, Integer>();
-		this.allocatedCoreAdmissibleFrequencies = new HashMap<AllocatedCore, ArrayList<Integer>>();
-		this.allocatedCoreStates = new HashMap<AllocatedCore, Integer>();
 		/**Processor*/
 		this.addOfferedInterface(ProcessorIntrospectionI.class);
 		this.processorIntrospectionOutboundPorts = new HashMap<String, ProcessorIntrospectionOutboundPort>();
 		this.processorManagementOutboundPorts = new HashMap<AllocatedCore, ProcessorManagementOutboundPort>();
 		this.pmip_processorManagementOutboundPorts = new HashMap<String, ProcessorManagementOutboundPort>();
+		
 		/*Management*/
 		this.addOfferedInterface(PerformanceControllerManagementI.class);
 		this.pcmip = new PerformanceControllerManagementInboundPort(pc_management_ipURI, this);
@@ -186,17 +258,19 @@ extends AbstractComponent{
 	
 	// Component life cycle
 	
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#start()
+	 */
 	@Override
 	public void			start() throws ComponentStartException
 	{
 		super.start() ;
-//		try{
-//			this.connectOutboundPorts();
-//		}catch(Exception e) {
-//			throw new ComponentStartException();
-//		}
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI#connectOutboundPorts()
+	 */
+	@Override
 	public void connectOutboundPorts() throws Exception {
 		this.doPortConnection(
 				this.rdmop.getPortURI(), 
@@ -229,6 +303,18 @@ extends AbstractComponent{
 				AdmissionControllerServicesConnector.class.getCanonicalName() );
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#execute()
+	 */
+	@Override
+	public void execute() throws Exception {
+		super.execute();
+		controlAverageReqDuration(3000);
+	}
+	
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#finalise()
+	 */
 	@Override
 	public void			finalise() throws Exception
 	{	
@@ -253,6 +339,9 @@ extends AbstractComponent{
 		super.finalise() ;
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#shutdown()
+	 */
 	@Override
 	public void			shutdown() throws ComponentShutdownException
 	{
@@ -283,23 +372,28 @@ extends AbstractComponent{
 		
 	}
 
+	//--------------------------------------------------------------------
+	//METHODS
+	//--------------------------------------------------------------------
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI#toggleTracingLogging()
+	 */
+	@Override
 	public void toggleTracingLogging() {
 		this.toggleTracing();
 		this.toggleLogging();
 		this.logMessage( "PC " +this.pcURI +" start");
 	}
 	
-	@Override
-	public void execute() throws Exception {
-		super.execute();
-		controlAverageReqDuration(3000);
-	}
-	
-	// -------------------------------------------------------------------------
-	// Component internal services
-	// -------------------------------------------------------------------------
-	
-	public void controlAverageReqDuration(int interval) throws Exception {
+	/**
+	 * Cette méthode appel à checkPerformance tous les interval milliseconds pour interroger sur
+	 * la performance
+	 * 
+	 * @param interval		Intervalle de temps où on inspecte le temps moyen d'exécution des requêtes
+	 * @throws Exception
+	 */
+	private void controlAverageReqDuration(int interval) throws Exception {
 		this.scheduleTaskAtFixedRate(
 				new AbstractComponent.AbstractTask() {
 					@Override
@@ -317,9 +411,17 @@ extends AbstractComponent{
 		) ;
 	}
 	
-	public void checkPerformance() throws Exception {
+	/**
+	 * Récupère de répartiteur de requête le temps moyen d'exécution et varie la performance
+	 * selon exigence demandé.
+	 * 
+	 * @throws Exception
+	 */
+	private void checkPerformance() throws Exception {
 		long moyenne = this.rdmop.getAverageReqDuration();
 		
+		// On récupère les données sur les coeurs attribués aux avms si on ne les a pas
+		// on considère par la suite que ces données sont manipulées dans le controlleur de performance
 		if(this.allocatedCoreStates.isEmpty()) {
 			this.updateProcessorData();
 		}
@@ -328,21 +430,33 @@ extends AbstractComponent{
 		}
 		this.logMessage("PerfControl. "+ this.pcURI+"| temps moyenne "+moyenne+".");
 		if(moyenne < SEUIL_INF) {
+			// décrémente la fréquence
 			if(!this.decreaseFrequency()) {
+				// si on ne plus décrémenter la fréquence, diminue le nombre de coeur
 				if(!this.findAVMAndRemoveAllocateCore()) {
+					// si tous les avms ne possèdent qu'un seul coeur, on commence à retirer des avms
 					this.removeAVM();
 				}
 			}
 		}
 		if(moyenne > SEUIL_SUP) {
+			// incrémente la fréquence
 			if(!this.increaseFrequency()) {
+				// augmente de nombre de coeur 
 				if(!this.findAVMAndAddAllocateCore()) {
+					// ajoute une avm en cherchant un coeur sur d'autres ordinateurs
 					this.addAVM();
 				}
 			}
 		}
 	}
 	
+	/**
+	 * Incrémente la fréquence du coeur d'un cran supérieur 
+	 * (on possède un liste de coeurs qui sont alloués pour cette application)
+	 * @return si on a réussi à incrémenter la fréquence d'un coeur ou pas
+	 * @throws Exception
+	 */
 	private boolean increaseFrequency() throws Exception {
 		for(AllocatedCore ac : this.allocatedCoreStates.keySet()) {
 			int index = this.allocatedCoreAdmissibleFrequencies.get(ac).lastIndexOf(this.allocatedCoreStates.get(ac));
@@ -358,6 +472,12 @@ extends AbstractComponent{
 		return false;
 	}
 	
+	/**
+	 * Décrémente la fréquence du coeur d'un cran inférieur 
+	 * 
+	 * @return si on a réussi à décrémenter la fréquence d'un coeur ou pas
+	 * @throws Exception
+	 */
 	private boolean decreaseFrequency() throws Exception {
 		for(AllocatedCore ac : this.allocatedCoreStates.keySet()) {
 			int index = this.allocatedCoreAdmissibleFrequencies.get(ac).indexOf(this.allocatedCoreStates.get(ac));
@@ -373,6 +493,13 @@ extends AbstractComponent{
 		return false;
 	}
 	
+	/**
+	 * Trouve un avm dans lequel l'ordinateur qu'il héberge possède encore des coeurs libres
+	 * (on possède une liste des ordinateurs dans lesquels nos avms s'est hébergé)
+	 * 
+	 * @return si on a réussi à trouver des coeurs libres ou pas sur les ordinateurs hébergés par nos avms
+	 * @throws Exception
+	 */
 	private boolean findAVMAndAddAllocateCore() throws Exception {
 		AllocatedCore ac = null;
 		String avm = null;
@@ -397,6 +524,12 @@ extends AbstractComponent{
 		}
 	}
 	
+	/**
+	 * Retire un coeur à l'avm qui possède le plus de coeur
+	 * 
+	 * @return si on a réussi à retirer un coeur à une avm, on ne retire pas de coeur au avm qui n'en possède qu'un
+	 * @throws Exception
+	 */
 	private boolean findAVMAndRemoveAllocateCore() throws Exception {
 		String avm = Collections.max(this.number_of_cores_of_avm.entrySet(),
 									  Comparator.comparingInt(Map.Entry::getValue)).getKey();
@@ -414,6 +547,12 @@ extends AbstractComponent{
 		return true;
 	}
 	
+	/**
+	 * Essaye d'abord de trouver un coeur libre sur tous les ordinateurs que possède le controlleur
+	 * d'admission, si on trouve un, on ajoute cet avm dans la liste des avms attribués à l'application
+	 * 
+	 * @throws Exception
+	 */
 	private void addAVM() throws Exception {
 		AllocatedCore[] ac = this.acsop.findComputerAndAllocateCores(1);
 		if(ac.length == 0) {
@@ -464,6 +603,11 @@ extends AbstractComponent{
 		}
 	}
 	
+	/**
+	 * Ne retire que des avms libres à l'application
+	 * 
+	 * @throws Exception
+	 */
 	private void removeAVM() throws Exception {
 		if(listAVMs_libre.isEmpty()) {
 			logMessage("PerfControl. "+ this.pcURI + "| aucune diminution de la performance n'a pu être effectuée.");
@@ -471,6 +615,8 @@ extends AbstractComponent{
 		}
 		// c'est un appel interne dans le cas où tous les AVMs ne restent plus qu'un seul coeur
 		String avmURI = listAVMs_libre.remove(0);
+		
+		this.rdmop.removeAVM(this.avmsIntrospectionOutboundPorts.get(avmURI).getAVMPortsURI().get(ApplicationVMPortTypes.REQUEST_SUBMISSION));
 		
 		AllocatedCore ac = this.avmsManagementOutboundPorts.get(avmURI).removeAllocateCore();
 		String cpuri = this.avmsIntrospectionOutboundPorts.get(avmURI).getDynamicState().getComputerURI();
@@ -493,11 +639,15 @@ extends AbstractComponent{
 		
 		this.avmURIs.remove(avmURI);
 		
-		rdmop.removeAVM(avmURI);
-		
 		this.acsop.recycleFreeAVM(avmURI);
 	}
 	
+	/**
+	 * Alloue un coeur sur un ordinateur précis
+	 * @param cpuri			URI de l'ordinateur dont on demande d'allouer un coeur
+	 * @return	un coeur préalloué pour notre application, null si il n'y a plus de coeur libre sur cet ordinateur
+	 * @throws Exception
+	 */
 	private AllocatedCore allocateCore(String cpuri) throws Exception {
 		AllocatedCore[] allocatedCores = new AllocatedCore[0];
 		ComputerServicesOutboundPort csop = this.pc_ComputerServicesOutboundPorts.get(cpuri);
@@ -512,11 +662,22 @@ extends AbstractComponent{
 		return null;
 	}
 	
+	/**
+	 * Déalloue un coeur
+	 * 
+	 * @param ac		un coeur qui a été alloué
+	 * @param cpuri		URI de l'ordinateur qui possède le coeur
+	 * @throws Exception
+	 */
 	private void releaseCore(AllocatedCore ac, String cpuri) throws Exception { 
 		ComputerServicesOutboundPort csop = this.pc_ComputerServicesOutboundPorts.get(cpuri);
 		csop.releaseCore(ac);
 	}
 	
+	/**
+	 * Met à jour les informations sur le nombre de coeurs attribués aux avms
+	 * @throws Exception
+	 */
 	private void updateNbCoresOfAVMs() throws Exception {
 		for(String avmuri : this.avmsIntrospectionOutboundPorts.keySet()) {
 			ApplicationVMIntrospectionOutboundPort avmiop = avmsIntrospectionOutboundPorts.get(avmuri);
@@ -537,6 +698,10 @@ extends AbstractComponent{
 		}
 	}
 	
+	/**
+	 * Met à jour les informations sur les données des processeurs qui sont utilisé pour notre application
+	 * @throws Exception
+	 */
 	private void updateProcessorData() throws Exception {
 		for(String avmuri : avmsIntrospectionOutboundPorts.keySet()) {
 			for(AllocatedCore ac : this.avmsIntrospectionOutboundPorts.get(avmuri).getDynamicState().getCoresStatus()) {
@@ -545,6 +710,11 @@ extends AbstractComponent{
 		}
 	}
 	
+	/**
+	 * Connecte les ports des processeurs lorsqu'on alloue un nouveau coeur, pour savoir les différents données du processeur
+	 * (Fréquences acceptés et la demande de manipulation des fréquences)
+	 * @throws Exception
+	 */
 	private void connectProcessorPorts(AllocatedCore ac) throws Exception {
 		String piip = ac.processorInboundPortURI.get(ProcessorPortTypes.INTROSPECTION);
 		String pmip = ac.processorInboundPortURI.get(ProcessorPortTypes.MANAGEMENT);

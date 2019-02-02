@@ -19,8 +19,9 @@ import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.Admissio
  * invariant		true
  * </pre>
  * 
- * <p>Created on : 16 January, 2019</p>
+ * <p>Created on : January 16, 2019</p>
  * 
+ * @author	<a>Chao LIN</a>
  */
 public class				AdmissionControllerServicesConnector
 extends		AbstractConnector

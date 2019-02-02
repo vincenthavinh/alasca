@@ -21,8 +21,9 @@ import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM.Application
  * invariant		true
  * </pre>
  * 
- * <p>Created on : 16 January, 2019</p>
+ * <p>Created on : January 16, 2019</p>
  * 
+ * @author	<a>Chao LIN</a>
  */
 public interface			AdmissionControllerServicesI
 extends		OfferedI,
@@ -39,24 +40,38 @@ extends		OfferedI,
 	 * post	true			// no postcondition.
 	 * </pre>
 	 *
-	 * @return		uri of the allocated AVM
+	 * @return		uri of ports of the allocated AVM
 	 * @throws Exception		<i>todo.</i>
 	 */
 	public Map<ApplicationVMPortTypes, String>	allocateFreeAVM() throws Exception ;
 	
 	/**
-	 * recycle a free AVM previously allocated to the performance controller.
+	 * recycle a free AVM previously allocated to a performance controller.
 	 *
-	 * @param uri of the AVM
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	AVMuri != null
+	 * post	true			// no postcondition.
+	 * </pre>
+	 *
+	 * @param AVMuri		uri of the free AVM 
 	 * @throws Exception	<i>todo.</i>
 	 */
 	public void		recycleFreeAVM(String AVMuri) throws Exception;
 	
 	/**
-	 * find an idle core 
+	 * find an idle cores 
 	 * 
-	 * @param nbCore
-	 * @return a core allocated from a computer
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	nbCore != 0
+	 * post	true			// no postcondition.
+	 * </pre>
+	 * 
+	 * @param nbCore		number of cores requested
+	 * @return a cores allocated from a computer
 	 * @throws Exception
 	 */
 	public AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception;

@@ -56,7 +56,8 @@ import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatch
 public class RequestDispatcher 
 	extends AbstractComponent
 	implements RequestSubmissionHandlerI, 
-			   RequestNotificationHandlerI{
+			   RequestNotificationHandlerI,
+			   RequestDispatcherManagementI{
 
 	//nom de ce composant
 	protected String rdURI;
@@ -88,16 +89,6 @@ public class RequestDispatcher
 	protected RequestDispatcherManagementInboundPort	requestDispatcherManagementInboundPort ;
 
 	/**
-	 * Créer une nouvelle répartiteur de requête
-	 * 
-	 * @param vmURI										URI of the newly created VM.
-	 * @param applicationVMManagementInboundPortURI		URI of the VM management inbound port.
-	 * @param applicationVMIntrospectionInboundPortURI 	URI of the VM introspection inbound port.
-	 * @param requestSubmissionInboundPortURI			URI of the request submission inbound port.
-	 * @param requestNotificationInboundPortURI			URI of the request notification inbound port.
-	 * @throws Exception								<i>todo.</i>
-	 */
-	/**
 	 * Créer un répartiteur de requête en donnant son URI et les inbound ports
 	 * 
 	 * <p><strong>Contract</strong></p>
@@ -118,7 +109,7 @@ public class RequestDispatcher
 	 * @param requestNotificationInboundPortURIdispatcher	URI of the request notification inbound port.
 	 * @param requestSubmissionInboundPortURIdispatcher		URI of the request submission inbound port.
 	 * @param requestNotificationInboundPortURI				URI of the request notification inbound port of request generator.
-	 * @param requestSubmissionInboundPortURIs				URI of the request submission inbound port of VMs.
+	 * @param requestSubmissionInboundPortURIs				URI of the request submission inbound ports of VMs.
 	 * @throws Exception
 	 */
 	public RequestDispatcher(
@@ -205,12 +196,19 @@ public class RequestDispatcher
 	
 	// Component life cycle
 	
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#start()
+	 */
 	@Override
 	public void			start() throws ComponentStartException
 	{
 		super.start() ;
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI#connectOutboundPorts()
+	 */
+	@Override
 	public void connectOutboundPorts() throws Exception {
 
 		this.doPortConnection(
@@ -227,6 +225,9 @@ public class RequestDispatcher
 		}
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#finalise()
+	 */
 	@Override
 	public void			finalise() throws Exception
 	{	
@@ -237,6 +238,9 @@ public class RequestDispatcher
 		super.finalise() ;
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#shutdown()
+	 */
 	@Override
 	public void			shutdown() throws ComponentShutdownException
 	{
@@ -261,12 +265,17 @@ public class RequestDispatcher
 	// Component internal services
 	// -------------------------------------------------------------------------
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.interfaces.RequestSubmissionHandlerI#acceptRequestSubmission(fr.sorbonne_u.datacenter.software.interfaces.RequestI)
+	 */
 	@Override
 	public void acceptRequestSubmission(RequestI r) throws Exception {
 		// not used
 	}
 
-	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.interfaces.RequestSubmissionHandlerI#acceptRequestSubmissionAndNotify(fr.sorbonne_u.datacenter.software.interfaces.RequestI)
+	 */
 	@Override
 	public void	acceptRequestSubmissionAndNotify(RequestI r) throws Exception {
 		for(AVMtool avm : this.avms) {
@@ -285,6 +294,9 @@ public class RequestDispatcher
 		rsop.submitRequestAndNotify(r) ;
 	}
 
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.interfaces.RequestNotificationHandlerI#acceptRequestTerminationNotification(fr.sorbonne_u.datacenter.software.interfaces.RequestI)
+	 */
 	@Override
 	public void acceptRequestTerminationNotification(RequestI r) throws Exception {
 		long duration = System.currentTimeMillis() - this.req_startTimes.remove(r.getRequestURI());
@@ -303,13 +315,20 @@ public class RequestDispatcher
 		this.requestNotificationOutboundPort.notifyRequestTermination(r);
 	}
 
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI#toggleTracingLogging()
+	 */
+	@Override
 	public void toggleTracingLogging() {
 		this.toggleTracing();
 		this.toggleLogging();
 		this.logMessage( "RD " +this.rdURI +" start");
 	}
 	
-	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI#getAverageReqDuration()
+	 */
+	@Override
 	public long getAverageReqDuration() {
 		long sum_durations = 0;
 		for(Long duration : this.last_req_durations) {
@@ -321,6 +340,10 @@ public class RequestDispatcher
 		return sum_durations / (long) this.last_req_durations.size();
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI#addAVM(String)
+	 */
+	@Override
 	public void addAVM(String avm_reqSubURI) throws Exception {
 		AVMtool tmp = new AVMtool(avm_reqSubURI);
 		tmp.rsop = new RequestSubmissionOutboundPort(this);
@@ -336,6 +359,10 @@ public class RequestDispatcher
 		);
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDispatcherManagementI#removeAVM(String)
+	 */
+	@Override
 	public void removeAVM(String avm_rsipURI) throws Exception {
 		AVMtool avm_toremove = null;
 		for(AVMtool avm : avms) {

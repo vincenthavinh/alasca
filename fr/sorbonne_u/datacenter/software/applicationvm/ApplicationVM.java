@@ -281,12 +281,18 @@ implements	ProcessorServicesNotificationConsumerI,
 	// Component life-cycle
 	// ------------------------------------------------------------------------
 
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#start()
+	 */
 	@Override
 	public void			start() throws ComponentStartException
 	{
 		super.start() ;
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#connectOutboundPorts()
+	 */	
 	@Override
 	public void connectOutboundPorts() throws Exception {
 		this.doPortConnection(
@@ -296,6 +302,9 @@ implements	ProcessorServicesNotificationConsumerI,
 		) ;
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#connectOutboundPorts(String)
+	 */	
 	@Override
 	public void connectOutboundPorts(String requestNotificationInboundPortURI) throws Exception {
 		assert requestNotificationInboundPortURI != null;
@@ -307,6 +316,9 @@ implements	ProcessorServicesNotificationConsumerI,
 		) ;
 	}
 
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#finalise()
+	 */
 	@Override
 	public void			finalise() throws Exception
 	{
@@ -319,6 +331,9 @@ implements	ProcessorServicesNotificationConsumerI,
 		super.finalise() ;
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#disconnectOutboundPorts()
+	 */	
 	@Override
 	public void disconnectOutboundPorts() throws Exception {
 		this.doPortDisconnection(this.requestNotificationInboundPortURI);
@@ -766,6 +781,7 @@ implements	ProcessorServicesNotificationConsumerI,
 	/**
 	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#addAllocateCore(fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore)
 	 */	
+	@Override
 	public void addAllocateCore(AllocatedCore allocatedCore) throws Exception {
 		assert allocatedCore != null;
 		
@@ -788,6 +804,7 @@ implements	ProcessorServicesNotificationConsumerI,
 	/**
 	 * @see fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMManagementI#removeAllocateCore()
 	 */	
+	@Override
 	public AllocatedCore removeAllocateCore() throws Exception {
 		AllocatedCore allocatedCore = this.allocatedCoresIdleStatus.keySet().stream().findFirst().get();
 		this.allocatedCoresIdleStatus.remove(allocatedCore);

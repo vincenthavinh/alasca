@@ -41,47 +41,24 @@ import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatch
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatcherManagementOutboundPort;
 
 /**
- * The class <code>ApplicationVM</code> implements the component representing
- * an application VM in the data center.
+ * La classe <code>AdmissionController</code> controle l'hébergement des applications en examinant
+ * les ressources qu'il possède.
  *
  * <p><strong>Description</strong></p>
  * 
- * The Application VM (AVM) component simulates the execution of web
- * applications by receiving requests, executing them and notifying the
- * emitter of the end of execution of its request (as a way to simulate
- * the return of the result).
- * 
- * The AVM is allocated cores on processors of a single computer and uses them
- * to execute the submitted requests.  It maintain a queue for requests waiting
- * a core to become idle before beginning their execution.
- * 
- * As a component, the AVM offers a request submission service through the
- * interface <code>RequestSubmissionI</code> implemented by
- * <code>RequestSubmissionInboundPort</code> inbound port. To notify the end
- * of the execution of requests, the AVM requires the interface
- * <code>RequestNotificationI</code> through the
- * <code>RequestNotificationOutboundPort</code> outbound port.
- * 
- * The AVM can be managed (essentially allocated cores) and it offers the
- * interface <code>ApplicationVMManagementI</code> through the inbound port
- * <code>ApplicationVMManagementInboundPort</code> for this.
- * 
- * AVM uses cores on processors to execute requests. To pass the request to
- * the cores, it requires the interface <code>ProcessorServicesI</code>
- * through <code>ProcessorServicesOutboundPort</code>. It receives the
- * notifications of the end of execution of the requests by offering the
- * interface <code>ProcessorServicesNotificationI</code> through the
- * inbound port <code>ProcessorServicesNotificationInboundPort</code>.
+ * Le controlleur d'admission est un composant qui est connecté aux ordinateurs pour gérer les
+ * resssources. Il refuse les demandes d'hébergement lorsqu'il n'a plus alloué de coeurs suffisant
+ * pour une application. Il gère la création de la plupart des composants.
  * 
  * <p><strong>Invariant</strong></p>
  * 
  * TODO: complete!
- * 
  * <pre>
- * invariant		vmURI != null
- * invariant		applicationVMManagementInboundPortURI != null
- * invariant		requestSubmissionInboundPortURI != null
- * invariant		requestNotificationOutboundPortURI != null
+ * invariant		ac_URI != null
+ * invariant		ac_ApplicationSubmissionInboundPortURI != null
+ * invariant		cp_computerServicesInboundPortURIs != null && cp_computerServicesInboundPortURIs.size() != 0
+ * invariant		dcc_DynamicComponentCreationInboundPortURI != 0
+ * invariant		ac_AdmissionControllerServicesInboundPortURI != null
  * </pre>
  * 
  * <p>Created on : February 1, 2019</p>
@@ -134,10 +111,27 @@ public class AdmissionController
 	protected HashMap<String, ApplicationVM> avms_libre;
 	protected int index_free_avm;
 	
-	//--------------------------------------------------------------------
-	//METHODS
-	//--------------------------------------------------------------------
-	
+	/**
+	 * Créer un controlleur d'admission en donnant son URI et les inbound ports
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre		ac_URI != null
+	 * pre		ac_ApplicationSubmissionInboundPortURI != null
+	 * pre		cp_computerServicesInboundPortURIs != null && cp_computerServicesInboundPortURIs.size() != 0
+	 * pre		dcc_DynamicComponentCreationInboundPortURI != 0
+	 * pre		ac_AdmissionControllerServicesInboundPortURI != null
+	 * post	true			// no postcondition.
+	 * </pre>
+	 *
+	 * @param ac_URI										URI du controlleur d'admission
+	 * @param ac_ApplicationSubmissionInboundPortURI		URI du application submission inbound port du controlleur d'admission
+	 * @param cp_computerServicesInboundPortURIs			Liste des URIs de services inbound ports des ordinateurs
+	 * @param dcc_DynamicComponentCreationInboundPortURI	URI du dynamic component creator
+	 * @param ac_AdmissionControllerServicesInboundPortURI	URI du port de service du controlleur d'admission
+	 * @throws Exception
+	 */
 	public AdmissionController(
 			String ac_URI,
 			String ac_ApplicationSubmissionInboundPortURI,
@@ -210,6 +204,9 @@ public class AdmissionController
 
 	// Component life cycle
 	
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#start()
+	 */
 	@Override
 	public void			start() throws ComponentStartException
 	{
@@ -231,6 +228,9 @@ public class AdmissionController
 		}
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#finalise()
+	 */
 	@Override
 	public void			finalise() throws Exception
 	{	
@@ -262,6 +262,9 @@ public class AdmissionController
 		super.finalise() ;
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.components.AbstractComponent#shutdown()
+	 */
 	@Override
 	public void			shutdown() throws ComponentShutdownException
 	{
@@ -296,7 +299,13 @@ public class AdmissionController
 		super.shutdown();
 	}
 
+	//--------------------------------------------------------------------
+	//METHODS
+	//--------------------------------------------------------------------
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationHostingHandlerI#processAskHosting(String, int, int, int)
+	 */
 	@Override
 	public String processAskHosting(String requestNotificationInboundPortURI, int nbCoresByAVM, int seul_inf, int seul_sup) throws Exception {
 		this.logMessage("AdContr. "+ this.ac_URI+"| reçu askHosting() d'un applicationClient.");
@@ -393,7 +402,8 @@ public class AdmissionController
 		);
 		ac_PerformanceController.put(requestNotificationInboundPortURI, pc);
 		//Performance controller
-		// pb pour le creer avec dynamic component
+		// pb pour le creer avec dynamic component, la création échoue en donnant 
+		// les mêmes configurations qu'au-dessus (n'entre pas dans le constructeur du PerformanceController)
 //		this.ac_DynamicComponentCreationOutboundPort.createComponent(
 //				PerformanceController.class.getCanonicalName(), 
 //				new Object[]{
@@ -467,6 +477,9 @@ public class AdmissionController
 		return rd_rsipURI;
 	}
 
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationHostingHandlerI#processAskHostToConnect(String)
+	 */
 	@Override
 	public Boolean processAskHostToConnect(String requestNotificationInboundPortURI) {
 		try {
@@ -497,6 +510,9 @@ public class AdmissionController
 		return true;
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI#findComputerAndAllocateCores(int)
+	 */
 	// TODO ne pas parcourir tous les ordinateurs
 	public AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception {
 		AllocatedCore[] allocatedCores = new AllocatedCore[0];
@@ -516,10 +532,16 @@ public class AdmissionController
 		return allocatedCores;
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI#recycleFreeAVM(String)
+	 */
 	public void recycleFreeAVM(String AVMuri) throws Exception{
 		this.avms_libre.get(AVMuri).disconnectOutboundPorts();
 	}
 	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI#allocateFreeAVM()
+	 */
 	public Map<ApplicationVMPortTypes, String> allocateFreeAVM() throws Exception{
 		String avm_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
 		String avm_amipURI = AbstractPort.generatePortURI(ApplicationVMManagementInboundPort.class);
