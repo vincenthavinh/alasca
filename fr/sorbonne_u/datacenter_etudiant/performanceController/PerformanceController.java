@@ -39,11 +39,11 @@ import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatch
 
 /**
  * La classe <code>PerformanceController</code> manipule les ressources des ordinateurs et des
- * avm pour controller la performance souhaitée par l'application.
+ * avm pour contrôler la performance souhaitée par l'application.
  *
  * <p><strong>Description</strong></p>
  * 
- * Le controlleur de performance varie les fréquences des coeurs alloués aux avms, attribue ou
+ * Le contrôleur de performance varie les fréquences des coeurs alloués aux avms, attribue ou
  * reprend des coeurs aux avms, ajoute ou retire des avms libres à une application pour que le
  * temps moyen d'exécution d'une requête soit dans les seuils demandés par le client lors de 
  * l'hébergement de l'application.
@@ -113,7 +113,7 @@ implements PerformanceControllerManagementI{
 	protected AdmissionControllerServicesOutboundPort acsop;
 	
 	/**
-	 * Créer un controlleur de performance en donnant son URI et les inbound ports
+	 * Créer un contrôleur de performance en donnant son URI et les inbound ports
 	 * On utilise que des ArrayList dans le constructeur car le dynamicComponentCreator ne supporte
 	 * pas de créer un component avec des HashMap dans les paramètres
 	 * 
@@ -134,8 +134,8 @@ implements PerformanceControllerManagementI{
 	 * post	true			// no postcondition.
 	 * </pre>
 	 * 
-	 * @param pcURI										URI du controlleur de performance
-	 * @param pc_management_ipURI						URI du management inbound port du controlleur de performance
+	 * @param pcURI										URI du contrôleur de performance
+	 * @param pc_management_ipURI						URI du management inbound port du contrôleur de performance
 	 * @param rd_management_ipURI						URI du management inbound port du répartiteur de requête
 	 * @param rd_request_notification_ipURI				URI du notification de requête du répartiteur de requête (connection aux avms libre)
 	 * @param avms_URI									URIs des avms attribué à l'application
@@ -145,7 +145,7 @@ implements PerformanceControllerManagementI{
 	 * @param cp_computerServicesInboundPortURIs		URIs du services inbound port des ordinateurs
 	 * @param seuil_inf									Seuil inférieur du temps moyen d'exécution souhaité
 	 * @param seuil_sup									Seuil supérieur du temps moyen d'exécution souhaité
-	 * @param admissionControllerServicesInboundPortURI	URI du services inbound port du controlleur d'admission 
+	 * @param admissionControllerServicesInboundPortURI	URI du services inbound port du contrôleur d'admission 
 	 * @throws Exception
 	 */
 	public PerformanceController(
@@ -421,7 +421,7 @@ implements PerformanceControllerManagementI{
 		long moyenne = this.rdmop.getAverageReqDuration();
 		
 		// On récupère les données sur les coeurs attribués aux avms si on ne les a pas
-		// on considère par la suite que ces données sont manipulées dans le controlleur de performance
+		// on considère par la suite que ces données sont manipulées dans le contrôleur de performance
 		if(this.allocatedCoreStates.isEmpty()) {
 			this.updateProcessorData();
 		}
@@ -548,7 +548,7 @@ implements PerformanceControllerManagementI{
 	}
 	
 	/**
-	 * Essaye d'abord de trouver un coeur libre sur tous les ordinateurs que possède le controlleur
+	 * Essaye d'abord de trouver un coeur libre sur tous les ordinateurs que possède le contrôleur
 	 * d'admission, si on trouve un, on ajoute cet avm dans la liste des avms attribués à l'application
 	 * 
 	 * @throws Exception

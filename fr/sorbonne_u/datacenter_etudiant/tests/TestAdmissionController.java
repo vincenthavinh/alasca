@@ -11,7 +11,12 @@ import fr.sorbonne_u.datacenter.hardware.processors.Processor;
 import fr.sorbonne_u.datacenter.hardware.tests.ComputerMonitor;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.AdmissionController;
 import fr.sorbonne_u.datacenter_etudiant.clientapplication.ClientApplication;
-
+/**
+ * Scénario avec intervention du performance contrôleur
+ * 
+ * @author Chao LIN
+ *
+ */
 public class TestAdmissionController extends AbstractCVM {
 
 	/** static URIs **/

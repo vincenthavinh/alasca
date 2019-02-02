@@ -89,7 +89,7 @@ extends AbstractComponent {
 	 *
 	 * @param ca_URI									URI du clientapplication
 	 * @param ca_ApplicationNotificationInboundPortURI	URI du notification inbound port du  clientapplication
-	 * @param ac_ApplicationSubmissionInboundPortURI	URI du submission inbound port du admission controlleur
+	 * @param ac_ApplicationSubmissionInboundPortURI	URI du submission inbound port du admission contrôleur
 	 * @param nbCoresByAVM								Nombre de coeurs estimé pour chaque avm attribué à cet application
 	 * @param rg_URI									URI du générateur de requête
 	 * @param rg_meanInterArrivalTime					La moyenne des intervalles de temps d'envoie de requêtes
@@ -181,7 +181,7 @@ extends AbstractComponent {
 		this.rg_RequestNotificationInboundPortURI = AbstractPort.generatePortURI(RequestNotificationInboundPort.class);
 		this.rg_RequestGeneratorManagementInboundPortURI = AbstractPort.generatePortURI(RequestGeneratorManagementInboundPort.class);
 		
-		// Demande l'hébergement au controlleur d'admission et reçoit le request submission inbound port du répartiteur de requête attribué
+		// Demande l'hébergement au contrôleur d'admission et reçoit le request submission inbound port du répartiteur de requête attribué
 		this.rd_RequestSubmissionInboundPortURI = this.ca_ApplicationSubmissionOutboundPort.askHosting(rg_RequestNotificationInboundPortURI, nbCoresByAVM, pc_seuil_inf, pc_seuil_sup);
 		
 		// Si la demande est refusée, on reçoit null

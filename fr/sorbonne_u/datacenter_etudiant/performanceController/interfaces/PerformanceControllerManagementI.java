@@ -5,7 +5,7 @@ import fr.sorbonne_u.components.interfaces.RequiredI;
 
 /**
  * L'interface <code>PerformanceControllerManagementI</code> définie les méthodes
- * de gestion d'un controlleur de performance.
+ * de gestion d'un contrôleur de performance.
  *
  * <p><strong>Description</strong></p>
  * 
@@ -24,7 +24,7 @@ public interface PerformanceControllerManagementI
 	RequiredI {
 
 	/**
-	 * Connecte les outboundports du controlleur de performance
+	 * Connecte les outboundports du contrôleur de performance
 	 * On utilise cette méthode pour éviter de faire la connection aux inbound ports qui 
 	 * n'existe pas en créant le répartiteur dynamiquement.
 	 * 

@@ -5,7 +5,7 @@ import fr.sorbonne_u.components.interfaces.RequiredI;
 
 /**
  * L'interface <code>ApplicationHostingI</code> définie les méthodes de demande d'une application
- * vers l'admission controlleur.
+ * vers l'admission contrôleur.
  *
  * <p><strong>Description</strong></p>
  * 

@@ -46,7 +46,7 @@ import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatch
  *
  * <p><strong>Description</strong></p>
  * 
- * Le controlleur d'admission est un composant qui est connecté aux ordinateurs pour gérer les
+ * Le contrôleur d'admission est un composant qui est connecté aux ordinateurs pour gérer les
  * resssources. Il refuse les demandes d'hébergement lorsqu'il n'a plus alloué de coeurs suffisant
  * pour une application. Il gère la création de la plupart des composants.
  * 
@@ -115,7 +115,7 @@ public class AdmissionController
 	protected int index_free_avm;
 	
 	/**
-	 * Créer un controlleur d'admission en donnant son URI et les inbound ports
+	 * Créer un contrôleur d'admission en donnant son URI et les inbound ports
 	 * 
 	 * <p><strong>Contract</strong></p>
 	 * 
@@ -128,11 +128,11 @@ public class AdmissionController
 	 * post	true			// no postcondition.
 	 * </pre>
 	 *
-	 * @param ac_URI										URI du controlleur d'admission
-	 * @param ac_ApplicationSubmissionInboundPortURI		URI du application submission inbound port du controlleur d'admission
+	 * @param ac_URI										URI du contrôleur d'admission
+	 * @param ac_ApplicationSubmissionInboundPortURI		URI du application submission inbound port du contrôleur d'admission
 	 * @param cp_computerServicesInboundPortURIs			Liste des URIs de services inbound ports des ordinateurs
 	 * @param dcc_DynamicComponentCreationInboundPortURI	URI du dynamic component creator
-	 * @param ac_AdmissionControllerServicesInboundPortURI	URI du port de service du controlleur d'admission
+	 * @param ac_AdmissionControllerServicesInboundPortURI	URI du port de service du contrôleur d'admission
 	 * @throws Exception
 	 */
 	public AdmissionController(
