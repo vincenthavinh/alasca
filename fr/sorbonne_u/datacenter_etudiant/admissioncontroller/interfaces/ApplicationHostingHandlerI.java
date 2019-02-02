@@ -6,6 +6,12 @@ package fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces;
  *
  * <p><strong>Description</strong></p>
  * 
+ * <p><strong>Invariant</strong></p>
+ * 
+ * <pre>
+ * invariant		true
+ * </pre>
+ * 
  * <p>Created on : February 1, 2019</p>
  * 
  * @author	<a>Chao LIN</a>

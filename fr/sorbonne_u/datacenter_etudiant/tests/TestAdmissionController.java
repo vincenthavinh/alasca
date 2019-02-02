@@ -1,5 +1,6 @@
 package fr.sorbonne_u.datacenter_etudiant.tests;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -11,8 +12,10 @@ import fr.sorbonne_u.datacenter.hardware.processors.Processor;
 import fr.sorbonne_u.datacenter.hardware.tests.ComputerMonitor;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.AdmissionController;
 import fr.sorbonne_u.datacenter_etudiant.clientapplication.ClientApplication;
+import fr.sorbonne_u.datacenter_etudiant.coordinator.CoreCoordinator;
 /**
- * Scénario avec intervention du performance contrôleur
+ * Scénario avec intervention du performance contrôleur (varie les fréquences, les allocations
+ * de coeurs et allocation d'avm libre)
  * 
  * @author Chao LIN
  *
@@ -31,7 +34,7 @@ public class TestAdmissionController extends AbstractCVM {
 
 	//admission controller
 	public static final String ac_ApplicationSubmissionInboundPortURI = "ac-asip" ;
-	public static final String ac_AdmissionControllerServicesInboundPortURI = "ac-ibp" ;
+	public static final String ac_AdmissionControllerServicesInboundPortURI = "acs-ibp" ;
 	
 	//client application
 	public static final String	ca0_ApplicationNotificationInboundPortURI = "ca0-anip" ;
@@ -40,14 +43,16 @@ public class TestAdmissionController extends AbstractCVM {
 	//dynamic component creator 
 	public static final String dcc_DynamicComponentCreationInboundPortURI = AbstractCVM.DCC_INBOUNDPORT_URI_SUFFIX ;
 	
+	//core coordinator
+	public static final String cc_CoreCoordinatorServicesInboundPortURI = "ccs-ibp";
+	
 	/** static components **/
 	protected ComputerMonitor cm0 ;
 	protected ComputerMonitor cm1 ;
 	protected AdmissionController ac ;
+	protected CoreCoordinator cc;
 	protected ClientApplication ca0;
 	protected ClientApplication ca1;
-
-	
 	
 	public TestAdmissionController() throws Exception {
 		super();
@@ -128,29 +133,43 @@ public class TestAdmissionController extends AbstractCVM {
 				 cp1_ComputerStaticStateDataInboundPortURI,
 				 cp1_ComputerDynamicStateDataInboundPortURI) ;
 		this.addDeployedComponent(this.cm1) ;
-	
-		
+		// --------------------------------------------------------------------
+		ArrayList<String> cpURI = new ArrayList<String>();
+		cpURI.add(computer0URI);
+		cpURI.add(computer1URI);
+		ArrayList<String> cp_services_URI = new ArrayList<String>();
+		cp_services_URI.add(cp0_ComputerServicesInboundPortURI);
+		cp_services_URI.add(cp1_ComputerServicesInboundPortURI);
 		// --------------------------------------------------------------------
 		// Create the Admission Controller component.
 		// Il faut lui passer le(s) ordinateur(s) existant(s).
 		// --------------------------------------------------------------------
-		HashMap<String, String> csipURIs = new HashMap<String, String>();
-		csipURIs.put(computer0URI, cp0_ComputerServicesInboundPortURI);
-		csipURIs.put(computer1URI, cp1_ComputerServicesInboundPortURI);
-		
+		String cc_URI = "cc0";
+		this.cc = new CoreCoordinator(
+				cc_URI,
+				cc_CoreCoordinatorServicesInboundPortURI,
+				cpURI,
+				cp_services_URI);
+		this.addDeployedComponent(this.cc);
+		this.cc.toggleTracing() ;
+		this.cc.toggleLogging() ;
+		// --------------------------------------------------------------------
+		// Create the Admission Controller component.
+		// Il faut lui passer le(s) ordinateur(s) existant(s).
+		// --------------------------------------------------------------------
 		String ac_URI = "ac0";
 		this.ac = new AdmissionController(
 				ac_URI, 
 				ac_ApplicationSubmissionInboundPortURI, 
-				csipURIs,
 				dcc_DynamicComponentCreationInboundPortURI,
-				ac_AdmissionControllerServicesInboundPortURI);
+				ac_AdmissionControllerServicesInboundPortURI,
+				cc_CoreCoordinatorServicesInboundPortURI);
 		this.addDeployedComponent(this.ac);
 		this.ac.toggleTracing() ;
 		this.ac.toggleLogging() ;
-		// --------------------------------------------------------------------
 		
 		// --------------------------------------------------------------------
+		
 		// Create the 2 Client Application components.
 		// Il faut lui passer l'admission controller pour communiquer avec
 		// --------------------------------------------------------------------

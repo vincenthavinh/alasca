@@ -12,9 +12,6 @@ import fr.sorbonne_u.components.pre.dcc.connectors.DynamicComponentCreationConne
 import fr.sorbonne_u.components.pre.dcc.interfaces.DynamicComponentCreationI;
 import fr.sorbonne_u.components.pre.dcc.ports.DynamicComponentCreationOutboundPort;
 import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
-import fr.sorbonne_u.datacenter.hardware.computers.connectors.ComputerServicesConnector;
-import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI;
-import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerServicesOutboundPort;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM.ApplicationVMPortTypes;
 import fr.sorbonne_u.datacenter.software.applicationvm.connectors.ApplicationVMManagementConnector;
@@ -29,6 +26,9 @@ import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.Applicat
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.ApplicationHostingI;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.AdmissionControllerServicesInboundPort;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.ApplicationHostingInboundPort;
+import fr.sorbonne_u.datacenter_etudiant.coordinator.connectors.CoreCoordinatorServicesConnector;
+import fr.sorbonne_u.datacenter_etudiant.coordinator.interfaces.CoreCoordinatorServicesI;
+import fr.sorbonne_u.datacenter_etudiant.coordinator.ports.CoreCoordinatorServicesOutboundPort;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.PerformanceController;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.connectors.PerformanceControllerManagementConnector;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI;
@@ -56,9 +56,8 @@ import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatch
  * <pre>
  * invariant		ac_URI != null
  * invariant		ac_ApplicationSubmissionInboundPortURI != null
- * invariant		cp_computerServicesInboundPortURIs != null && cp_computerServicesInboundPortURIs.size() != 0
- * invariant		dcc_DynamicComponentCreationInboundPortURI != 0
  * invariant		ac_AdmissionControllerServicesInboundPortURI != null
+ * invariant		coreCoord_services_ipURI != null
  * </pre>
  * 
  * <p>Created on : February 1, 2019</p>
@@ -98,10 +97,6 @@ public class AdmissionController
 	//inboundport
 	protected ApplicationHostingInboundPort ac_ApplicationSubmissionInboundPort;
 	
-	/**Computer**/
-	protected HashMap<String, String> cp_ComputerServicesInboundPortURIs;
-	protected HashMap<String, ComputerServicesOutboundPort> ac_ComputerServicesOutboundPorts;
-	
 	/**DynamicComponentCreator**/
 	//outboundport
 	protected String dcc_DynamicComponentCreationInboundPortURI;
@@ -114,6 +109,10 @@ public class AdmissionController
 	// index pour les uris des avms libre
 	protected int index_free_avm;
 	
+	/**Coordinateur de coeur*/
+	protected String coreCoord_services_ipURI;
+	protected CoreCoordinatorServicesOutboundPort coreCoord_services_op;
+	
 	/**
 	 * Créer un contrôleur d'admission en donnant son URI et les inbound ports
 	 * 
@@ -122,7 +121,6 @@ public class AdmissionController
 	 * <pre>
 	 * pre		ac_URI != null
 	 * pre		ac_ApplicationSubmissionInboundPortURI != null
-	 * pre		cp_computerServicesInboundPortURIs != null && cp_computerServicesInboundPortURIs.size() != 0
 	 * pre		dcc_DynamicComponentCreationInboundPortURI != 0
 	 * pre		ac_AdmissionControllerServicesInboundPortURI != null
 	 * post	true			// no postcondition.
@@ -130,7 +128,6 @@ public class AdmissionController
 	 *
 	 * @param ac_URI										URI du contrôleur d'admission
 	 * @param ac_ApplicationSubmissionInboundPortURI		URI du application submission inbound port du contrôleur d'admission
-	 * @param cp_computerServicesInboundPortURIs			Liste des URIs de services inbound ports des ordinateurs
 	 * @param dcc_DynamicComponentCreationInboundPortURI	URI du dynamic component creator
 	 * @param ac_AdmissionControllerServicesInboundPortURI	URI du port de service du contrôleur d'admission
 	 * @throws Exception
@@ -138,9 +135,9 @@ public class AdmissionController
 	public AdmissionController(
 			String ac_URI,
 			String ac_ApplicationSubmissionInboundPortURI,
-			HashMap<String, String> cp_computerServicesInboundPortURIs,
 			String dcc_DynamicComponentCreationInboundPortURI,
-			String ac_AdmissionControllerServicesInboundPortURI
+			String ac_AdmissionControllerServicesInboundPortURI,
+			String coreCoord_services_ipURI
 	) throws Exception {
 		super(1,1);
 		
@@ -148,15 +145,14 @@ public class AdmissionController
 		assert ac_URI != null;
 		assert ac_ApplicationSubmissionInboundPortURI != null;
 		assert dcc_DynamicComponentCreationInboundPortURI != null;
-		assert cp_computerServicesInboundPortURIs != null;
-		assert cp_computerServicesInboundPortURIs.size() != 0;
 		assert ac_AdmissionControllerServicesInboundPortURI != null;
+		assert coreCoord_services_ipURI != null;
 		
 		//initilisation
 		
 		this.ac_URI = ac_URI;
-		this.cp_ComputerServicesInboundPortURIs = cp_computerServicesInboundPortURIs;
 		this.dcc_DynamicComponentCreationInboundPortURI = dcc_DynamicComponentCreationInboundPortURI;
+		this.coreCoord_services_ipURI = coreCoord_services_ipURI;
 		
 		this.ac_RequestDispatcherManagementOutboundPorts = new HashMap<String, RequestDispatcherManagementOutboundPort>();
 		this.ac_ApplicationVMManagementOutboundPorts = new HashMap<String, ArrayList<ApplicationVMManagementOutboundPort>>();
@@ -168,7 +164,7 @@ public class AdmissionController
 		this.rd_number = 0;
 		
 		this.avms_libre_recyclees = new ArrayList<Map<ApplicationVMPortTypes, String>>();
-		
+
 		//initialisation des ports
 		
 		/**offered**/
@@ -187,23 +183,19 @@ public class AdmissionController
 		this.admissionControllerServicesInboundPort.publishPort();
 		
 		/**required**/
-		//ComputerServices
-		this.ac_ComputerServicesOutboundPorts = new HashMap<String, ComputerServicesOutboundPort>();
-		this.addRequiredInterface(ComputerServicesI.class) ;
-		for(String cpURI : cp_ComputerServicesInboundPortURIs.keySet()) {
-			this.ac_ComputerServicesOutboundPorts.put(cpURI, new ComputerServicesOutboundPort(this));
-			this.addPort(this.ac_ComputerServicesOutboundPorts.get(cpURI)) ;
-			this.ac_ComputerServicesOutboundPorts.get(cpURI).publishPort() ;
-		}
-		
 		//DynamicComponentCreation
 		this.addRequiredInterface(DynamicComponentCreationI.class);
 		this.ac_DynamicComponentCreationOutboundPort = new DynamicComponentCreationOutboundPort(this);
 		this.addPort(this.ac_DynamicComponentCreationOutboundPort);
 		this.ac_DynamicComponentCreationOutboundPort.publishPort();
+		
+		/**Coordinateur de coeur*/
+		this.addRequiredInterface(CoreCoordinatorServicesI.class);
+		this.coreCoord_services_op = new CoreCoordinatorServicesOutboundPort(this);
+		this.addPort(coreCoord_services_op);
+		this.coreCoord_services_op.publishPort();
 
 		//Postconditions
-		assert  this.ac_ComputerServicesOutboundPorts != null ;
 		assert  this.ac_DynamicComponentCreationOutboundPort != null && this.ac_DynamicComponentCreationOutboundPort instanceof DynamicComponentCreationI;
 	}
 
@@ -218,16 +210,14 @@ public class AdmissionController
 		super.start() ;
 
 		try {
-			for(String cpURI : cp_ComputerServicesInboundPortURIs.keySet()) {
-				this.doPortConnection(
-						this.ac_ComputerServicesOutboundPorts.get(cpURI).getPortURI(),
-						this.cp_ComputerServicesInboundPortURIs.get(cpURI),
-						ComputerServicesConnector.class.getCanonicalName()) ;
-			}
 			this.doPortConnection(
 					this.ac_DynamicComponentCreationOutboundPort.getPortURI(),
 					this.dcc_DynamicComponentCreationInboundPortURI,
 					DynamicComponentCreationConnector.class.getCanonicalName()) ;
+			this.doPortConnection(
+					this.coreCoord_services_op.getPortURI(),
+					this.coreCoord_services_ipURI,
+					CoreCoordinatorServicesConnector.class.getCanonicalName() );
 		} catch (Exception e) {
 			throw new ComponentStartException(e) ;
 		}
@@ -239,10 +229,6 @@ public class AdmissionController
 	@Override
 	public void			finalise() throws Exception
 	{	
-		for(String cpURI : ac_ComputerServicesOutboundPorts.keySet()) {
-			this.doPortDisconnection(ac_ComputerServicesOutboundPorts.get(cpURI).getPortURI()) ;
-		}
-		
 		this.doPortDisconnection(this.ac_DynamicComponentCreationOutboundPort.getPortURI()) ;
 		
 		for(RequestDispatcherManagementOutboundPort rdmop : this.ac_RequestDispatcherManagementOutboundPorts.values()) {
@@ -263,7 +249,7 @@ public class AdmissionController
 		for(ApplicationVM avm : this.avms_libre.values()) {
 			avm.finalise();
 		}
-		
+		this.doPortDisconnection(this.coreCoord_services_op.getPortURI());
 		super.finalise() ;
 	}
 	
@@ -275,9 +261,6 @@ public class AdmissionController
 	{
 		try {
 			this.ac_ApplicationSubmissionInboundPort.unpublishPort() ;
-			for(String cpURI : ac_ComputerServicesOutboundPorts.keySet()) {
-				ac_ComputerServicesOutboundPorts.get(cpURI).unpublishPort();
-			}
 			this.ac_DynamicComponentCreationOutboundPort.unpublishPort() ;
 			for(RequestDispatcherManagementOutboundPort rdmop : this.ac_RequestDispatcherManagementOutboundPorts.values()) {
 				rdmop.unpublishPort();
@@ -297,6 +280,7 @@ public class AdmissionController
 			for(ApplicationVM avm : this.avms_libre.values()) {
 				avm.shutdown();
 			}
+			this.coreCoord_services_op.unpublishPort();
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
@@ -320,7 +304,7 @@ public class AdmissionController
 		/**Try hosting application**/
 		// choix arbitraire pour le moment
 		// argument variable selon la demande de l application dans le futur
-		AllocatedCore[] allocatedCores = this.findComputerAndAllocateCores(nbCoresByAVM*nbAVMsByApp);
+		AllocatedCore[] allocatedCores = this.coreCoord_services_op.findComputerAndAllocateCores(nbCoresByAVM*nbAVMsByApp);
 		
 		if(allocatedCores.length == 0) {
 			return null;
@@ -354,12 +338,6 @@ public class AdmissionController
 		
 		//port du performance controller
 		String pc_management_ipURI = AbstractPort.generatePortURI(PerformanceControllerManagementInboundPort.class);
-		ArrayList<String> computers_URI = new ArrayList<String>();
-		ArrayList<String> computersServices_URI = new ArrayList<String>();
-		for(String computerURI : cp_ComputerServicesInboundPortURIs.keySet()) {
-			computers_URI.add(computerURI);
-			computersServices_URI.add(cp_ComputerServicesInboundPortURIs.get(computerURI));
-		}
 		
 		/*Creation des composants dynamiques*/
 		
@@ -399,11 +377,10 @@ public class AdmissionController
 				avms_URI, 
 				avms_iipURIs, 
 				avms_amipURIs,
-				computers_URI,
-				computersServices_URI,
 				seul_inf,
 				seul_sup,
-				admissionControllerServicesInboundPort.getPortURI()
+				admissionControllerServicesInboundPort.getPortURI(),
+				coreCoord_services_ipURI
 		);
 		ac_PerformanceController.put(requestNotificationInboundPortURI, pc);
 		//Performance controller
@@ -516,28 +493,6 @@ public class AdmissionController
 	}
 	
 	/**
-	 * @see fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI#findComputerAndAllocateCores(int)
-	 */
-	// TODO ne pas parcourir tous les ordinateurs
-	public AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception {
-		AllocatedCore[] allocatedCores = new AllocatedCore[0];
-
-		for(String cpURI : this.ac_ComputerServicesOutboundPorts.keySet()) {
-			ComputerServicesOutboundPort csop = this.ac_ComputerServicesOutboundPorts.get(cpURI);
-			allocatedCores = csop.allocateCores(nbCore) ;
-			if(allocatedCores.length == nbCore) {
-				logMessage("AdContr. "+ this.ac_URI+"| "+ allocatedCores.length + " coeur(s) alloué(s) depuis " + csop.getServerPortURI());
-				return allocatedCores;
-			}
-			else {
-				csop.releaseCores(allocatedCores);
-			}
-		}
-		logMessage("AdContr. "+ this.ac_URI+"| Aucun coeur n'a pu être alloué.");
-		return allocatedCores;
-	}
-	
-	/**
 	 * @see fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI#recycleFreeAVM(String)
 	 */
 	public void recycleFreeAVM(String AVMuri) throws Exception{
@@ -552,6 +507,9 @@ public class AdmissionController
 	public Map<ApplicationVMPortTypes, String> allocateFreeAVM() throws Exception{
 		if(!this.avms_libre_recyclees.isEmpty()) {
 			return this.avms_libre_recyclees.remove(0);
+		}
+		if(this.avms_libre.size() >= 5) {
+			return null;
 		}
 		String avm_rsipURI = AbstractPort.generatePortURI(RequestSubmissionInboundPort.class);
 		String avm_amipURI = AbstractPort.generatePortURI(ApplicationVMManagementInboundPort.class);

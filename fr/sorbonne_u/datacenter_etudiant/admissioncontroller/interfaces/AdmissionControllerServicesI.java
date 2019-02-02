@@ -4,7 +4,6 @@ import java.util.Map;
 
 import fr.sorbonne_u.components.interfaces.OfferedI;
 import fr.sorbonne_u.components.interfaces.RequiredI;
-import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM.ApplicationVMPortTypes;
 
 /**
@@ -60,20 +59,5 @@ extends		OfferedI,
 	 */
 	public void		recycleFreeAVM(String AVMuri) throws Exception;
 	
-	/**
-	 * find an idle cores 
-	 * 
-	 * <p><strong>Contract</strong></p>
-	 * 
-	 * <pre>
-	 * pre	nbCore != 0
-	 * post	true			// no postcondition.
-	 * </pre>
-	 * 
-	 * @param nbCore		number of cores requested
-	 * @return a cores allocated from a computer
-	 * @throws Exception
-	 */
-	public AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception;
 }
 

@@ -8,7 +8,7 @@ import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.Perfor
 
 /**
  * La classe <code>PerformanceControllerManagementInboundPort</code> implémente le
- * inbound port offert par l'interface <code>PerformanceControllerManagementI</code>.
+ * inbound port offrant l'interface <code>PerformanceControllerManagementI</code>.
  *
  * <p><strong>Description</strong></p>
  * 

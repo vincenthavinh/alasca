@@ -12,9 +12,6 @@ import fr.sorbonne_u.components.exceptions.ComponentShutdownException;
 import fr.sorbonne_u.components.exceptions.ComponentStartException;
 import fr.sorbonne_u.datacenter.TimeManagement;
 import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
-import fr.sorbonne_u.datacenter.hardware.computers.connectors.ComputerServicesConnector;
-import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI;
-import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerServicesOutboundPort;
 import fr.sorbonne_u.datacenter.hardware.processors.Processor.ProcessorPortTypes;
 import fr.sorbonne_u.datacenter.hardware.processors.connectors.ProcessorIntrospectionConnector;
 import fr.sorbonne_u.datacenter.hardware.processors.connectors.ProcessorManagementConnector;
@@ -31,6 +28,9 @@ import fr.sorbonne_u.datacenter.software.applicationvm.ports.ApplicationVMManage
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.connectors.AdmissionControllerServicesConnector;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.AdmissionControllerServicesOutboundPort;
+import fr.sorbonne_u.datacenter_etudiant.coordinator.connectors.CoreCoordinatorServicesConnector;
+import fr.sorbonne_u.datacenter_etudiant.coordinator.interfaces.CoreCoordinatorServicesI;
+import fr.sorbonne_u.datacenter_etudiant.coordinator.ports.CoreCoordinatorServicesOutboundPort;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.ports.PerformanceControllerManagementInboundPort;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherManagementConnector;
@@ -56,13 +56,13 @@ import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.ports.RequestDispatch
  * invariant		rd_management_ipURI != null
  * invariant		rd_request_notification_ipURI != null
  * invariant		avms_URI != null && avms_URI.size() != 0
- * invariant		avmsIntrospectionInboundPortURIs != null && avms_URI.size() != 0
- * invariant		avmsManagementInboundPortURIs != null && avms_URI.size() != 0
- * invariant		computers_URI != null && avms_URI.size() != 0
- * invariant		cp_computerServicesInboundPortURIs != null && avms_URI.size() != 0
+ * invariant		avmsIntrospectionInboundPortURIs != null && avmsIntrospectionInboundPortURIs.size() != 0
+ * invariant		avmsManagementInboundPortURIs != null && avmsManagementInboundPortURIs.size() != 0
+ * invariant		computers_URI != null && computers_URI.size() != 0
+ * invariant		cp_computerServicesInboundPortURIs != null && cp_computerServicesInboundPortURIs.size() != 0
  * invariant		admissionControllerServicesInboundPortURI != null
  * invariant		pc_seuil_inf <= pc_seuil_sup
- 
+ * invariant		coreCoord_services_ipURI != null
  * </pre>
  * 
  * <p>Created on : February 1, 2019</p>
@@ -87,10 +87,6 @@ implements PerformanceControllerManagementI{
 	protected ArrayList<String> listAVMs_libre;
 	
 	/**Computer**/
-	protected HashMap<String, String> cp_ComputerServicesInboundPortURIs;
-	protected HashMap<String, ComputerServicesOutboundPort> pc_ComputerServicesOutboundPorts;
-	// une map avec l'uri de l'ordinateur et la liste des avms qui héberge sur cet ordinateur
-	// utiliser pour augmenter le nombre de coeur d'une avm (et que le coeur appartient à l'ordinateur dont l'avm s'est hébergé)
 	protected HashMap<String, ArrayList<String>> computer_list_avm; 
 	
 	/**AVMs introspections**/
@@ -112,6 +108,10 @@ implements PerformanceControllerManagementI{
 	protected String admissionControllerServicesInboundPortURI;
 	protected AdmissionControllerServicesOutboundPort acsop;
 	
+	/**Coordinateur de coeur*/
+	protected String coreCoord_services_ipURI;
+	protected CoreCoordinatorServicesOutboundPort coreCoord_services_op;
+	
 	/**
 	 * Créer un contrôleur de performance en donnant son URI et les inbound ports
 	 * On utilise que des ArrayList dans le constructeur car le dynamicComponentCreator ne supporte
@@ -125,10 +125,10 @@ implements PerformanceControllerManagementI{
 	 * pre		rd_management_ipURI != null
 	 * pre		rd_request_notification_ipURI != null
 	 * pre		avms_URI != null && avms_URI.size() != 0
-	 * pre		avmsIntrospectionInboundPortURIs != null && avms_URI.size() != 0
-	 * pre		avmsManagementInboundPortURIs != null && avms_URI.size() != 0
-	 * pre		computers_URI != null && avms_URI.size() != 0
-	 * pre		cp_computerServicesInboundPortURIs != null && avms_URI.size() != 0
+	 * pre		avmsIntrospectionInboundPortURIs != null && avmsIntrospectionInboundPortURIs.size() != 0
+	 * pre		avmsManagementInboundPortURIs != null && avmsManagementInboundPortURIs.size() != 0
+	 * pre		computers_URI != null && computers_URI.size() != 0
+	 * pre		cp_computerServicesInboundPortURIs != null && cp_computerServicesInboundPortURIs.size() != 0
 	 * pre		admissionControllerServicesInboundPortURI != null
 	 * pre		pc_seuil_inf <= pc_seuil_sup
 	 * post	true			// no postcondition.
@@ -146,7 +146,6 @@ implements PerformanceControllerManagementI{
 	 * @param seuil_inf									Seuil inférieur du temps moyen d'exécution souhaité
 	 * @param seuil_sup									Seuil supérieur du temps moyen d'exécution souhaité
 	 * @param admissionControllerServicesInboundPortURI	URI du services inbound port du contrôleur d'admission 
-	 * @throws Exception
 	 */
 	public PerformanceController(
 			String pcURI,
@@ -156,20 +155,24 @@ implements PerformanceControllerManagementI{
 			ArrayList<String> avms_URI, /* AVMs URI */
 			ArrayList<String> avmsIntrospectionInboundPortURIs /* AVMs introspection */,
 			ArrayList<String> avmsManagementInboundPortURIs /* AVMs management */,
-			ArrayList<String> computers_URI, /*Computer URI*/
-			ArrayList<String> cp_computerServicesInboundPortURIs /* computer service */,
 			int seuil_inf,
 			int seuil_sup,
-			String admissionControllerServicesInboundPortURI
+			String admissionControllerServicesInboundPortURI,
+			String coreCoord_services_ipURI
 	) throws Exception {
 		
 		super(1,1);
 		//Preconditions
-		assert cp_computerServicesInboundPortURIs != null && cp_computerServicesInboundPortURIs.size() != 0;
-		assert avmsManagementInboundPortURIs != null && avmsManagementInboundPortURIs.size() != 0;
+		assert pcURI != null;
+		assert pc_management_ipURI != null;
+		assert rd_management_ipURI != null;
+		assert rd_request_notification_ipURI != null;
+		assert avms_URI != null && avms_URI.size() != 0;
 		assert avmsIntrospectionInboundPortURIs != null && avmsIntrospectionInboundPortURIs.size() != 0;
-		assert pcURI != null && pc_management_ipURI != null;
+		assert avmsManagementInboundPortURIs != null && avmsManagementInboundPortURIs.size() != 0;
 		assert admissionControllerServicesInboundPortURI != null;
+		assert seuil_inf <= seuil_sup;
+		assert coreCoord_services_ipURI != null;
 		
 		/**Variables*/
 		this.pcURI = pcURI;
@@ -184,14 +187,7 @@ implements PerformanceControllerManagementI{
 		this.number_of_cores_of_avm = new HashMap<String, Integer>();
 		this.allocatedCoreAdmissibleFrequencies = new HashMap<AllocatedCore, ArrayList<Integer>>();
 		this.allocatedCoreStates = new HashMap<AllocatedCore, Integer>();
-		
-		
-		/**Ordinateur*/
-		// n'utilise pas HashMap directement dans le constructeur en raison du DynamicCreator ne supporte pas les hashMap comme paramètre
-		this.cp_ComputerServicesInboundPortURIs = new HashMap<String, String>();
-		for(int i=0; i<computers_URI.size(); i++) {
-			this.cp_ComputerServicesInboundPortURIs.put(computers_URI.get(i), cp_computerServicesInboundPortURIs.get(i));
-		}
+		this.coreCoord_services_ipURI = coreCoord_services_ipURI;
 		
 		/**AVMs*/
 		this.avmsManagementInboundPortURIs = new HashMap<String, String>();
@@ -215,14 +211,6 @@ implements PerformanceControllerManagementI{
 		
 		
 		/**required**/
-		//ComputerServices
-		this.pc_ComputerServicesOutboundPorts = new HashMap<String, ComputerServicesOutboundPort>();
-		this.addRequiredInterface(ComputerServicesI.class) ;
-		for(String cpuri : this.cp_ComputerServicesInboundPortURIs.keySet()) {
-			this.pc_ComputerServicesOutboundPorts.put(cpuri, new ComputerServicesOutboundPort(this));
-			this.addPort(this.pc_ComputerServicesOutboundPorts.get(cpuri)) ;
-			this.pc_ComputerServicesOutboundPorts.get(cpuri).publishPort();
-		}
 		
 		//AVMsIntrospection
 		this.avmsIntrospectionOutboundPorts = new HashMap<String, ApplicationVMIntrospectionOutboundPort>();
@@ -254,6 +242,11 @@ implements PerformanceControllerManagementI{
 		this.addPort(this.acsop);
 		this.acsop.publishPort();
 		
+		/**Coordinateur de coeur*/
+		this.addRequiredInterface(CoreCoordinatorServicesI.class);
+		this.coreCoord_services_op = new CoreCoordinatorServicesOutboundPort(this);
+		this.addPort(coreCoord_services_op);
+		this.coreCoord_services_op.publishPort();
 	}
 	
 	// Component life cycle
@@ -277,12 +270,6 @@ implements PerformanceControllerManagementI{
 				this.rdmipURI, 
 				RequestDispatcherManagementConnector.class.getCanonicalName());
 		
-		for(String cpuri : this.pc_ComputerServicesOutboundPorts.keySet()){
-			this.doPortConnection(
-					this.pc_ComputerServicesOutboundPorts.get(cpuri).getPortURI(),
-					this.cp_ComputerServicesInboundPortURIs.get(cpuri),
-					ComputerServicesConnector.class.getCanonicalName()) ;
-		}
 		
 		for(String avmuri : this.avmsIntrospectionOutboundPorts.keySet()) {
 			this.doPortConnection(
@@ -301,6 +288,10 @@ implements PerformanceControllerManagementI{
 				this.acsop.getPortURI(),
 				this.admissionControllerServicesInboundPortURI,
 				AdmissionControllerServicesConnector.class.getCanonicalName() );
+		this.doPortConnection(
+				this.coreCoord_services_op.getPortURI(),
+				this.coreCoord_services_ipURI,
+				CoreCoordinatorServicesConnector.class.getCanonicalName() );
 	}
 	
 	/**
@@ -320,9 +311,6 @@ implements PerformanceControllerManagementI{
 	{	
 		this.doPortDisconnection(this.rdmop.getPortURI());
 		
-		for(String cpuri : this.pc_ComputerServicesOutboundPorts.keySet()){
-			this.doPortDisconnection(this.pc_ComputerServicesOutboundPorts.get(cpuri).getPortURI()) ;
-		}
 		for(String avmuri : this.avmsIntrospectionOutboundPorts.keySet()) {
 			this.doPortDisconnection(this.avmsIntrospectionOutboundPorts.get(avmuri).getPortURI()) ;
 		}
@@ -336,6 +324,7 @@ implements PerformanceControllerManagementI{
 			this.doPortDisconnection(this.pmip_processorManagementOutboundPorts.get(processor).getPortURI());
 		}
 		this.doPortDisconnection(this.acsop.getPortURI());
+		this.doPortDisconnection(this.coreCoord_services_op.getPortURI());
 		super.finalise() ;
 	}
 	
@@ -349,9 +338,6 @@ implements PerformanceControllerManagementI{
 			
 			this.rdmop.unpublishPort();
 			this.pcmip.unpublishPort();
-			for(String cpuri : this.pc_ComputerServicesOutboundPorts.keySet()){
-				this.pc_ComputerServicesOutboundPorts.get(cpuri).unpublishPort() ;
-			}
 			for(String avmuri : this.avmsIntrospectionOutboundPorts.keySet()) {
 				this.avmsIntrospectionOutboundPorts.get(avmuri).unpublishPort() ;
 			}
@@ -365,6 +351,7 @@ implements PerformanceControllerManagementI{
 				this.processorManagementOutboundPorts.get(ac).unpublishPort();
 			}
 			this.acsop.unpublishPort();
+			this.coreCoord_services_op.unpublishPort();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -373,7 +360,7 @@ implements PerformanceControllerManagementI{
 	}
 
 	//--------------------------------------------------------------------
-	//METHODS
+	// METHODS
 	//--------------------------------------------------------------------
 	
 	/**
@@ -504,7 +491,7 @@ implements PerformanceControllerManagementI{
 		AllocatedCore ac = null;
 		String avm = null;
 		for(String cpuri : this.computer_list_avm.keySet()) {
-			ac = allocateCore(cpuri);
+			ac = this.coreCoord_services_op.allocateCore(cpuri);
 			if(ac != null) {
 				avm = this.computer_list_avm.get(cpuri).get(0);
 				break;
@@ -538,8 +525,7 @@ implements PerformanceControllerManagementI{
 			return false;
 		}
 		AllocatedCore ac = this.avmsManagementOutboundPorts.get(avm).removeAllocateCore();
-		String computer_uri = ac.processorURI.split("-")[0];
-		this.pc_ComputerServicesOutboundPorts.get(computer_uri).releaseCore(ac);
+		this.coreCoord_services_op.releaseCore(ac);
 		this.number_of_cores_of_avm.put(avm, this.number_of_cores_of_avm.get(avm)-1);
 		this.allocatedCoreStates.remove(ac);
 		this.allocatedCoreAdmissibleFrequencies.remove(ac);
@@ -554,8 +540,9 @@ implements PerformanceControllerManagementI{
 	 * @throws Exception
 	 */
 	private void addAVM() throws Exception {
-		AllocatedCore[] ac = this.acsop.findComputerAndAllocateCores(1);
+		AllocatedCore[] ac = this.coreCoord_services_op.findComputerAndAllocateCores(1);
 		if(ac.length == 0) {
+			logMessage("PerfControl. "+ this.pcURI + "| plus de coeur libre parmi tous les ordinateurs que nous disposons.");
 			logMessage("PerfControl. "+ this.pcURI + "| aucune augmentation de la performance n'a pu être effectuée.");
 			return;
 		}
@@ -600,6 +587,7 @@ implements PerformanceControllerManagementI{
 			logMessage("PerfControl. "+ this.pcURI + "| ajoute une avm.");
 		}
 		else {
+			logMessage("PerfControl. "+ this.pcURI + "| plus d'avm libre.");
 			logMessage("PerfControl. "+ this.pcURI + "| aucune augmentation de la performance n'a pu être effectuée.");
 		}
 	}
@@ -620,8 +608,7 @@ implements PerformanceControllerManagementI{
 		this.rdmop.removeAVM(this.avmsIntrospectionOutboundPorts.get(avmURI).getAVMPortsURI().get(ApplicationVMPortTypes.REQUEST_SUBMISSION));
 		
 		AllocatedCore ac = this.avmsManagementOutboundPorts.get(avmURI).removeAllocateCore();
-		String cpuri = this.avmsIntrospectionOutboundPorts.get(avmURI).getDynamicState().getComputerURI();
-		this.releaseCore(ac, cpuri);
+		this.coreCoord_services_op.releaseCore(ac);
 		this.number_of_cores_of_avm.put(avmURI, this.number_of_cores_of_avm.get(avmURI)-1);
 		this.allocatedCoreStates.remove(ac);
 		this.allocatedCoreAdmissibleFrequencies.remove(ac);
@@ -641,38 +628,6 @@ implements PerformanceControllerManagementI{
 		this.avmURIs.remove(avmURI);
 		
 		this.acsop.recycleFreeAVM(avmURI);
-	}
-	
-	/**
-	 * Alloue un coeur sur un ordinateur précis
-	 * @param cpuri			URI de l'ordinateur dont on demande d'allouer un coeur
-	 * @return	un coeur préalloué pour notre application, null si il n'y a plus de coeur libre sur cet ordinateur
-	 * @throws Exception
-	 */
-	private AllocatedCore allocateCore(String cpuri) throws Exception {
-		AllocatedCore[] allocatedCores = new AllocatedCore[0];
-		ComputerServicesOutboundPort csop = this.pc_ComputerServicesOutboundPorts.get(cpuri);
-		allocatedCores = csop.allocateCores(1) ;
-		if(allocatedCores.length == 1) {
-			logMessage("PerfControl. "+ this.pcURI+"| "+ allocatedCores.length + " coeur alloué depuis " + csop.getServerPortURI());
-			return allocatedCores[0];
-		}
-		else {
-			csop.releaseCores(allocatedCores);
-		}
-		return null;
-	}
-	
-	/**
-	 * Déalloue un coeur
-	 * 
-	 * @param ac		un coeur qui a été alloué
-	 * @param cpuri		URI de l'ordinateur qui possède le coeur
-	 * @throws Exception
-	 */
-	private void releaseCore(AllocatedCore ac, String cpuri) throws Exception { 
-		ComputerServicesOutboundPort csop = this.pc_ComputerServicesOutboundPorts.get(cpuri);
-		csop.releaseCore(ac);
 	}
 	
 	/**

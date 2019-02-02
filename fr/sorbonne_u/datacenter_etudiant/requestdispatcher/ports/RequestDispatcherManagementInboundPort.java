@@ -8,7 +8,7 @@ import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.interfaces.RequestDis
 
 /**
  * La classe <code>RequestDispatcherManagementInboundPort</code> implémente le
- * inbound port offert par l'interface <code>ApplicationVMManagementI</code>.
+ * inbound port offrant l'interface <code>ApplicationVMManagementI</code>.
  *
  * <p><strong>Description</strong></p>
  * 

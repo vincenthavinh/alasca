@@ -3,6 +3,10 @@ fr.sorbonne_u.datacenter_etudiant.admissioncontroller.connectors
 fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces
 fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports
 fr.sorbonne_u.datacenter_etudiant.clientapplication
+fr.sorbonne_u.datacenter_etudiant.coordinator
+fr.sorbonne_u.datacenter_etudiant.coordinator.connectors
+fr.sorbonne_u.datacenter_etudiant.coordinator.interfaces
+fr.sorbonne_u.datacenter_etudiant.coordinator.ports
 fr.sorbonne_u.datacenter_etudiant.performanceController
 fr.sorbonne_u.datacenter_etudiant.performanceController.connectors
 fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces

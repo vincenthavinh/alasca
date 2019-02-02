@@ -89,18 +89,4 @@ implements	AdmissionControllerServicesI
 				}) ;
 	}
 
-	/**
-	 * @see fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI#findComputerAndAllocateCores(int)
-	 */
-	@Override
-	public AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception {
-		return this.getOwner().handleRequestSync(
-				new AbstractComponent.AbstractService<AllocatedCore[]>() {
-					@Override
-					public AllocatedCore[] call() throws Exception {
-						return ((AdmissionController)this.getOwner()).
-									findComputerAndAllocateCores(nbCore);
-					}
-				}) ;
-	}
 }

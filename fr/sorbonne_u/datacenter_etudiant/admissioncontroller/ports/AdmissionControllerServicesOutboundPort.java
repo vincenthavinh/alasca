@@ -68,12 +68,4 @@ implements	AdmissionControllerServicesI
 	public void recycleFreeAVM(String AVMuri) throws Exception {
 		((AdmissionControllerServicesI)this.connector).recycleFreeAVM(AVMuri);
 	}
-
-	/**
-	 * @see fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI#findComputerAndAllocateCores(int)
-	 */
-	@Override
-	public AllocatedCore[] findComputerAndAllocateCores(int nbCore) throws Exception {
-		return ((AdmissionControllerServicesI)this.connector).findComputerAndAllocateCores(nbCore);
-	}
 }
