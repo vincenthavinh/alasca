@@ -164,7 +164,7 @@ public class TestAdmissionController extends AbstractCVM {
 				dcc_DynamicComponentCreationInboundPortURI,
 				ac_AdmissionControllerServicesInboundPortURI,
 				cc_CoreCoordinatorServicesInboundPortURI);
-		this.addDeployedComponent(this.ac);
+		this.addDeployedComponent(this.ac) ;
 		this.ac.toggleTracing() ;
 		this.ac.toggleLogging() ;
 		

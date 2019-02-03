@@ -84,7 +84,12 @@ implements PerformanceControllerManagementI{
 	protected HashMap<AllocatedCore, ProcessorManagementOutboundPort> processorManagementOutboundPorts;
 	protected HashMap<String, ProcessorIntrospectionOutboundPort> processorIntrospectionOutboundPorts;
 	protected HashMap<String, ProcessorManagementOutboundPort> pmip_processorManagementOutboundPorts;
+	/** Liste des avms libres qu'on a alloué depuis admissionController*/
 	protected ArrayList<String> listAVMs_libre;
+	/** Nombre d'avms qu'on peut allouer/désallouer*/
+	protected int limite_nb_avms;
+	/** Nombre d'avms qu'on a alloué/désalloué*/
+	protected int variance_avms;
 	
 	/**Computer**/
 	protected HashMap<String, ArrayList<String>> computer_list_avm; 
@@ -145,7 +150,9 @@ implements PerformanceControllerManagementI{
 	 * @param cp_computerServicesInboundPortURIs		URIs du services inbound port des ordinateurs
 	 * @param seuil_inf									Seuil inférieur du temps moyen d'exécution souhaité
 	 * @param seuil_sup									Seuil supérieur du temps moyen d'exécution souhaité
+	 * @param limite_nb_avms							Nombre d'avms qu'on peut allouer/déallouer
 	 * @param admissionControllerServicesInboundPortURI	URI du services inbound port du contrôleur d'admission 
+	 * @param coreCoord_services_ipURI					URI du coordinateur de coeurs
 	 */
 	public PerformanceController(
 			String pcURI,
@@ -157,6 +164,7 @@ implements PerformanceControllerManagementI{
 			ArrayList<String> avmsManagementInboundPortURIs /* AVMs management */,
 			int seuil_inf,
 			int seuil_sup,
+			int limite_nb_avms,
 			String admissionControllerServicesInboundPortURI,
 			String coreCoord_services_ipURI
 	) throws Exception {
@@ -173,6 +181,7 @@ implements PerformanceControllerManagementI{
 		assert admissionControllerServicesInboundPortURI != null;
 		assert seuil_inf <= seuil_sup;
 		assert coreCoord_services_ipURI != null;
+		assert limite_nb_avms < avms_URI.size();
 		
 		/**Variables*/
 		this.pcURI = pcURI;
@@ -188,6 +197,8 @@ implements PerformanceControllerManagementI{
 		this.allocatedCoreAdmissibleFrequencies = new HashMap<AllocatedCore, ArrayList<Integer>>();
 		this.allocatedCoreStates = new HashMap<AllocatedCore, Integer>();
 		this.coreCoord_services_ipURI = coreCoord_services_ipURI;
+		this.limite_nb_avms = limite_nb_avms;
+		this.variance_avms = 0;
 		
 		/**AVMs*/
 		this.avmsManagementInboundPortURIs = new HashMap<String, String>();
@@ -540,6 +551,12 @@ implements PerformanceControllerManagementI{
 	 * @throws Exception
 	 */
 	private void addAVM() throws Exception {
+		if(this.variance_avms >= this.limite_nb_avms) {
+			logMessage("PerfControl. "+ this.pcURI + "| atteint le nombre limite d'avms que cet application peut allouer.");
+			logMessage("PerfControl. "+ this.pcURI + "| aucune augmentation de la performance n'a pu être effectuée.");
+			return;
+		}
+		
 		AllocatedCore[] ac = this.coreCoord_services_op.findComputerAndAllocateCores(1);
 		if(ac.length == 0) {
 			logMessage("PerfControl. "+ this.pcURI + "| plus de coeur libre parmi tous les ordinateurs que nous disposons.");
@@ -583,7 +600,7 @@ implements PerformanceControllerManagementI{
 			listAVMs_libre.add(avmURI);
 			this.updateNbCoresOfAVMs();
 			this.updateProcessorData();
-			
+			this.variance_avms++;
 			logMessage("PerfControl. "+ this.pcURI + "| ajoute une avm.");
 		}
 		else {
@@ -593,17 +610,25 @@ implements PerformanceControllerManagementI{
 	}
 	
 	/**
-	 * Ne retire que des avms libres à l'application
+	 * Retire une avm à l'application
 	 * 
 	 * @throws Exception
 	 */
 	private void removeAVM() throws Exception {
-		if(listAVMs_libre.isEmpty()) {
-			logMessage("PerfControl. "+ this.pcURI + "| aucune diminution de la performance n'a pu être effectuée.");
+		if(this.variance_avms <= -(this.limite_nb_avms)) {
+			logMessage("PerfControl. "+ this.pcURI + "| atteint le nombre limite d'avms que cet application peut déallouer.");
+			logMessage("PerfControl. "+ this.pcURI + "| aucune augmentation de la performance n'a pu être effectuée.");
 			return;
 		}
 		// c'est un appel interne dans le cas où tous les AVMs ne restent plus qu'un seul coeur
-		String avmURI = listAVMs_libre.remove(0);
+		String avmURI = null;
+		if(!this.listAVMs_libre.isEmpty()) {
+			avmURI = this.listAVMs_libre.remove(0);
+		}
+		else {
+			avmURI = this.avmURIs.remove(0);
+		}
+		this.variance_avms--;
 		
 		this.rdmop.removeAVM(this.avmsIntrospectionOutboundPorts.get(avmURI).getAVMPortsURI().get(ApplicationVMPortTypes.REQUEST_SUBMISSION));
 		
@@ -612,18 +637,25 @@ implements PerformanceControllerManagementI{
 		this.number_of_cores_of_avm.put(avmURI, this.number_of_cores_of_avm.get(avmURI)-1);
 		this.allocatedCoreStates.remove(ac);
 		this.allocatedCoreAdmissibleFrequencies.remove(ac);
+		this.processorManagementOutboundPorts.remove(ac);
 		
 		this.avmsIntrospectionInboundPortURIs.remove(avmURI);
 		ApplicationVMIntrospectionOutboundPort avmiop = this.avmsIntrospectionOutboundPorts.remove(avmURI);
+		String cpuri = avmiop.getDynamicState().getComputerURI();
+		this.computer_list_avm.get(cpuri).remove(avmURI);
 		this.doPortDisconnection(avmiop.getPortURI());
 		avmiop.unpublishPort();
 		this.removePort(avmiop);
 		
+
 		this.avmsManagementInboundPortURIs.remove(avmURI);
 		ApplicationVMManagementOutboundPort avmmop = this.avmsManagementOutboundPorts.remove(avmURI);
+		avmmop.disconnectOutboundPorts();
 		this.doPortDisconnection(avmmop.getPortURI());
 		avmmop.unpublishPort();
 		this.removePort(avmmop);
+		
+		
 		
 		this.avmURIs.remove(avmURI);
 		

@@ -89,6 +89,10 @@ public class AdmissionController
 	 * 			 pour gerer les requetes de cette application				*/
 	protected HashMap<String, ArrayList<ApplicationVMManagementOutboundPort>> ac_ApplicationVMManagementOutboundPorts;
 	
+	/**Clefs: URI de l'avm
+	 * Valeurs: Les différents ports des avms*/
+	protected HashMap<String, Map<ApplicationVMPortTypes, String>> avms_created;
+	
 	/**PerformanceControllers**/
 	protected HashMap<String, PerformanceControllerManagementOutboundPort> ac_PerformanceControllerManagementOutboundPorts;
 	protected HashMap<String, PerformanceController> ac_PerformanceController;
@@ -164,7 +168,7 @@ public class AdmissionController
 		this.rd_number = 0;
 		
 		this.avms_libre_recyclees = new ArrayList<Map<ApplicationVMPortTypes, String>>();
-
+		this.avms_created = new HashMap<String, Map<ApplicationVMPortTypes, String>>();
 		//initialisation des ports
 		
 		/**offered**/
@@ -334,6 +338,11 @@ public class AdmissionController
 			avms_rsipURIs.add(avm_rsipURI);
 			avms_amipURIs.add(avm_amipURI);
 			avms_iipURIs.add(avm_iipURI);
+			Map<ApplicationVMPortTypes, String> avm_ports = new HashMap<ApplicationVMPortTypes, String>();
+			avm_ports.put(ApplicationVMPortTypes.REQUEST_SUBMISSION, avm_rsipURI);
+			avm_ports.put(ApplicationVMPortTypes.MANAGEMENT, avm_amipURI);
+			avm_ports.put(ApplicationVMPortTypes.INTROSPECTION, avm_iipURI);
+			this.avms_created.put(avm_URI, avm_ports);
 		}
 		
 		//port du performance controller
@@ -379,6 +388,7 @@ public class AdmissionController
 				avms_amipURIs,
 				seul_inf,
 				seul_sup,
+				1,
 				admissionControllerServicesInboundPort.getPortURI(),
 				coreCoord_services_ipURI
 		);
@@ -497,8 +507,11 @@ public class AdmissionController
 	 */
 	public void recycleFreeAVM(String AVMuri) throws Exception{
 		ApplicationVM avm = this.avms_libre.get(AVMuri);
-		avm.disconnectOutboundPorts();
-		this.avms_libre_recyclees.add(avm.getAVMPortsURI());
+		if(avm != null) {
+			this.avms_libre_recyclees.add(avm.getAVMPortsURI());
+			return;
+		}
+		this.avms_libre_recyclees.add(this.avms_created.get(AVMuri));
 	}
 	
 	/**

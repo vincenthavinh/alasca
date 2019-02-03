@@ -336,7 +336,7 @@ implements	ProcessorServicesNotificationConsumerI,
 	 */	
 	@Override
 	public void disconnectOutboundPorts() throws Exception {
-		this.doPortDisconnection(this.requestNotificationInboundPortURI);
+		this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI());
 		this.requestNotificationInboundPortURI = null;
 	}
 
@@ -815,7 +815,7 @@ implements	ProcessorServicesNotificationConsumerI,
 			}
 		}
 		if(removeprocessorServicePort) {
-			this.doPortDisconnection(allocatedCore.processorInboundPortURI.get(ProcessorPortTypes.SERVICES));
+			this.doPortDisconnection(this.processorServicesPorts.get(allocatedCore.processorURI).getPortURI());
 			this.processorServicesPorts.remove(allocatedCore.processorURI);
 			this.processorNotificationInboundPorts.remove(allocatedCore.processorURI);
 		}
