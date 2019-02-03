@@ -678,6 +678,7 @@ implements PerformanceControllerManagementI{
 		this.avmURIs.remove(avmURI);
 		
 		this.acsop.recycleFreeAVM(avmURI);
+		logMessage("PerfControl. "+ this.pcURI + "| retire une avm.");
 	}
 	
 	/**
