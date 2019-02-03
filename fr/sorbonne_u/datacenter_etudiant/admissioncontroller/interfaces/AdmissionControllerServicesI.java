@@ -29,7 +29,7 @@ extends		OfferedI,
 			RequiredI
 {
 	/**
-	 * allocate one free AVM to the performance controller and return the inbound port
+	 * allocate one free AVM to the performance controller and return the inbound ports
 	 * uri of the AVM allocated; return null if no free AVM is available.
 	 * 
 	 * <p><strong>Contract</strong></p>
@@ -45,7 +45,7 @@ extends		OfferedI,
 	public Map<ApplicationVMPortTypes, String>	allocateFreeAVM() throws Exception ;
 	
 	/**
-	 * recycle a free AVM previously allocated to a performance controller.
+	 * recycle an AVM 
 	 *
 	 * <p><strong>Contract</strong></p>
 	 * 
