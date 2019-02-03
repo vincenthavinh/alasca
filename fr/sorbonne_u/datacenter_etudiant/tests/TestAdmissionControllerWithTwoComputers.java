@@ -148,7 +148,7 @@ public class TestAdmissionControllerWithTwoComputers extends AbstractCVM {
 		cp_intro_URI.add(cp0_ComputerIntrospectionInboundPortURI);
 		cp_intro_URI.add(cp1_ComputerIntrospectionInboundPortURI);
 		// --------------------------------------------------------------------
-		// Create the Admission Controller component.
+		// Create the Core Coordinator component.
 		// Il faut lui passer le(s) ordinateur(s) existant(s).
 		// --------------------------------------------------------------------
 		String cc_URI = "cc0";
