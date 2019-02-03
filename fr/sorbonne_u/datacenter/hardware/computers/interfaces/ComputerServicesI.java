@@ -77,6 +77,24 @@ extends		OfferedI,
 	 * @throws Exception		<i>todo.</i>
 	 */
 	public AllocatedCore	allocateCore() throws Exception ;
+	
+	/**
+	 * allocate the core (<code>processorNo</code>, <code>coreNo</code>) on this computer and return an instance of
+	 * <code>AllocatedCore</code> containing the processor number,
+	 * the core number and a map giving the URI of the processor
+	 * inbound ports; return null if no core is available.
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	true			// no precondition.
+	 * post	true			// no postcondition.
+	 * </pre>
+	 *
+	 * @return				an instance of <code>AllocatedCore</code> with the data about the allocated core.
+	 * @throws Exception		<i>todo.</i>
+	 */
+	public AllocatedCore	allocateCore(int processorNo, int coreNo) throws Exception ;
 
 	/**
 	 * allocate up to <code>numberRequested</code> cores on this computer and

@@ -24,8 +24,9 @@ import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
 public interface CoreCoordinatorServicesI 
 extends		OfferedI,
 			RequiredI{
+	
 	/**
-	 * préallouer un coeur à une application sur un ordinateur précis
+	 * réserve un coeur à une application sur un ordinateur précis
 	 *
 	 * <p><strong>Contract</strong></p>
 	 * 
@@ -35,9 +36,26 @@ extends		OfferedI,
 	 * </pre>
 	 *
 	 * @param cpuri			URI de l'ordinateur dont on veut préallouer un coeur
+	 * @param pcuri			URI du contrôleur de performance 
 	 * @throws Exception	<i>todo.</i>
 	 */
-	public AllocatedCore allocateCore(String cpuri)  throws Exception ;
+	public boolean reserveCore(String cpuri, String pcuri) throws Exception;
+	
+	/**
+	 * fait le choix d'utiliser le coeur réservé ou pas
+	 *
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	cpuri != null
+	 * post	true			// no postcondition.
+	 * </pre>
+	 *
+	 * @param pcuri			URI du contrôleur de performance 
+	 * @param choice		utiliser le coeur réservé ou pas
+	 * @throws Exception	<i>todo.</i>
+	 */
+	public AllocatedCore makeChoice(String pcuri, boolean choice) throws Exception;
 	
 	/**
 	 * déalloue un coeur qui a été alloué

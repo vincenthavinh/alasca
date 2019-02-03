@@ -416,8 +416,7 @@ implements PerformanceControllerManagementI{
 	 * @throws Exception
 	 */
 	private void checkPerformance() throws Exception {
-		long moyenne = this.rdmop.getAverageReqDuration();
-		
+
 		// On récupère les données sur les coeurs attribués aux avms si on ne les a pas
 		// on considère par la suite que ces données sont manipulées dans le contrôleur de performance
 		if(this.allocatedCoreStates.isEmpty()) {
@@ -426,7 +425,44 @@ implements PerformanceControllerManagementI{
 		if(this.number_of_cores_of_avm.isEmpty()) {
 			this.updateNbCoresOfAVMs();
 		}
+		boolean canReserve = false;
+		String avm = null;
+		for(String cpuri : this.computer_list_avm.keySet()) {
+			canReserve = this.coreCoord_services_op.reserveCore(cpuri, this.pcURI);
+			if(canReserve) {
+				avm = this.computer_list_avm.get(cpuri).get(0);
+				break;
+			}
+		}
+		
+		// Utilise sleep pour bien voir la coordination des coeurs.
+		//Thread.sleep(4000);
+		
+		long moyenne = this.rdmop.getAverageReqDuration();
 		this.logMessage("PerfControl. "+ this.pcURI+"| temps moyenne "+moyenne+".");
+		if(moyenne > SEUIL_SUP) {
+			// incrémente la fréquence
+			if(!this.increaseFrequency()) {
+				if(canReserve) {
+					// augmente de nombre de coeur 
+					this.findAVMAndAddAllocateCore(avm);
+				}
+				else {
+					// ajoute une avm en cherchant un coeur sur d'autres ordinateurs
+					this.addAVM();
+				}
+			}
+			else {
+				if(canReserve) {
+					this.coreCoord_services_op.makeChoice(this.pcURI, false);
+				}
+			}
+		}
+		else {
+			if(canReserve) {
+				this.coreCoord_services_op.makeChoice(this.pcURI, false);
+			}
+		}
 		if(moyenne < SEUIL_INF) {
 			// décrémente la fréquence
 			if(!this.decreaseFrequency()) {
@@ -434,16 +470,6 @@ implements PerformanceControllerManagementI{
 				if(!this.findAVMAndRemoveAllocateCore()) {
 					// si tous les avms ne possèdent qu'un seul coeur, on commence à retirer des avms
 					this.removeAVM();
-				}
-			}
-		}
-		if(moyenne > SEUIL_SUP) {
-			// incrémente la fréquence
-			if(!this.increaseFrequency()) {
-				// augmente de nombre de coeur 
-				if(!this.findAVMAndAddAllocateCore()) {
-					// ajoute une avm en cherchant un coeur sur d'autres ordinateurs
-					this.addAVM();
 				}
 			}
 		}
@@ -498,16 +524,8 @@ implements PerformanceControllerManagementI{
 	 * @return si on a réussi à trouver des coeurs libres ou pas sur les ordinateurs hébergés par nos avms
 	 * @throws Exception
 	 */
-	private boolean findAVMAndAddAllocateCore() throws Exception {
-		AllocatedCore ac = null;
-		String avm = null;
-		for(String cpuri : this.computer_list_avm.keySet()) {
-			ac = this.coreCoord_services_op.allocateCore(cpuri);
-			if(ac != null) {
-				avm = this.computer_list_avm.get(cpuri).get(0);
-				break;
-			}
-		}
+	private boolean findAVMAndAddAllocateCore(String avm) throws Exception {
+		AllocatedCore ac = this.coreCoord_services_op.makeChoice(this.pcURI, true);
 		if(ac != null && avm != null) {
 			ApplicationVMManagementOutboundPort avmmop = avmsManagementOutboundPorts.get(avm);
 			avmmop.addAllocateCore(ac);

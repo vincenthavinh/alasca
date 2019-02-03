@@ -52,10 +52,12 @@ import fr.sorbonne_u.components.interfaces.DataRequiredI;
 import fr.sorbonne_u.datacenter.TimeManagement;
 import fr.sorbonne_u.datacenter.connectors.ControlledDataConnector;
 import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerDynamicStateI;
+import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerIntrospectionI;
 import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI;
 import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerStaticStateDataI;
 import fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerStaticStateI;
 import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerDynamicStateDataInboundPort;
+import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerIntrospectionInboundPort;
 import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerServicesInboundPort;
 import fr.sorbonne_u.datacenter.hardware.computers.ports.ComputerStaticStateDataInboundPort;
 import fr.sorbonne_u.datacenter.hardware.processors.Processor;
@@ -115,6 +117,7 @@ import fr.sorbonne_u.datacenter.interfaces.PushModeControllingI;
  * invariant		processorsURI != null and
  *				    processorsURI.size() == numberOfProcessors
  * invariant		computerServicesInboundPortURI != null
+ * invariant		computerIntrospectionInboundPortURI != null
  * invariant		computerStaticStateDataInboundPortURI != null
  * invariant		computerDynamicStateDataInboundPortURI != null
  * </pre>
@@ -132,7 +135,8 @@ implements	ProcessorStateDataConsumerI,
 	public static enum ComputerPortTypes {
 		SERVICES,		// basic services: allocating and releasing cores
 		STATIC_STATE,	// notification (data interface) for the static state
-		DYNAMIC_STATE	// notification (data interface) for the dynamic state
+		DYNAMIC_STATE,	// notification (data interface) for the dynamic state
+		INTROSPECTION
 	}
 
 	// ------------------------------------------------------------------------
@@ -249,6 +253,8 @@ implements	ProcessorStateDataConsumerI,
 	protected boolean[][]					reservedCores ;
 	/** computer inbound port through which management methods are called.	*/
 	protected ComputerServicesInboundPort	computerServicesInboundPort ;
+	/** computer inbound port through which introspection methods are called.	*/
+	protected ComputerIntrospectionInboundPort	computerIntrospectionInboundPort ;
 	/** computer data inbound port through which it pushes its static data.	*/
 	protected ComputerStaticStateDataInboundPort
 											computerStaticStateDataInboundPort ;
@@ -277,6 +283,7 @@ implements	ProcessorStateDataConsumerI,
 	 * pre	numberOfProcessors &gt; 0
 	 * pre	numberOfCores &gt; 0
 	 * pre	computerServicesInboundPortURI != null
+	 * pre  computerIntrospectionInboundPortURI != null
 	 * pre	computerStaticStateDataInboundPortURI != null
 	 * pre	computerDynamicStateDataInboundPortURI != null
 	 * post	true			// no postcondition.
@@ -290,6 +297,7 @@ implements	ProcessorStateDataConsumerI,
 	 * @param numberOfProcessors						number of processors in the computer.
 	 * @param numberOfCores							number of cores per processor (homogeneous).
 	 * @param computerServicesInboundPortURI			URI of the computer service inbound port.
+	 * @param computerIntrospectionInboundPortURI		URI of the computer introspection inbound port.
 	 * @param computerStaticStateDataInboundPortURI	URI of the computer static data notification inbound port.
 	 * @param computerDynamicStateDataInboundPortURI	URI of the computer dynamic data notification inbound port.
 	 * @throws Exception								<i>todo.</i>
@@ -303,6 +311,7 @@ implements	ProcessorStateDataConsumerI,
 		int numberOfProcessors,
 		int numberOfCores,
 		String computerServicesInboundPortURI,
+		String computerIntrospectionInboundPortURI,
 		String computerStaticStateDataInboundPortURI,
 		String computerDynamicStateDataInboundPortURI
 		) throws Exception
@@ -434,6 +443,13 @@ implements	ProcessorStateDataConsumerI,
 											this) ;
 		this.addPort(this.computerServicesInboundPort) ;
 		this.computerServicesInboundPort.publishPort() ;
+		
+		this.addOfferedInterface(ComputerIntrospectionI.class) ;
+		this.computerIntrospectionInboundPort =
+			new ComputerIntrospectionInboundPort(computerIntrospectionInboundPortURI,
+												  this) ;
+		this.addPort(this.computerIntrospectionInboundPort) ;
+		this.computerIntrospectionInboundPort.publishPort() ;
 
 		this.addOfferedInterface(DataOfferedI.PullI.class) ;
 		this.addRequiredInterface(DataOfferedI.PushI.class) ;
@@ -507,8 +523,10 @@ implements	ProcessorStateDataConsumerI,
 				this.processorDynamicDataOutboundPorts[i].unpublishPort() ;
 			}
 			this.computerServicesInboundPort.unpublishPort() ;
+			this.computerIntrospectionInboundPort.unpublishPort() ;
 			this.computerStaticStateDataInboundPort.unpublishPort() ;
 			this.computerDynamicStateDataInboundPort.unpublishPort() ;
+			
 		} catch (Exception e) {
 			throw new ComponentShutdownException(e) ;
 		}
@@ -920,6 +938,38 @@ implements	ProcessorStateDataConsumerI,
 			}
 		}
 		if (!notFound) {
+			ret = new AllocatedCore(
+					processorNo,
+					this.processorsURI.get(processorNo), 
+					coreNo,
+					this.processorsInboundPortURI.get(
+										this.processorsURI.get(processorNo))) ;
+		}
+		return ret ;
+	}
+	
+	/**
+	 * allocate the core (<code>processorNo</code>, <code>coreNo</code>)  on this computer and return an instance of
+	 * <code>AllocatedCore</code> containing the processor number,
+	 * the core number and a map giving the URI of the processor
+	 * inbound ports; return null if no core is available. 
+	 * 
+	 * <p><strong>Contract</strong></p>
+	 * 
+	 * <pre>
+	 * pre	true			// no precondition.
+	 * post	true			// no postcondition.
+	 * </pre>
+	 * @param processorNo		Number of processor
+	 * @param coreNo			Number of core
+	 * @return	an instance of <code>AllocatedCore</code> with the data about the allocated core.
+	 * @throws Exception		<i>todo.</i>
+	 */
+	public AllocatedCore		allocateCore(int processorNo, int coreNo) throws Exception
+	{
+		AllocatedCore ret = null ;
+		if(this.reservedCores[processorNo][coreNo] == false) {
+			this.reservedCores[processorNo][coreNo] = true;
 			ret = new AllocatedCore(
 					processorNo,
 					this.processorsURI.get(processorNo), 

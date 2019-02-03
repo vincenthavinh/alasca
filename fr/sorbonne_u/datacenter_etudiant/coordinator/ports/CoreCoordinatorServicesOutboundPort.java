@@ -51,11 +51,19 @@ implements	CoreCoordinatorServicesI{
 	// ------------------------------------------------------------------------
 	
 	/**
-	 * @see fr.sorbonne_u.datacenter_etudiant.coordinator.interfaces.CoreCoordinatorServicesI#allocateCore(String)
+	 * @see fr.sorbonne_u.datacenter_etudiant.coordinator.interfaces.CoreCoordinatorServicesI#reserveCore(String, String)
 	 */
 	@Override
-	public AllocatedCore allocateCore(String cpuri) throws Exception {
-		return ((CoreCoordinatorServicesI)this.connector).allocateCore(cpuri) ;
+	public boolean reserveCore(String cpuri, String pcuri) throws Exception{
+		return ((CoreCoordinatorServicesI)this.connector).reserveCore(cpuri, pcuri);
+	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.coordinator.interfaces.CoreCoordinatorServicesI#makeChoice(String, boolean)
+	 */
+	@Override
+	public AllocatedCore makeChoice(String pcuri, boolean choice) throws Exception {
+		return ((CoreCoordinatorServicesI)this.connector).makeChoice(pcuri, choice);
 	}
 
 	/**

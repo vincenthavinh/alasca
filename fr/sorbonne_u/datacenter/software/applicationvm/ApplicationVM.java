@@ -322,8 +322,10 @@ implements	ProcessorServicesNotificationConsumerI,
 	@Override
 	public void			finalise() throws Exception
 	{
-		this.doPortDisconnection(
-							this.requestNotificationOutboundPort.getPortURI()) ;
+		if(this.requestNotificationInboundPortURI != null) {
+			this.doPortDisconnection(this.requestNotificationOutboundPort.getPortURI()) ;
+		}
+							
 		for (ProcessorServicesOutboundPort p :
 										this.processorServicesPorts.values()) {
 			p.doDisconnection() ;

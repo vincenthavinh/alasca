@@ -95,6 +95,7 @@ extends		AbstractCVM
 	// Predefined URI of the different ports visible at the component assembly
 	// level.
 	public static final String	ComputerServicesInboundPortURI = "cs-ibp" ;
+	public static final String	ComputerIntrospectionInboundPortURI = "ci-ibp" ;
 	public static final String	ComputerStaticStateDataInboundPortURI = "css-dip" ;
 	public static final String	ComputerDynamicStateDataInboundPortURI = "cds-dip" ;
 	public static final String	ApplicationVMManagementInboundPortURI = "avm-ibp" ;
@@ -154,6 +155,7 @@ extends		AbstractCVM
 							numberOfProcessors,
 							numberOfCores,
 							ComputerServicesInboundPortURI,
+							ComputerIntrospectionInboundPortURI,
 							ComputerStaticStateDataInboundPortURI,
 							ComputerDynamicStateDataInboundPortURI) ;
 		this.addDeployedComponent(c) ;

@@ -105,6 +105,22 @@ implements	ComputerServicesI
 						}
 					});
 	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#allocateCore(int, int)
+	 */
+	@Override
+	public AllocatedCore	allocateCore(int processorNo, int coreNo) throws Exception
+	{
+		return this.getOwner().handleRequestSync(
+					new AbstractComponent.AbstractService<AllocatedCore>() {
+						@Override
+						public AllocatedCore call() throws Exception {
+							return ((Computer)this.getOwner()).
+										allocateCore(processorNo, coreNo) ;
+						}
+					});
+	}
 
 	/**
 	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#allocateCores(int)

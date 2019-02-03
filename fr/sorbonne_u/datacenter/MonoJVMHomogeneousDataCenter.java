@@ -74,6 +74,8 @@ extends		AbstractCVM
 	// level.
 	public static final String	ComputerServicesInboundPortURIPrefix = "cs-ibp-" ;
 	public static final String	ComputerServicesOutboundPortURIPrefix = "cs-obp" ;
+	public static final String	ComputerIntrospectionInboundPortURIPrefix = "ci-ibp" ;
+	public static final String	ComputerIntrospectionOutboundPortURIPrefix = "ci-obp" ;
 	public static final String	ComputerStaticStateDataInboundPortURIPrefix = "css-dip-" ;
 	public static final String	ComputerStaticStateDataOutboundPortURIPrefix = "css-dop-" ;
 	public static final String	ComputerDynamicStateDataInboundPortURIPrefix = "cds-dip-" ;
@@ -157,6 +159,7 @@ extends		AbstractCVM
 					NUMBER_OF_PROCESSORS_PER_COMPUTER,
 					NUMBER_OF_CORES_PER_PROCESSOR,
 					ComputerServicesInboundPortURIPrefix + c,
+					ComputerIntrospectionInboundPortURIPrefix +c,
 					ComputerStaticStateDataInboundPortURIPrefix + c,
 					ComputerDynamicStateDataInboundPortURIPrefix + c) ;
 			this.addDeployedComponent(this.computers[c]) ;

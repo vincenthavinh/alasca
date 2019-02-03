@@ -92,6 +92,16 @@ implements	ComputerServicesI
 	{
 		return ((ComputerServicesI)this.connector).allocateCore() ;
 	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#allocateCore(int, int)
+	 */
+	@Override
+	public AllocatedCore	allocateCore(int processorNo, int coreNo) throws Exception
+	{
+		return ((ComputerServicesI)this.connector).allocateCore(processorNo, coreNo) ;
+	}
+
 
 	/**
 	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#allocateCores(int)

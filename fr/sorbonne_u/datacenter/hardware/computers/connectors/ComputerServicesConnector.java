@@ -70,6 +70,16 @@ implements	ComputerServicesI
 	{
 		return ((ComputerServicesI)this.offering).allocateCore() ;
 	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#allocateCore(int, int)
+	 */
+	@Override
+	public AllocatedCore	allocateCore(int processorNo, int coreNo) throws Exception
+	{
+		return ((ComputerServicesI)this.offering).
+											allocateCore(processorNo, coreNo) ;
+	}
 
 	/**
 	 * @see fr.sorbonne_u.datacenter.hardware.computers.interfaces.ComputerServicesI#allocateCores(int)

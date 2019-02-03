@@ -155,6 +155,8 @@ extends		AbstractCVM
 
 	public static final String	ComputerServicesInboundPortURI = "cs-ibp" ;
 	public static final String	ComputerServicesOutboundPortURI = "cs-obp" ;
+	public static final String	ComputerIntrospectionInboundPortURI = "ci-ibp" ;
+	public static final String	ComputerIntrospectionOutboundPortURI = "ci-obp" ;
 	public static final String	ComputerStaticStateDataInboundPortURI = "css-dip" ;
 	public static final String	ComputerStaticStateDataOutboundPortURI = "css-dop" ;
 	public static final String	ComputerDynamicStateDataInboundPortURI = "cds-dip" ;
@@ -214,6 +216,7 @@ extends		AbstractCVM
 							numberOfProcessors,
 							numberOfCores,
 							ComputerServicesInboundPortURI,
+							ComputerIntrospectionInboundPortURI,
 							ComputerStaticStateDataInboundPortURI,
 							ComputerDynamicStateDataInboundPortURI) ;
 		c.toggleTracing() ;

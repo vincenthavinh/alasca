@@ -58,16 +58,31 @@ public class CoreCoordinatorServicesInboundPort
 	// ------------------------------------------------------------------------
 
 	/**
-	 * @see fr.sorbonne_u.datacenter_etudiant.coordinator.interfaces.CoreCoordinatorServicesI#allocateCore(String)
+	 * @see fr.sorbonne_u.datacenter_etudiant.coordinator.interfaces.CoreCoordinatorServicesI#reserveCore(String, String)
 	 */
 	@Override
-	public AllocatedCore allocateCore(String cpuri) throws Exception {
+	public boolean reserveCore(String cpuri, String pcuri) throws Exception{
+		return this.getOwner().handleRequestSync(
+				new AbstractComponent.AbstractService<Boolean>() {
+					@Override
+					public Boolean call() throws Exception {
+						return ((CoreCoordinator)this.getOwner()).
+								reserveCore(cpuri, pcuri) ;
+					}
+				});
+	}
+	
+	/**
+	 * @see fr.sorbonne_u.datacenter_etudiant.coordinator.interfaces.CoreCoordinatorServicesI#makeChoice(String, boolean)
+	 */
+	@Override
+	public AllocatedCore makeChoice(String pcuri, boolean choice) throws Exception {
 		return this.getOwner().handleRequestSync(
 				new AbstractComponent.AbstractService<AllocatedCore>() {
 					@Override
 					public AllocatedCore call() throws Exception {
 						return ((CoreCoordinator)this.getOwner()).
-									allocateCore(cpuri) ;
+								makeChoice(pcuri, choice) ;
 					}
 				});
 	}
