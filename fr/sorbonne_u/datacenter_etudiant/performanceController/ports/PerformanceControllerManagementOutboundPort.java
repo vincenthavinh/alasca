@@ -58,5 +58,10 @@ public class PerformanceControllerManagementOutboundPort
 	public void toggleTracingLogging() throws Exception {
 		((PerformanceControllerManagementI)this.connector).toggleTracingLogging();
 	}
+
+	@Override
+	public void orderIncreaseCoresFrequencyOf(String procURI) throws Exception {
+		((PerformanceControllerManagementI)this.connector).orderIncreaseCoresFrequencyOf(procURI);
+	}
 	
 }

@@ -29,8 +29,12 @@ import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.connectors.Admissio
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.interfaces.AdmissionControllerServicesI;
 import fr.sorbonne_u.datacenter_etudiant.admissioncontroller.ports.AdmissionControllerServicesOutboundPort;
 import fr.sorbonne_u.datacenter_etudiant.coordinator.connectors.CoreCoordinatorServicesConnector;
+import fr.sorbonne_u.datacenter_etudiant.coordinator.connectors.FrequencyCoordinatorServicesConnector;
 import fr.sorbonne_u.datacenter_etudiant.coordinator.interfaces.CoreCoordinatorServicesI;
+import fr.sorbonne_u.datacenter_etudiant.coordinator.interfaces.FrequencyCoordinatorServicesI;
 import fr.sorbonne_u.datacenter_etudiant.coordinator.ports.CoreCoordinatorServicesOutboundPort;
+import fr.sorbonne_u.datacenter_etudiant.coordinator.ports.FrequencyCoordinatorServicesInboundPort;
+import fr.sorbonne_u.datacenter_etudiant.coordinator.ports.FrequencyCoordinatorServicesOutboundPort;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.interfaces.PerformanceControllerManagementI;
 import fr.sorbonne_u.datacenter_etudiant.performanceController.ports.PerformanceControllerManagementInboundPort;
 import fr.sorbonne_u.datacenter_etudiant.requestdispatcher.connectors.RequestDispatcherManagementConnector;
@@ -117,6 +121,12 @@ implements PerformanceControllerManagementI{
 	protected String coreCoord_services_ipURI;
 	protected CoreCoordinatorServicesOutboundPort coreCoord_services_op;
 	
+	/**Coordinateur de frequence*/
+	protected String freqCoord_services_ipURI;
+	protected FrequencyCoordinatorServicesOutboundPort freqCoord_services_op;
+	protected Boolean coordinatorTakingLead;
+	protected String coordinated_ProcURI;
+	
 	/**
 	 * Créer un contrôleur de performance en donnant son URI et les inbound ports
 	 * On utilise que des ArrayList dans le constructeur car le dynamicComponentCreator ne supporte
@@ -166,7 +176,8 @@ implements PerformanceControllerManagementI{
 			int seuil_sup,
 			int limite_nb_avms,
 			String admissionControllerServicesInboundPortURI,
-			String coreCoord_services_ipURI
+			String coreCoord_services_ipURI,
+			String freqCoord_services_ipURI
 	) throws Exception {
 		
 		super(1,1);
@@ -181,6 +192,7 @@ implements PerformanceControllerManagementI{
 		assert admissionControllerServicesInboundPortURI != null;
 		assert seuil_inf <= seuil_sup;
 		assert coreCoord_services_ipURI != null;
+		assert freqCoord_services_ipURI != null;
 		assert limite_nb_avms < avms_URI.size();
 		
 		/**Variables*/
@@ -197,8 +209,11 @@ implements PerformanceControllerManagementI{
 		this.allocatedCoreAdmissibleFrequencies = new HashMap<AllocatedCore, ArrayList<Integer>>();
 		this.allocatedCoreStates = new HashMap<AllocatedCore, Integer>();
 		this.coreCoord_services_ipURI = coreCoord_services_ipURI;
+		this.freqCoord_services_ipURI = freqCoord_services_ipURI;
 		this.limite_nb_avms = limite_nb_avms;
 		this.variance_avms = 0;
+		this.coordinatorTakingLead = false;
+		this.coordinated_ProcURI = null;
 		
 		/**AVMs*/
 		this.avmsManagementInboundPortURIs = new HashMap<String, String>();
@@ -258,6 +273,12 @@ implements PerformanceControllerManagementI{
 		this.coreCoord_services_op = new CoreCoordinatorServicesOutboundPort(this);
 		this.addPort(coreCoord_services_op);
 		this.coreCoord_services_op.publishPort();
+		
+		/**Coordinateur de frequence*/
+		this.addRequiredInterface(FrequencyCoordinatorServicesI.class);
+		this.freqCoord_services_op = new FrequencyCoordinatorServicesOutboundPort(this);
+		this.addPort(freqCoord_services_op);
+		this.freqCoord_services_op.publishPort();
 	}
 	
 	// Component life cycle
@@ -303,6 +324,10 @@ implements PerformanceControllerManagementI{
 				this.coreCoord_services_op.getPortURI(),
 				this.coreCoord_services_ipURI,
 				CoreCoordinatorServicesConnector.class.getCanonicalName() );
+		this.doPortConnection(
+				this.freqCoord_services_op.getPortURI(),
+				this.freqCoord_services_ipURI,
+				FrequencyCoordinatorServicesConnector.class.getCanonicalName() );
 	}
 	
 	/**
@@ -311,6 +336,18 @@ implements PerformanceControllerManagementI{
 	@Override
 	public void execute() throws Exception {
 		super.execute();
+		
+		//on indique au coor freq quels processeurs ce performance controlleur utilise.
+		ArrayList<String> proc_URIs = new ArrayList<String>();
+		for(ApplicationVMIntrospectionOutboundPort aiop : this.avmsIntrospectionOutboundPorts.values()) {
+			for(AllocatedCore ac : aiop.getAllocatedCores()) {
+				if(!proc_URIs.contains(ac.processorURI)) {
+					proc_URIs.add(ac.processorURI);
+					this.freqCoord_services_op.notifyAddProc(this.pcmip.getPortURI(), ac.processorURI);
+				}
+			}
+		}
+				
 		controlAverageReqDuration(3000);
 	}
 	
@@ -336,6 +373,7 @@ implements PerformanceControllerManagementI{
 		}
 		this.doPortDisconnection(this.acsop.getPortURI());
 		this.doPortDisconnection(this.coreCoord_services_op.getPortURI());
+		this.doPortDisconnection(this.freqCoord_services_op.getPortURI());
 		super.finalise() ;
 	}
 	
@@ -363,6 +401,7 @@ implements PerformanceControllerManagementI{
 			}
 			this.acsop.unpublishPort();
 			this.coreCoord_services_op.unpublishPort();
+			this.freqCoord_services_op.unpublishPort();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -427,7 +466,7 @@ implements PerformanceControllerManagementI{
 			this.updateNbCoresOfAVMs();
 		}
 		this.logMessage("PerfControl. "+ this.pcURI+"| temps moyenne "+moyenne+".");
-		if(moyenne < SEUIL_INF) {
+		if(moyenne > SEUIL_SUP) {
 			// décrémente la fréquence
 			if(!this.decreaseFrequency()) {
 				// si on ne plus décrémenter la fréquence, diminue le nombre de coeur
@@ -436,8 +475,14 @@ implements PerformanceControllerManagementI{
 					this.removeAVM();
 				}
 			}
+			
+			synchronized(coordinatorTakingLead) {
+				coordinatorTakingLead = false;
+				coordinated_ProcURI = null;
+			}
 		}
-		if(moyenne > SEUIL_SUP) {
+			
+		if(moyenne < SEUIL_INF) {
 			// incrémente la fréquence
 			if(!this.increaseFrequency()) {
 				// augmente de nombre de coeur 
@@ -445,6 +490,12 @@ implements PerformanceControllerManagementI{
 					// ajoute une avm en cherchant un coeur sur d'autres ordinateurs
 					this.addAVM();
 				}
+			}
+		}else if(coordinatorTakingLead){
+			synchronized(coordinatorTakingLead) {
+				increaseCoresFrequencyOf(coordinated_ProcURI);
+				coordinatorTakingLead = false;
+				coordinated_ProcURI = null;
 			}
 		}
 	}
@@ -459,7 +510,15 @@ implements PerformanceControllerManagementI{
 		for(AllocatedCore ac : this.allocatedCoreStates.keySet()) {
 			int index = this.allocatedCoreAdmissibleFrequencies.get(ac).lastIndexOf(this.allocatedCoreStates.get(ac));
 			if(index < (this.allocatedCoreAdmissibleFrequencies.get(ac).size()-1)) {
+				
 				int freq = this.allocatedCoreAdmissibleFrequencies.get(ac).get(index+1);
+				
+				//si le frequanceGap est trop grand, on demande au coordinateur d augmenter les autres coeurs.
+				if(this.processorIntrospectionOutboundPorts.get(ac.processorInboundPortURI.get(ProcessorPortTypes.INTROSPECTION)).isCurrentlyPossibleFrequencyForCore(ac.coreNo, freq)){
+					this.freqCoord_services_op.increaseFrequencyOutOfGap(ac.processorURI, ac.coreNo, this.pcmip.getPortURI());
+					logMessage("PerfControl. "+ this.pcURI + "| ne peut allouer pour cause de frequencyGap.");
+				}
+
 				this.processorManagementOutboundPorts.get(ac).setCoreFrequency(ac.coreNo, freq);
 				this.logMessage("PerfControl. "+ this.pcURI + "| coeur "+ac.processorURI+"-"+ac.coreNo+" passe de "+this.allocatedCoreStates.get(ac)+"Hz à "+freq+"Hz.");
 				this.allocatedCoreStates.replace(ac, freq);
@@ -470,6 +529,27 @@ implements PerformanceControllerManagementI{
 		return false;
 	}
 	
+	private void increaseCoresFrequencyOf(String procURI) throws Exception {
+		for(AllocatedCore ac : this.allocatedCoreStates.keySet()) {
+			if(ac.processorURI.equals(procURI)) {
+				int index = this.allocatedCoreAdmissibleFrequencies.get(ac).lastIndexOf(this.allocatedCoreStates.get(ac));
+				if(index < (this.allocatedCoreAdmissibleFrequencies.get(ac).size()-1)) {
+					
+					int freq = this.allocatedCoreAdmissibleFrequencies.get(ac).get(index+1);
+					
+					//si le frequanceGap est trop grand, on demande au coordinateur d augmenter les autres coeurs.
+					if(this.processorIntrospectionOutboundPorts.get(ac.processorInboundPortURI.get(ProcessorPortTypes.INTROSPECTION)).isCurrentlyPossibleFrequencyForCore(ac.coreNo, freq)){
+						this.freqCoord_services_op.increaseFrequencyOutOfGap(ac.processorURI, ac.coreNo, this.pcmip.getPortURI());
+					}
+
+					this.processorManagementOutboundPorts.get(ac).setCoreFrequency(ac.coreNo, freq);
+					this.logMessage("PerfControl. "+ this.pcURI + "| coeur "+ac.processorURI+"-"+ac.coreNo+" passe de "+this.allocatedCoreStates.get(ac)+"Hz à "+freq+"Hz.");
+					this.allocatedCoreStates.replace(ac, freq);
+				}
+			}
+		}
+	}
+	
 	/**
 	 * Décrémente la fréquence du coeur d'un cran inférieur 
 	 * 
@@ -478,13 +558,15 @@ implements PerformanceControllerManagementI{
 	 */
 	private boolean decreaseFrequency() throws Exception {
 		for(AllocatedCore ac : this.allocatedCoreStates.keySet()) {
-			int index = this.allocatedCoreAdmissibleFrequencies.get(ac).indexOf(this.allocatedCoreStates.get(ac));
-			if(index > 0) {
-				int freq = this.allocatedCoreAdmissibleFrequencies.get(ac).get(index-1);
-				this.processorManagementOutboundPorts.get(ac).setCoreFrequency(ac.coreNo, freq);
-				this.logMessage("PerfControl. "+ this.pcURI + "| coeur "+ac.processorURI+"-"+ac.coreNo+" passe de "+this.allocatedCoreStates.get(ac)+"Hz à "+freq+"Hz.");
-				this.allocatedCoreStates.replace(ac, freq);
-				return true;
+			if(!coordinatorTakingLead || !ac.processorURI.equals(coordinated_ProcURI)) {
+				int index = this.allocatedCoreAdmissibleFrequencies.get(ac).indexOf(this.allocatedCoreStates.get(ac));
+				if(index > 0) {
+					int freq = this.allocatedCoreAdmissibleFrequencies.get(ac).get(index-1);
+					this.processorManagementOutboundPorts.get(ac).setCoreFrequency(ac.coreNo, freq);
+					this.logMessage("PerfControl. "+ this.pcURI + "| coeur "+ac.processorURI+"-"+ac.coreNo+" passe de "+this.allocatedCoreStates.get(ac)+"Hz à "+freq+"Hz.");
+					this.allocatedCoreStates.replace(ac, freq);
+					return true;
+				}
 			}
 		}
 		this.logMessage("PerfControl. "+ this.pcURI + "| ne peut plus diminuer la fréquence des coeurs.");
@@ -514,6 +596,7 @@ implements PerformanceControllerManagementI{
 			this.connectProcessorPorts(ac);
 			this.number_of_cores_of_avm.put(avm, this.number_of_cores_of_avm.get(avm)+1);
 			logMessage("PerfControl. "+ this.pcURI+"| ajoute un coeur à l'avm "+ avm +".");
+			this.freqCoord_services_op.notifyAddProc(this.pcmip.getPortURI(), ac.processorURI);
 			return true;
 		}
 		else {
@@ -541,6 +624,7 @@ implements PerformanceControllerManagementI{
 		this.allocatedCoreStates.remove(ac);
 		this.allocatedCoreAdmissibleFrequencies.remove(ac);
 		logMessage("PerfControl. "+ this.pcURI+"| retire un coeur à l'avm "+ avm +".");
+		this.freqCoord_services_op.notifyRemoveProc(this.pcmip.getPortURI(), ac.processorURI);
 		return true;
 	}
 	
@@ -730,5 +814,11 @@ implements PerformanceControllerManagementI{
 		Collections.sort(sortedList);
 		allocatedCoreAdmissibleFrequencies.put(ac, sortedList);
 		processorManagementOutboundPorts.put(ac, this.pmip_processorManagementOutboundPorts.get(pmip));
+	}
+
+	@Override
+	public void orderIncreaseCoresFrequencyOf(String procURI) throws Exception {
+		this.coordinatorTakingLead = true;
+		this.coordinated_ProcURI = procURI;
 	}
 }

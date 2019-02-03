@@ -39,4 +39,9 @@ implements PerformanceControllerManagementI{
 	public void toggleTracingLogging() throws Exception {
 		((PerformanceControllerManagementI)this.offering).toggleTracingLogging();
 	}
+
+	@Override
+	public void orderIncreaseCoresFrequencyOf(String procURI) throws Exception {
+		((PerformanceControllerManagementI)this.offering).orderIncreaseCoresFrequencyOf(procURI);	
+	}
 }

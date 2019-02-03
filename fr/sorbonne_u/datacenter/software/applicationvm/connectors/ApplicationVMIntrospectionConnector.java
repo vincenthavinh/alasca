@@ -35,7 +35,10 @@ package fr.sorbonne_u.datacenter.software.applicationvm.connectors;
 //knowledge of the CeCILL-C license and that you accept its terms.
 
 import java.util.Map;
+import java.util.Set;
+
 import fr.sorbonne_u.components.connectors.AbstractConnector;
+import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM.ApplicationVMPortTypes;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMDynamicStateI;
 import fr.sorbonne_u.datacenter.software.applicationvm.interfaces.ApplicationVMIntrospectionI;
@@ -94,5 +97,10 @@ implements	ApplicationVMIntrospectionI
 	throws Exception
 	{
 		return ((ApplicationVMIntrospectionI)this.offering).getDynamicState() ;
+	}
+
+	@Override
+	public Set<AllocatedCore> getAllocatedCores() throws Exception {
+		return ((ApplicationVMIntrospectionI)this.offering).getAllocatedCores() ;
 	}
 }

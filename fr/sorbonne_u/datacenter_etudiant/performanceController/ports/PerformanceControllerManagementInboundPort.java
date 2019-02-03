@@ -94,5 +94,18 @@ public class PerformanceControllerManagementInboundPort
 					}
 				}) ;
 	}
+
+	@Override
+	public void orderIncreaseCoresFrequencyOf(String procURI) throws Exception {
+		this.getOwner().handleRequestSync(
+				new AbstractComponent.AbstractService<Void>() {
+					@Override
+					public Void call() throws Exception {
+						((PerformanceController)this.getOwner()).
+							orderIncreaseCoresFrequencyOf(procURI);
+						return null;
+					}
+				}) ;
+	}
 	
 }

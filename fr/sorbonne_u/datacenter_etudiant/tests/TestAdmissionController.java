@@ -20,6 +20,7 @@ import fr.sorbonne_u.datacenter_etudiant.coordinator.CoreCoordinator;
  * @author Chao LIN
  *
  */
+import fr.sorbonne_u.datacenter_etudiant.coordinator.FrequencyCoordinator;
 public class TestAdmissionController extends AbstractCVM {
 
 	/** static URIs **/
@@ -46,11 +47,15 @@ public class TestAdmissionController extends AbstractCVM {
 	//core coordinator
 	public static final String cc_CoreCoordinatorServicesInboundPortURI = "ccs-ibp";
 	
+	//frequency coordinator
+	public static final String fc_FrequencyCoordinatorServicesInboundPortURI = "fcs-ibp";
+	
 	/** static components **/
 	protected ComputerMonitor cm0 ;
 	protected ComputerMonitor cm1 ;
 	protected AdmissionController ac ;
 	protected CoreCoordinator cc;
+	protected FrequencyCoordinator fc;
 	protected ClientApplication ca0;
 	protected ClientApplication ca1;
 	
@@ -141,7 +146,7 @@ public class TestAdmissionController extends AbstractCVM {
 		cp_services_URI.add(cp0_ComputerServicesInboundPortURI);
 		cp_services_URI.add(cp1_ComputerServicesInboundPortURI);
 		// --------------------------------------------------------------------
-		// Create the Admission Controller component.
+		// Create the Core Coordinator component.
 		// Il faut lui passer le(s) ordinateur(s) existant(s).
 		// --------------------------------------------------------------------
 		String cc_URI = "cc0";
@@ -154,6 +159,18 @@ public class TestAdmissionController extends AbstractCVM {
 		this.cc.toggleTracing() ;
 		this.cc.toggleLogging() ;
 		// --------------------------------------------------------------------
+		// Create the Frequency Coordinator component.
+		// Il faut lui passer le(s) ordinateur(s) existant(s).
+		// --------------------------------------------------------------------
+		String fc_URI = "fc0";
+		this.fc = new FrequencyCoordinator(
+				fc_URI,
+				fc_FrequencyCoordinatorServicesInboundPortURI
+				);
+		this.addDeployedComponent(this.fc);
+		this.fc.toggleTracing() ;
+		this.fc.toggleLogging() ;
+		// --------------------------------------------------------------------
 		// Create the Admission Controller component.
 		// Il faut lui passer le(s) ordinateur(s) existant(s).
 		// --------------------------------------------------------------------
@@ -163,7 +180,8 @@ public class TestAdmissionController extends AbstractCVM {
 				ac_ApplicationSubmissionInboundPortURI, 
 				dcc_DynamicComponentCreationInboundPortURI,
 				ac_AdmissionControllerServicesInboundPortURI,
-				cc_CoreCoordinatorServicesInboundPortURI);
+				cc_CoreCoordinatorServicesInboundPortURI,
+				fc_FrequencyCoordinatorServicesInboundPortURI);
 		this.addDeployedComponent(this.ac) ;
 		this.ac.toggleTracing() ;
 		this.ac.toggleLogging() ;

@@ -35,8 +35,11 @@ package fr.sorbonne_u.datacenter.software.applicationvm.interfaces;
 //knowledge of the CeCILL-C license and that you accept its terms.
 
 import java.util.Map;
+import java.util.Set;
+
 import fr.sorbonne_u.components.interfaces.OfferedI;
 import fr.sorbonne_u.components.interfaces.RequiredI;
+import fr.sorbonne_u.datacenter.hardware.computers.Computer.AllocatedCore;
 import fr.sorbonne_u.datacenter.software.applicationvm.ApplicationVM.ApplicationVMPortTypes;
 
 /**
@@ -105,4 +108,6 @@ extends		OfferedI,
 	 * @throws Exception	<i>todo.</i>
 	 */
 	public ApplicationVMDynamicStateI	getDynamicState() throws Exception ;
+
+	public Set<AllocatedCore> getAllocatedCores() throws Exception;
 }

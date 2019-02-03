@@ -52,4 +52,6 @@ public interface PerformanceControllerManagementI
 	 * @throws Exception
 	 */
 	public void toggleTracingLogging() throws Exception;
+	
+	public void orderIncreaseCoresFrequencyOf(String procURI) throws Exception;
 }

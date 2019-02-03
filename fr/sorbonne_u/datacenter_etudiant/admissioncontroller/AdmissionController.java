@@ -117,6 +117,9 @@ public class AdmissionController
 	protected String coreCoord_services_ipURI;
 	protected CoreCoordinatorServicesOutboundPort coreCoord_services_op;
 	
+	/**Coordinateur de frequence*/
+	protected String freqCoord_services_ipURI;
+	
 	/**
 	 * Créer un contrôleur d'admission en donnant son URI et les inbound ports
 	 * 
@@ -141,7 +144,8 @@ public class AdmissionController
 			String ac_ApplicationSubmissionInboundPortURI,
 			String dcc_DynamicComponentCreationInboundPortURI,
 			String ac_AdmissionControllerServicesInboundPortURI,
-			String coreCoord_services_ipURI
+			String coreCoord_services_ipURI,
+			String freqCoord_services_ipURI
 	) throws Exception {
 		super(1,1);
 		
@@ -151,12 +155,14 @@ public class AdmissionController
 		assert dcc_DynamicComponentCreationInboundPortURI != null;
 		assert ac_AdmissionControllerServicesInboundPortURI != null;
 		assert coreCoord_services_ipURI != null;
+		assert freqCoord_services_ipURI != null;
 		
 		//initilisation
 		
 		this.ac_URI = ac_URI;
 		this.dcc_DynamicComponentCreationInboundPortURI = dcc_DynamicComponentCreationInboundPortURI;
 		this.coreCoord_services_ipURI = coreCoord_services_ipURI;
+		this.freqCoord_services_ipURI = freqCoord_services_ipURI;
 		
 		this.ac_RequestDispatcherManagementOutboundPorts = new HashMap<String, RequestDispatcherManagementOutboundPort>();
 		this.ac_ApplicationVMManagementOutboundPorts = new HashMap<String, ArrayList<ApplicationVMManagementOutboundPort>>();
@@ -390,7 +396,8 @@ public class AdmissionController
 				seul_sup,
 				1,
 				admissionControllerServicesInboundPort.getPortURI(),
-				coreCoord_services_ipURI
+				coreCoord_services_ipURI,
+				freqCoord_services_ipURI
 		);
 		ac_PerformanceController.put(requestNotificationInboundPortURI, pc);
 		//Performance controller

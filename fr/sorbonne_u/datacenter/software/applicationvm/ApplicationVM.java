@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import fr.sorbonne_u.components.AbstractComponent;
@@ -820,5 +821,9 @@ implements	ProcessorServicesNotificationConsumerI,
 			this.processorNotificationInboundPorts.remove(allocatedCore.processorURI);
 		}
 		return allocatedCore;
+	}
+
+	public Set<AllocatedCore> getAllocatedCores() {
+		return this.allocatedCoresIdleStatus.keySet();	
 	}
 }
