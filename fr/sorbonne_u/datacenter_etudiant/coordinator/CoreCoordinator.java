@@ -288,6 +288,9 @@ extends AbstractComponent{
 				break;
 			}
 			else {
+				for(ReservedCoreData rcd : list_reservedCores) {
+					reservedCores[rcd.getProcessorNo()][rcd.getCoreNo()] = false;
+				}
 				list_reservedCores.clear();
 			}
 		}
